@@ -280,7 +280,7 @@ func mainCore() error {
 	mempoolSavers = append(mempoolSavers, sqliteDB.MPC)
 
 	// Web template data. WebUI implements BlockDataSaver interface
-	webUI := NewWebUI(&sqliteDB)
+	webUI := NewWebUI(&sqliteDB,activeChain)
 	if webUI == nil {
 		return fmt.Errorf("Failed to start WebUI. Missing HTML resources?")
 	}

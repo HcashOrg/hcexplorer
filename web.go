@@ -70,7 +70,7 @@ type WebUI struct {
 
 // NewWebUI constructs a new WebUI by loading and parsing the html templates
 // then launching the WebSocket event handler
-func NewWebUI(expSource APIDataSource) *WebUI {
+func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI {
 	fp := filepath.Join("views", "root.tmpl")
 	efp := filepath.Join("views", "extras.tmpl")
 	errorfp := filepath.Join("views", "error.tmpl")
@@ -96,7 +96,7 @@ func NewWebUI(expSource APIDataSource) *WebUI {
 			return t.Format("2006-01-02 15:04:05")
 		},
 		"ticketWindowProgress": func(i int) float64 {
-			p := (float64(i) / 288) * 100
+			p := (float64(i) / float64(activeNetParams.StakeDiffWindowSize)) * 100
 			return p
 		},
 		"float64AsDecimalParts": func(v float64, useCommas bool) []string {
@@ -277,9 +277,11 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 	str, err := TemplateExecToString(td.templ, "home", struct {
 		InitialData []*dcrjson.GetBlockVerboseResult
 		Data        WebTemplateData
+		StakeDiffWindowSize int64
 	}{
 		initialBlocks,
 		td.TemplateData,
+		td.params.StakeDiffWindowSize,
 	})
 	td.templateDataMtx.RUnlock()
 	if err != nil {

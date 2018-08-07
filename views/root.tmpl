@@ -44,9 +44,9 @@
                                                     style="width: {{ticketWindowProgress .StakeSummary.IdxBlockInWindow}}%; background: #2ed8a3;"
                                                     aria-valuenow="{{.StakeSummary.IdxBlockInWindow}}"
                                                     aria-valuemin="0"
-                                                    aria-valuemax="144"
+                                                    aria-valuemax="{{$.StakeDiffWindowSize}}"
                                                 >
-                                                <span id="blocksdiff" style="color:#383b41" class="nowrap pl-1">block <span id="window_block_index" >{{.StakeSummary.IdxBlockInWindow}}</span> of 288</span>
+                                                <span id="blocksdiff" style="color:#383b41" class="nowrap pl-1">block <span id="window_block_index" >{{.StakeSummary.IdxBlockInWindow}}</span> of {{$.StakeDiffWindowSize}}</span>
                                                 </div>
                                             </div>
                                         </div>
