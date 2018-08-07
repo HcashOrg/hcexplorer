@@ -1,0 +1,82 @@
+@font-face {
+    font-family: 'TekoSemibold';
+    src: url('TekoSemibold/TekoSemibold.eot');
+    src: url('TekoSemibold/TekoSemibold.eot') format('embedded-opentype'),
+    url('TekoSemibold/TekoSemibold.woff2') format('woff2'),
+    url('TekoSemibold/TekoSemibold.woff') format('woff'),
+    url('TekoSemibold/TekoSemibold.ttf') format('truetype'),
+    url('TekoSemibold/TekoSemibold.svg#TekoSemibold') format('svg');
+}
+@font-face {
+    font-family: 'TekoRegular';
+    src: url('TekoRegular/TekoRegular.eot');
+    src: url('TekoRegular/TekoRegular.eot') format('embedded-opentype'),
+    url('TekoRegular/TekoRegular.woff2') format('woff2'),
+    url('TekoRegular/TekoRegular.woff') format('woff'),
+    url('TekoRegular/TekoRegular.ttf') format('truetype'),
+    url('TekoRegular/TekoRegular.svg#TekoRegular') format('svg');
+}
+@font-face {
+    font-family: 'TekoMedium';
+    src: url('TekoMedium/TekoMedium.eot');
+    src: url('TekoMedium/TekoMedium.eot') format('embedded-opentype'),
+    url('TekoMedium/TekoMedium.woff2') format('woff2'),
+    url('TekoMedium/TekoMedium.woff') format('woff'),
+    url('TekoMedium/TekoMedium.ttf') format('truetype'),
+    url('TekoMedium/TekoMedium.svg#TekoMedium') format('svg');
+}
+@font-face {
+    font-family: 'TekoBold';
+    src: url('TekoBold/TekoBold.eot');
+    src: url('TekoBold/TekoBold.eot') format('embedded-opentype'),
+    url('TekoBold/TekoBold.woff2') format('woff2'),
+    url('TekoBold/TekoBold.woff') format('woff'),
+    url('TekoBold/TekoBold.ttf') format('truetype'),
+    url('TekoBold/TekoBold.svg#TekoBold') format('svg');
+}
+@font-face {
+    font-family: 'JuraSemiBold';
+    src: url('JuraSemiBold/JuraSemiBold.eot');
+    src: url('JuraSemiBold/JuraSemiBold.eot') format('embedded-opentype'),
+    url('JuraSemiBold/JuraSemiBold.woff2') format('woff2'),
+    url('JuraSemiBold/JuraSemiBold.woff') format('woff'),
+    url('JuraSemiBold/JuraSemiBold.ttf') format('truetype'),
+    url('JuraSemiBold/JuraSemiBold.svg#JuraSemiBold') format('svg');
+}
+@font-face {
+    font-family: 'JuraRegular';
+    src: url('JuraRegular/JuraRegular.eot');
+    src: url('JuraRegular/JuraRegular.eot') format('embedded-opentype'),
+    url('JuraRegular/JuraRegular.woff2') format('woff2'),
+    url('JuraRegular/JuraRegular.woff') format('woff'),
+    url('JuraRegular/JuraRegular.ttf') format('truetype'),
+    url('JuraRegular/JuraRegular.svg#JuraRegular') format('svg');
+}
+@font-face {
+    font-family: 'JuraMedium';
+    src: url('JuraMedium/JuraMedium.eot');
+    src: url('JuraMedium/JuraMedium.eot') format('embedded-opentype'),
+    url('JuraMedium/JuraMedium.woff2') format('woff2'),
+    url('JuraMedium/JuraMedium.woff') format('woff'),
+    url('JuraMedium/JuraMedium.ttf') format('truetype'),
+    url('JuraMedium/JuraMedium.svg#JuraMedium') format('svg');
+}
+@font-face {
+    font-family: 'JuraLight';
+    src: url('JuraLight/JuraLight.eot');
+    src: url('JuraLight/JuraLight.eot') format('embedded-opentype'),
+    url('JuraLight/JuraLight.woff2') format('woff2'),
+    url('JuraLight/JuraLight.woff') format('woff'),
+    url('JuraLight/JuraLight.ttf') format('truetype'),
+    url('JuraLight/JuraLight.svg#JuraLight') format('svg');
+}
+@font-face {
+    font-family: 'JuraBold';
+    src: url('JuraBold/JuraBold.eot');
+    src: url('JuraBold/JuraBold.eot') format('embedded-opentype'),
+    url('JuraBold/JuraBold.woff2') format('woff2'),
+    url('JuraBold/JuraBold.woff') format('woff'),
+    url('JuraBold/JuraBold.ttf') format('truetype'),
+    url('JuraBold/JuraBold.svg#JuraBold') format('svg');
+}
+

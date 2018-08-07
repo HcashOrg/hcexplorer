@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'JuraBold';
+    src: url('fonts/JuraBold.eot');
+    src: url('fonts/JuraBold.eot') format('embedded-opentype'),
+         url('fonts/JuraBold.woff2') format('woff2'),
+         url('fonts/JuraBold.woff') format('woff'),
+         url('fonts/JuraBold.ttf') format('truetype'),
+         url('fonts/JuraBold.svg#JuraBold') format('svg');
+}

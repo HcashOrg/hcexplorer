@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'TekoBold';
+    src: url('fonts/TekoBold.eot');
+    src: url('fonts/TekoBold.eot') format('embedded-opentype'),
+         url('fonts/TekoBold.woff2') format('woff2'),
+         url('fonts/TekoBold.woff') format('woff'),
+         url('fonts/TekoBold.ttf') format('truetype'),
+         url('fonts/TekoBold.svg#TekoBold') format('svg');
+}

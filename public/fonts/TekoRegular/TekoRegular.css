@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'TekoRegular';
+    src: url('fonts/TekoRegular.eot');
+    src: url('fonts/TekoRegular.eot') format('embedded-opentype'),
+         url('fonts/TekoRegular.woff2') format('woff2'),
+         url('fonts/TekoRegular.woff') format('woff'),
+         url('fonts/TekoRegular.ttf') format('truetype'),
+         url('fonts/TekoRegular.svg#TekoRegular') format('svg');
+}
