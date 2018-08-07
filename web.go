@@ -96,7 +96,7 @@ func NewWebUI(expSource APIDataSource) *WebUI {
 			return t.Format("2006-01-02 15:04:05")
 		},
 		"ticketWindowProgress": func(i int) float64 {
-			p := (float64(i) / 144) * 100
+			p := (float64(i) / 288) * 100
 			return p
 		},
 		"float64AsDecimalParts": func(v float64, useCommas bool) []string {
