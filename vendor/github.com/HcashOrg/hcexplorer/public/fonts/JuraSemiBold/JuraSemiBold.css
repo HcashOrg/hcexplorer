@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'JuraSemiBold_woff';
+    src: url('fonts/JuraSemiBold_woff.eot');
+    src: url('fonts/JuraSemiBold_woff.eot') format('embedded-opentype'),
+         url('fonts/JuraSemiBold_woff.woff2') format('woff2'),
+         url('fonts/JuraSemiBold_woff.woff') format('woff'),
+         url('fonts/JuraSemiBold_woff.ttf') format('truetype'),
+         url('fonts/JuraSemiBold_woff.svg#JuraSemiBold_woff') format('svg');
+}

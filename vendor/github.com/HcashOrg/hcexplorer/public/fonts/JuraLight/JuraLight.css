@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'JuraLight';
+    src: url('fonts/JuraLight.eot');
+    src: url('fonts/JuraLight.eot') format('embedded-opentype'),
+         url('fonts/JuraLight.woff2') format('woff2'),
+         url('fonts/JuraLight.woff') format('woff'),
+         url('fonts/JuraLight.ttf') format('truetype'),
+         url('fonts/JuraLight.svg#JuraLight') format('svg');
+}

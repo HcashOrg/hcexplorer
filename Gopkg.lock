@@ -50,6 +50,28 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:a8da1b28fbea75a46c36e1461f59138790d85add3011bb0b3a01d081161a24da"
+  name = "github.com/HcashOrg/hcexplorer"
+  packages = [
+    "blockdata",
+    "db/dbtypes",
+    "db/dbtypes/internal",
+    "db/hcpg",
+    "db/hcpg/internal",
+    "db/hcsqlite",
+    "explorer",
+    "hcdataapi",
+    "mempool",
+    "rpcutils",
+    "semver",
+    "stakedb",
+    "txhelpers",
+  ]
+  pruneopts = ""
+  revision = "b6e7b837f426059381f952468450b66aa10e5ac4"
+
+[[projects]]
+  branch = "master"
   digest = "1:34f3a474178e5b2edcb6946e16059014ab60e38ed07c675fed7104d6aeeb4692"
   name = "github.com/HcashOrg/hcrpcclient"
   packages = ["."]
@@ -321,6 +343,19 @@
     "github.com/HcashOrg/hcd/hcutil",
     "github.com/HcashOrg/hcd/txscript",
     "github.com/HcashOrg/hcd/wire",
+    "github.com/HcashOrg/hcexplorer/blockdata",
+    "github.com/HcashOrg/hcexplorer/db/dbtypes",
+    "github.com/HcashOrg/hcexplorer/db/dbtypes/internal",
+    "github.com/HcashOrg/hcexplorer/db/hcpg",
+    "github.com/HcashOrg/hcexplorer/db/hcpg/internal",
+    "github.com/HcashOrg/hcexplorer/db/hcsqlite",
+    "github.com/HcashOrg/hcexplorer/explorer",
+    "github.com/HcashOrg/hcexplorer/hcdataapi",
+    "github.com/HcashOrg/hcexplorer/mempool",
+    "github.com/HcashOrg/hcexplorer/rpcutils",
+    "github.com/HcashOrg/hcexplorer/semver",
+    "github.com/HcashOrg/hcexplorer/stakedb",
+    "github.com/HcashOrg/hcexplorer/txhelpers",
     "github.com/HcashOrg/hcrpcclient",
     "github.com/HcashOrg/hcwallet/netparams",
     "github.com/HcashOrg/hcwallet/wallet/udb",

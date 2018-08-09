@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'TekoMedium';
+    src: url('fonts/TekoMedium.eot');
+    src: url('fonts/TekoMedium.eot') format('embedded-opentype'),
+         url('fonts/TekoMedium.woff2') format('woff2'),
+         url('fonts/TekoMedium.woff') format('woff'),
+         url('fonts/TekoMedium.ttf') format('truetype'),
+         url('fonts/TekoMedium.svg#TekoMedium') format('svg');
+}

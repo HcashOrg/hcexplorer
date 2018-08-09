@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'TekoSemibold_woff2';
+    src: url('fonts/TekoSemibold_woff2.eot');
+    src: url('fonts/TekoSemibold_woff2.eot') format('embedded-opentype'),
+         url('fonts/TekoSemibold_woff2.woff2') format('woff2'),
+         url('fonts/TekoSemibold_woff2.woff') format('woff'),
+         url('fonts/TekoSemibold_woff2.ttf') format('truetype'),
+         url('fonts/TekoSemibold_woff2.svg#TekoSemibold_woff2') format('svg');
+}

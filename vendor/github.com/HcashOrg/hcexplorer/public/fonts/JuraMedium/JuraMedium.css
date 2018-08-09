@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'JuraMedium';
+    src: url('fonts/JuraMedium.eot');
+    src: url('fonts/JuraMedium.eot') format('embedded-opentype'),
+         url('fonts/JuraMedium.woff2') format('woff2'),
+         url('fonts/JuraMedium.woff') format('woff'),
+         url('fonts/JuraMedium.ttf') format('truetype'),
+         url('fonts/JuraMedium.svg#JuraMedium') format('svg');
+}

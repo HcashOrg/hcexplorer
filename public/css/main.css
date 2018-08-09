@@ -781,6 +781,331 @@ body.darkBG .navbar-fixed-bottom {
 }
 
 
+
+.top-nav2 {
+	position: fixed;
+	color: #fff !important;
+  width: 320px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 4;
+  padding-top: 60px;
+  padding-left: 30px;
+  -webkit-transition: all 0.3s linear;
+  -moz-transition: all 0.3s linear;
+  -ms-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+	background-color: #24142C;
+	-webkit-transform: translate(-100%, 0);
+	-moz-transform: translate(-100%, 0);
+	-ms-transform: translate(-100%, 0);
+	transform: translate(-100%, 0);
+}
+.top-nav2.active {
+	-webkit-transform: translate(0, 0);
+	-moz-transform: translate(0, 0);
+	-ms-transform: translate(0, 0);
+	transform: translate(0, 0);
+}
+.top-nav2 input::-webkit-input-placeholder{
+	color:#fff !important;
+}
+.top-nav2 input::-moz-placeholder{   /* Mozilla Firefox 19+ */
+	color:#fff !important;
+}
+.top-nav2 input:-moz-placeholder{    /* Mozilla Firefox 4 to 18 */
+	color:#fff !important;
+}
+.top-nav2 input:-ms-input-placeholder{  /* Internet Explorer 10-11 */ 
+	color:#fff !important;
+}
+
+.top-nav2 a {
+	display: block;
+  color: white;
+}
+.top-nav2 .nav3 a {
+	margin-left: 0;
+	margin-right: 0;
+}
+.top-nav2 .d-flex {
+	display: block !important;
+}
+.top-nav2 .dcricon-coolsnady {
+  font-size: 22px;
+}
+.menubtn {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 50px;
+	height: 50px;
+	padding: 10px;
+	z-index: 5;
+	background-color: #8839D1;
+}
+.menubtn .name {
+	display: block;
+	position: absolute;
+	left: 100%;
+	top: 50%;
+	white-space: nowrap;
+  -webkit-transition: all 0.3s linear;
+  -moz-transition: all 0.3s linear;
+  -ms-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+  color: #fff;
+	-webkit-transform: translate(-200%, -50%);
+	-moz-transform: translate(-200%, -50%);
+	-ms-transform: translate(-200%, -50%);
+	-o-transform: translate(-200%, -50%);
+	transform: translate(-200%, -50%);
+}
+.menubtn .icon {
+	position: relative;
+	display: block;
+	width: 30px;
+	height: 30px;
+}
+.menubtn .icon i {
+	position: absolute;
+	display: block;
+	height: 3px;
+	background-color: #fff;
+	left: 0;
+	right: 0;
+	top: 50%;
+  -webkit-transition: all 0.3s linear;
+  -moz-transition: all 0.3s linear;
+  -ms-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+	-webkit-transform: translate(0, -50%);
+	-moz-transform: translate(0, -50%);
+	-ms-transform: translate(0, -50%);
+	-o-transform: translate(0, -50%);
+	transform: translate(0, -50%);
+}
+.menubtn .icon i:nth-child(1) {
+	margin-top: -7px;
+}
+.menubtn .icon i:nth-child(2) {
+	
+}
+.menubtn .icon i:nth-child(3) {
+	margin-top: 7px;
+}
+
+.menubtn.active .name {
+	-webkit-transform: translate(10%, -50%);
+	-moz-transform: translate(10%, -50%);
+	-ms-transform: translate(10%, -50%);
+	-o-transform: translate(10%, -50%);
+	transform: translate(10%, -50%);
+}
+.menubtn.active .icon i:nth-child(1),
+.menubtn.active .icon i:nth-child(3) {
+	margin-top: 0;
+}
+.menubtn.active .icon i:nth-child(2) {
+	opacity: 0;
+}
+.menubtn.active .icon i:nth-child(1) {
+	-webkit-transform: translate(0, -50%) rotate(45deg);
+	-moz-transform: translate(0, -50%) rotate(45deg);
+	-ms-transform: translate(0, -50%) rotate(45deg);
+	transform: translate(0, -50%) rotate(45deg);
+}
+.menubtn.active .icon i:nth-child(3) {
+	-webkit-transform: translate(0, -50%) rotate(-45deg);
+	-moz-transform: translate(0, -50%) rotate(-45deg);
+	-ms-transform: translate(0, -50%) rotate(-45deg);
+	transform: translate(0, -50%) rotate(-45deg);
+}
+
+
+.top-nav2 .navbar-fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  font-size: 12px;
+  line-height: 22px;
+}
+.top-nav2 .navbar-fixed-bottom .nav-item {
+  color: silver;
+  padding: 0 6px;
+  position: relative;
+}
+
+.top-nav2 .h-logo .h-logo2 {
+	float: left;
+	height: 40px;
+	padding: 5px 0;
+}
+.top-nav2 .h-logo .h-logo2 img {
+	max-height: 100%;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+}
+
+.top-nav2 .h-logo #sun-toggle {
+	float: right;
+	height: 40px;
+	width: 40px;
+	line-height: 40px;
+	text-align: center;
+	padding: 0;
+}
+
+.top-nav2 .h-nav3 a {
+	position:relative;
+	display: block;
+	height: 40px;
+	line-height: 40px;
+	font-size: 16px;
+}
+.top-nav2 .h-nav3 a:hover {
+	color: #8839D1 !important;
+	text-decoration: none;
+}
+.top-nav2 .h-nav3 a:hover:before {
+	content: '';
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background-color: #8839D1;
+}
+
+.top-nav2 .navbar-form {
+	padding-right: 20px;
+}
+.top-nav2 .navbar-form input {
+	background-color: #8839D1 !important;
+	color: #fff !important;
+}
+.top-nav2 .h-btns {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	padding-left: 30px;
+	background-color: #24142C;
+	padding-bottom: 10px;
+}
+.top-nav2 .h-btns .btn {
+	padding: 0 15px;
+	height: 34px;
+	line-height: 34px;
+	border: 1px solid #8839D1;
+	border-radius: 1000px;
+	display: inline-block;
+}
+.top-nav2 .h-btns .btn:hover {
+	box-shadow: none;
+	background-color: #8839D1;
+	color: #fff;
+}
+
+.top-nav2 .h-btns .btn .icon,
+.top-nav2 .h-btns .btn .icon_1 {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	line-height: 20px;
+	margin-left: 15px;
+	vertical-align: middle;
+}
+.top-nav2 .h-btns .btn .icon_1 svg,
+.top-nav2 .h-btns .btn .icon_1 img {
+	max-width: 100%;
+	max-height: 100%;
+	width: auto;
+	height: auto;
+	vertical-align: top;
+}
+.top-nav2 .h-btns .btn .icon_1 {
+	background-image: url(https://h.cash/themes/en/images/doublearrow2.png);
+	background-repeat: no-repeat;
+	background-position: 0 0;
+	height: 13px;
+	background-size: 100% auto;
+}
+.top-nav2 .h-btns .btn:hover .icon_1 {
+	background-position: 0 -13px;
+}
+.top-nav2 .h-btns .btn:hover .icon_1 img {
+	display: none;
+}
+
+.top-nav2 .h-btns .swapbtnbox {
+	margin-bottom: 5px;
+}
+.top-nav2 .h-btns .downloadapp {
+	margin-bottom: 20px;
+}
+.top-nav2 .h-btns .downloadapp ul {
+	display: none;
+	list-style: none;
+	padding-left: 0;
+}
+.top-nav2 .h-btns .downloadapp li {
+	margin-top: 5px;
+	font-size: 14px;
+}
+.top-nav2 .h-btns .downloadapp li a {
+	height: 24px;
+	line-height: 24px;
+	font-size: 14px;
+}
+.top-nav2 .h-btns .yellowpaper {
+	padding-bottom: 5px;
+	border-bottom: 1px solid #543365;
+}
+.top-nav2 .h-btns .whitepaper {
+	padding-top: 5px;
+}
+.top-nav2 .h-btns .yellowpaper a,
+.top-nav2 .h-btns .whitepaper a {
+	position: relative;
+	display: block;
+	height: 40px;
+	line-height: 20px;
+	padding-left: 30px;
+}
+.top-nav2 .h-btns .yellowpaper .icon,
+.top-nav2 .h-btns .whitepaper .icon {
+	position: absolute;
+	left: 0;
+	width: 30px;
+	height: 30px;
+	top: 50%;
+	-webkit-transform: translate(0, -50%);
+	-moz-transform: translate(0, -50%);
+	-o-transform: translate(0, -50%);
+	transform: translate(0, -50%);
+}
+.top-nav2 .h-btns .yellowpaper .icon svg,
+.top-nav2 .h-btns .whitepaper .icon svg {
+	height: 100%;
+	width: 100%;
+}
+.top-nav2 .h-btns .yellowpaper .size,
+.top-nav2 .h-btns .whitepaper .size {
+	font-size: 12px;
+}
+.top-nav2 .h-btns .yellowpaper .name {
+	color: #e1a91a;
+}
+.top-nav2 .h-btns .yellowpaper .icon path {
+	fill: #e1a91a;
+}
+
+
+
 @media screen and (max-width: 1366px){
 	.col-md-6 {
 		width: 100%;
@@ -811,6 +1136,26 @@ body.darkBG .navbar-fixed-bottom {
 	.table tbody th,
 	.table tbody td {
 		padding: 0.25rem .3rem;
+	}
+	.menubtn {
+		width: 40px;
+		height: 40px;
+		padding: 5px;
+	}
+	.top-nav .col-sm-auto {
+		width: auto;
+		padding-left: 5px;
+		padding-right: 5px;
+	}
+	.menubtn {
+		margin-left: -20px;
+		-webkit-transition: all 0.3s linear;
+		-moz-transition: all 0.3s linear;
+		-ms-transition: all 0.3s linear;
+		transition: all 0.3s linear;
+	}
+	.menubtn.active {
+		margin-left: 0px;
 	}
 }
 @media screen and (max-width: 960px){
@@ -872,6 +1217,15 @@ body.darkBG .navbar-fixed-bottom {
 	.top-nav .menubtn {
 		display: block;
 	}
+	.top-nav a {
+		margin-left: 3px;
+		margin-right: 3px;
+	}
+	.top-nav2 .h-nav3 a {
+		height: 30px;
+		line-height: 30px;
+	}
+	/*
 	.top-nav .nav3 {
 		display: none;
 		position: fixed;
@@ -896,6 +1250,7 @@ body.darkBG .navbar-fixed-bottom {
 		text-decoration: none;
 		background-color: #8839D1;
 	}
+	*/
 }
 @media screen and (min-width: 1280px){
 	html {
@@ -909,7 +1264,7 @@ body.darkBG .navbar-fixed-bottom {
 	.top-search {
 		height: 40px;
 		line-height: 40px;
-		margin: 20px 0 !important;
+		margin: 5px 0 !important;
 		font-size: 1.125rem;
 		padding-left: 30px;
 		padding-right: 30px;

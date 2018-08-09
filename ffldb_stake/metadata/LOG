@@ -1,0 +1,49 @@
+=============== Aug 10, 2018 (CST) ===============
+05:38:39.046119 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:38:39.057090 db@open opening
+05:38:39.058088 version@stat F·[] S·0B[] Sc·[]
+05:38:39.063074 db@janitor F·2 G·0
+05:38:39.063074 db@open done T·5.9835ms
+05:40:42.144660 memdb@flush N·3 S·93B
+05:40:42.151772 memdb@flush created L0@3 N·3 S·260B "\x00\x00\x00..loc,v1":"bid..bid,v3"
+05:40:42.151772 version@stat F·[1] S·260B[260B] Sc·[0.25]
+05:40:42.156737 memdb@flush committed F·1 T·11.0813ms
+05:40:42.157735 journal@remove removed @1
+05:40:42.217013 transaction@flush created L0@4 N·19404 S·4MiB "\x00\x00\x00..loc,v4":"\x00\x00\x00\a\xb2\x0e\x00\x00,v19407"
+05:40:42.287856 transaction@flush created L0@5 N·36949 S·1MiB "\x00\x00\x00..5@S,d21695":"bid..bid,v21694"
+05:40:42.287856 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:40:42.292843 db@close closing
+05:40:42.293841 db@close done T·997.7µs
+=============== Aug 10, 2018 (CST) ===============
+05:41:44.239192 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:41:44.240189 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:41:44.240189 db@open opening
+05:41:44.240189 journal@recovery F·1
+05:41:44.240189 journal@recovery recovering @2
+05:41:44.241187 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:41:44.260135 db@janitor F·5 G·0
+05:41:44.260135 db@open done T·19.9458ms
+05:42:22.676902 db@close closing
+05:42:22.679894 db@close done T·2.9918ms
+=============== Aug 10, 2018 (CST) ===============
+05:42:24.846755 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:42:24.847752 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:42:24.847752 db@open opening
+05:42:24.847752 journal@recovery F·1
+05:42:24.847752 journal@recovery recovering @6
+05:42:24.852738 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:42:24.871719 db@janitor F·5 G·0
+05:42:24.871719 db@open done T·23.9674ms
+05:43:50.558474 db@close closing
+05:43:50.561466 db@close done T·2.9925ms
+=============== Aug 10, 2018 (CST) ===============
+05:45:28.597309 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:45:28.597309 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:45:28.597309 db@open opening
+05:45:28.597309 journal@recovery F·1
+05:45:28.597309 journal@recovery recovering @8
+05:45:28.598307 version@stat F·[3] S·5MiB[5MiB] Sc·[0.75]
+05:45:28.612268 db@janitor F·5 G·0
+05:45:28.612268 db@open done T·14.9596ms
+05:46:56.153732 db@close closing
+05:46:56.154729 db@close done T·997.1µs
