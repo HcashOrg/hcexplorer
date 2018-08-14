@@ -1,3 +1,4 @@
+
 {
     "testnet": {
         "APIEnabled": true,
@@ -7,6 +8,26 @@
         ],
         "Network": "testnet",
         "URL": "https://testnet-pool.h.cash",
+        "Launched": 0,
+        "LastUpdated": 0,
+        "Immature": 0,
+        "Live": 0,
+        "Voted": 0,
+        "Missed": 0,
+        "PoolFees": 0,
+        "ProportionLive": 0,
+        "ProportionMissed": 0,
+        "UserCount": 0,
+        "UserCountActive": 0
+    },
+	"mainnet": {
+        "APIEnabled": true,
+        "APIVersionsSupported": [
+            1,
+            2
+        ],
+        "Network": "mainnet",
+        "URL": "https://pool.h.cash/",
         "Launched": 0,
         "LastUpdated": 0,
         "Immature": 0,
