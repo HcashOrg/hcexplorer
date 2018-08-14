@@ -1,0 +1,3 @@
+time="07 Aug 18 22:12:01.77 +0800" level=debug msg="rebuilddb logger started."
+time="07 Aug 18 22:12:01.78 +0800" level=info msg="open D:\GoProject\src\github.com\HcashOrg\hcexplorer\rebuilddb2.conf: The system cannot find the file specified."
+time="07 Aug 18 22:12:01.78 +0800" level=error msg="open D:\GoProject\src\github.com\HcashOrg\hcexplorer\rebuilddb2.conf: The system cannot find the file specified."

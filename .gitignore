@@ -1,0 +1,7 @@
+*~
+*.pyc
+logs/
+ffldb_stake/
+vendor/
+.DS_Store
+debug
