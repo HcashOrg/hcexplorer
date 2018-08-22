@@ -42,13 +42,13 @@
     "txscript",
     "wire"
   ]
-  revision = "f4e1f9e3ee8b61ef5987205f47efe36499cc575b"
+  revision = "049998835c25aac954fc43241e7255b780eeaace"
 
 [[projects]]
   branch = "master"
   name = "github.com/HcashOrg/hcrpcclient"
   packages = ["."]
-  revision = "90a10418b98085c301c982c309a6ae9709598a3a"
+  revision = "de69c7288a2006f5af420a60cb3751c24238ed00"
 
 [[projects]]
   branch = "master"
@@ -61,7 +61,7 @@
     "wallet/udb",
     "walletdb"
   ]
-  revision = "e0b4aa3add70ff3c0838cb25304be3dfc4e69717"
+  revision = "581eee8c61171e5e36f89cd46e2360e2593ffbe4"
 
 [[projects]]
   branch = "master"
@@ -246,7 +246,7 @@
     "unix",
     "windows"
   ]
-  revision = "4ea2f632f6e912459fe60b26b1749377f0d889d5"
+  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
 
 [solve-meta]
   analyzer-name = "dep"
