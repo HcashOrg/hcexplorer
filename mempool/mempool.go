@@ -18,7 +18,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcrpcclient"
 )
@@ -285,7 +285,7 @@ type MempoolData struct {
 	Height            uint32
 	NumTickets        uint32
 	NewTickets        uint32
-	Ticketfees        *dcrjson.TicketFeeInfoResult
+	Ticketfees        *hcjson.TicketFeeInfoResult
 	MinableFees       *MinableFeeInfo
 	AllTicketsDetails TicketsDetails
 }
@@ -333,7 +333,7 @@ func (t *mempoolDataCollector) Collect() (*MempoolData, error) {
 
 	// Get a map of ticket hashes to getrawmempool results
 	// mempoolTickets[ticketHashes[0].String()].Fee
-	mempoolTickets, err := c.GetRawMempoolVerbose(dcrjson.GRMTickets)
+	mempoolTickets, err := c.GetRawMempoolVerbose(hcjson.GRMTickets)
 	if err != nil {
 		return nil, err
 	}

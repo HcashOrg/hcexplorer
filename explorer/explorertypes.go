@@ -6,7 +6,7 @@ package explorer
 import (
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/txhelpers"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
 )
 
@@ -87,7 +87,7 @@ type BlockValidation struct {
 
 // Vin models basic data about a tx input for display
 type Vin struct {
-	*dcrjson.Vin
+	*hcjson.Vin
 	Addresses       []string
 	FormattedAmount string
 }

@@ -23,7 +23,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcrpcclient"
 	"github.com/HcashOrg/hcd/txscript"
@@ -159,15 +159,15 @@ func (db *wiredDB) GetBlockHeight(hash string) (int64, error) {
 	return height, nil
 }
 
-func (db *wiredDB) GetHeader(idx int) *dcrjson.GetBlockHeaderVerboseResult {
+func (db *wiredDB) GetHeader(idx int) *hcjson.GetBlockHeaderVerboseResult {
 	return rpcutils.GetBlockHeaderVerbose(db.client, db.params, int64(idx))
 }
 
-func (db *wiredDB) GetBlockVerbose(idx int, verboseTx bool) *dcrjson.GetBlockVerboseResult {
+func (db *wiredDB) GetBlockVerbose(idx int, verboseTx bool) *hcjson.GetBlockVerboseResult {
 	return rpcutils.GetBlockVerbose(db.client, db.params, int64(idx), verboseTx)
 }
 
-func (db *wiredDB) GetBlockVerboseByHash(hash string, verboseTx bool) *dcrjson.GetBlockVerboseResult {
+func (db *wiredDB) GetBlockVerboseByHash(hash string, verboseTx bool) *hcjson.GetBlockVerboseResult {
 	return rpcutils.GetBlockVerboseByHash(db.client, db.params, hash, verboseTx)
 }
 
@@ -179,7 +179,7 @@ func (db *wiredDB) GetCoinSupply() hcutil.Amount {
 	return coinSupply
 }
 
-func (db *wiredDB) GetBlockSubsidy(height int64, voters uint16) *dcrjson.GetBlockSubsidyResult {
+func (db *wiredDB) GetBlockSubsidy(height int64, voters uint16) *hcjson.GetBlockSubsidyResult {
 	blockSubsidy, err := db.client.GetBlockSubsidy(height, voters)
 	if err != nil {
 		return nil
@@ -199,7 +199,7 @@ func (db *wiredDB) GetTransactionsForBlockByHash(hash string) *apitypes.BlockTra
 	return makeBlockTransactions(blockVerbose)
 }
 
-func makeBlockTransactions(blockVerbose *dcrjson.GetBlockVerboseResult) *apitypes.BlockTransactions {
+func makeBlockTransactions(blockVerbose *hcjson.GetBlockVerboseResult) *apitypes.BlockTransactions {
 	blockTransactions := new(apitypes.BlockTransactions)
 
 	blockTransactions.Tx = make([]string, len(blockVerbose.Tx))
@@ -327,7 +327,7 @@ func (db *wiredDB) GetTransactionHex(txid string) string {
 	return hex
 }
 
-func (db *wiredDB) DecodeRawTransaction(txhex string) (*dcrjson.TxRawResult, error) {
+func (db *wiredDB) DecodeRawTransaction(txhex string) (*hcjson.TxRawResult, error) {
 	bytes, err := hex.DecodeString(txhex)
 	if err != nil {
 		log.Errorf("DecodeRawTransaction failed: %v", err)
@@ -391,7 +391,7 @@ func (db *wiredDB) getRawTransaction(txid string) (*apitypes.Tx, string) {
 	tx.Version = txraw.Version
 	tx.Locktime = txraw.LockTime
 	tx.Expiry = txraw.Expiry
-	tx.Vin = make([]dcrjson.Vin, len(txraw.Vin))
+	tx.Vin = make([]hcjson.Vin, len(txraw.Vin))
 	copy(tx.Vin, txraw.Vin)
 	tx.Vout = make([]apitypes.Vout, len(txraw.Vout))
 	for i := range txraw.Vout {
@@ -427,20 +427,20 @@ func (db *wiredDB) getRawTransaction(txid string) (*apitypes.Tx, string) {
 }
 
 // GetVoteVersionInfo requests stake version info from the hcd RPC server
-func (db *wiredDB) GetVoteVersionInfo(ver uint32) (*dcrjson.GetVoteInfoResult, error) {
+func (db *wiredDB) GetVoteVersionInfo(ver uint32) (*hcjson.GetVoteInfoResult, error) {
 	return db.client.GetVoteInfo(ver)
 }
 
 // GetStakeVersions requests the output of the getstakeversions RPC, which gets
 // stake version information and individual vote version information starting at the
 // given block and for count-1 blocks prior.
-func (db *wiredDB) GetStakeVersions(txHash string, count int32) (*dcrjson.GetStakeVersionsResult, error) {
+func (db *wiredDB) GetStakeVersions(txHash string, count int32) (*hcjson.GetStakeVersionsResult, error) {
 	return db.client.GetStakeVersions(txHash, count)
 }
 
 // GetStakeVersionsLatest requests the output of the getstakeversions RPC for
 // just the current best block.
-func (db *wiredDB) GetStakeVersionsLatest() (*dcrjson.StakeVersions, error) {
+func (db *wiredDB) GetStakeVersionsLatest() (*hcjson.StakeVersions, error) {
 	txHash, err := db.GetBestBlockHash()
 	if err != nil {
 		return nil, err
@@ -499,7 +499,7 @@ func (db *wiredDB) GetStakeDiffEstimates() *apitypes.StakeDiff {
 	return sd
 }
 
-func (db *wiredDB) GetFeeInfo(idx int) *dcrjson.FeeInfoBlock {
+func (db *wiredDB) GetFeeInfo(idx int) *hcjson.FeeInfoBlock {
 	stakeInfo, err := db.RetrieveStakeInfoExtended(int64(idx))
 	if err != nil {
 		log.Errorf("Unable to retrieve stake info: %v", err)
@@ -705,7 +705,7 @@ func (db *wiredDB) GetAddressTransactionsRaw(addr string, count int) []*apitypes
 		tx.TxID = txs[i].Txid
 		tx.Version = txs[i].Version
 		tx.Locktime = txs[i].LockTime
-		tx.Vin = make([]dcrjson.VinPrevOut, len(txs[i].Vin))
+		tx.Vin = make([]hcjson.VinPrevOut, len(txs[i].Vin))
 		copy(tx.Vin, txs[i].Vin)
 		tx.Confirmations = int64(txs[i].Confirmations)
 		tx.BlockHash = txs[i].BlockHash
@@ -736,7 +736,7 @@ func (db *wiredDB) GetAddressTransactionsRaw(addr string, count int) []*apitypes
 	return txarray
 }
 
-func makeExplorerBlockBasic(data *dcrjson.GetBlockVerboseResult) *explorer.BlockBasic {
+func makeExplorerBlockBasic(data *hcjson.GetBlockVerboseResult) *explorer.BlockBasic {
 	block := &explorer.BlockBasic{
 		Height:         data.Height,
 		Size:           data.Size,
@@ -763,7 +763,7 @@ func makeExplorerBlockBasic(data *dcrjson.GetBlockVerboseResult) *explorer.Block
 	return block
 }
 
-func makeExplorerTxBasic(data dcrjson.TxRawResult, msgTx *wire.MsgTx, params *chaincfg.Params) *explorer.TxBasic {
+func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx, params *chaincfg.Params) *explorer.TxBasic {
 	tx := new(explorer.TxBasic)
 	tx.TxID = data.Txid
 	tx.FormattedSize = humanize.Bytes(uint64(len(data.Hex) / 2))
@@ -794,7 +794,7 @@ func makeExplorerTxBasic(data dcrjson.TxRawResult, msgTx *wire.MsgTx, params *ch
 	return tx
 }
 
-func makeExplorerAddressTx(data *dcrjson.SearchRawTransactionsResult, address string) *explorer.AddressTx {
+func makeExplorerAddressTx(data *hcjson.SearchRawTransactionsResult, address string) *explorer.AddressTx {
 	tx := new(explorer.AddressTx)
 	tx.TxID = data.Txid
 	tx.FormattedSize = humanize.Bytes(uint64(len(data.Hex) / 2))
@@ -980,7 +980,7 @@ func (db *wiredDB) GetExplorerTx(txid string) *explorer.TxInfo {
 			addresses = addrs
 		}
 		inputs = append(inputs, explorer.Vin{
-			Vin: &dcrjson.Vin{
+			Vin: &hcjson.Vin{
 				Txid:        vin.Txid,
 				Coinbase:    vin.Coinbase,
 				Stakebase:   vin.Stakebase,

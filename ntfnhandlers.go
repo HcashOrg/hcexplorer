@@ -237,8 +237,8 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 			}
 			//log.Trace("Transaction accepted to mempool: ", hash, amount)
 		},
-		// Note: dcrjson.TxRawResult is from getrawtransaction
-		//OnTxAcceptedVerbose: func(txDetails *dcrjson.TxRawResult) {
+		// Note: hcjson.TxRawResult is from getrawtransaction
+		//OnTxAcceptedVerbose: func(txDetails *hcjson.TxRawResult) {
 		//txDetails.Hex
 		//log.Info("Transaction accepted to mempool: ", txDetails.Txid)
 		//},

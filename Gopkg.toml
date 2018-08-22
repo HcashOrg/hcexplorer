@@ -1,4 +1,6 @@
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# Gopkg.toml example
+#
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -14,16 +16,26 @@
 #   source = "github.com/myfork/project2"
 #
 # [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
+#   name = "github.com/x/y"
+#   version = "2.4.0"
+#
+# [prune]
+#   non-go = false
+#   go-tests = true
+#   unused-packages = true
 
-[[constraint]]
-  name = "github.com/sirupsen/logrus"
-  version = "1.0.4"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/chappjc/logrus-prefix"
+  name = "github.com/HcashOrg/hcd"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/HcashOrg/hcrpcclient"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/HcashOrg/hcwallet"
 
 [[constraint]]
   branch = "master"
@@ -35,42 +47,52 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/HcashOrg/hcd"
+  name = "github.com/chappjc/logrus-prefix"
+
+[[constraint]]
+  name = "github.com/davecgh/go-spew"
+  version = "1.1.1"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/HcashOrg/hcwallet"
+  name = "github.com/dustin/go-humanize"
 
 [[constraint]]
   name = "github.com/go-chi/chi"
-  version = "3.2.1"
+  version = "3.3.2"
 
 [[constraint]]
   name = "github.com/go-chi/docgen"
   version = "1.0.2"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/jrick/logrotate"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/lib/pq"
 
 [[constraint]]
   name = "github.com/mattn/go-sqlite3"
-  revision = "05548ff55570cdb9ac72ff4a25a3b5e77a6fb7e5"
+  version = "1.9.0"
 
 [[constraint]]
   name = "github.com/rs/cors"
-  revision = "eabcc6af4bbe5ad3a949d36450326a2b0b9894b8"
+  version = "1.5.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/shiena/ansicolor"
 
 [[constraint]]
-  branch = "master"
-  name = "golang.org/x/net"
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.6"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/HcashOrg/hcrpcclient"
+  name = "golang.org/x/net"
 
-
+[prune]
+  go-tests = true
+  unused-packages = true

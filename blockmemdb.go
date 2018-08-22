@@ -10,7 +10,7 @@ import (
 
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/wire"
 )
 
@@ -74,7 +74,7 @@ func (s *BlockDataToMemdb) Get(idx int) *blockdata.BlockData {
 }
 
 // GetHeader returns the block header for block idx
-func (s *BlockDataToMemdb) GetHeader(idx int) *dcrjson.GetBlockHeaderVerboseResult {
+func (s *BlockDataToMemdb) GetHeader(idx int) *hcjson.GetBlockHeaderVerboseResult {
 	if idx < 0 {
 		return nil
 	}
@@ -90,7 +90,7 @@ func (s *BlockDataToMemdb) GetHeader(idx int) *dcrjson.GetBlockHeaderVerboseResu
 }
 
 // GetFeeInfo returns the fee info for block idx
-func (s *BlockDataToMemdb) GetFeeInfo(idx int) *dcrjson.FeeInfoBlock {
+func (s *BlockDataToMemdb) GetFeeInfo(idx int) *hcjson.FeeInfoBlock {
 	if idx < 0 {
 		return nil
 	}
@@ -106,7 +106,7 @@ func (s *BlockDataToMemdb) GetFeeInfo(idx int) *dcrjson.FeeInfoBlock {
 }
 
 // GetStakeDiffEstimate returns the stake difficulty estimates for block idx
-func (s *BlockDataToMemdb) GetStakeDiffEstimate(idx int) *dcrjson.EstimateStakeDiffResult {
+func (s *BlockDataToMemdb) GetStakeDiffEstimate(idx int) *hcjson.EstimateStakeDiffResult {
 	if idx < 0 {
 		return nil
 	}

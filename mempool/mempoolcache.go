@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/HcashOrg/hcd/hcjson"
 	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcd/dcrjson"
 )
 
 // MempoolDataCache models the basic data for the mempool cache
@@ -17,7 +17,7 @@ type MempoolDataCache struct {
 	height                  uint32
 	timestamp               time.Time
 	numTickets              uint32
-	ticketFeeInfo           dcrjson.FeeInfoMempool
+	ticketFeeInfo           hcjson.FeeInfoMempool
 	allFees                 []float64
 	allFeeRates             []float64
 	lowestMineableByFeeRate float64
@@ -54,7 +54,7 @@ func (c *MempoolDataCache) GetNumTickets() (uint32, uint32) {
 }
 
 // GetFeeInfo returns the mempool height and basic fee info
-func (c *MempoolDataCache) GetFeeInfo() (uint32, dcrjson.FeeInfoMempool) {
+func (c *MempoolDataCache) GetFeeInfo() (uint32, hcjson.FeeInfoMempool) {
 	c.RLock()
 	defer c.RUnlock()
 	return c.height, c.ticketFeeInfo

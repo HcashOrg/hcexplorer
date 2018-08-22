@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	flags "github.com/btcsuite/go-flags"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcwallet/netparams"
+	flags "github.com/btcsuite/go-flags"
 )
 
 const (
@@ -58,10 +58,10 @@ type config struct {
 	DBTable    string `long:"dbtable" description:"DB table name"`
 
 	// RPC client options
-	HcdUser         string `long:"hcduser" description:"Daemon RPC user name"`
-	HcdPass         string `long:"hcdpass" description:"Daemon RPC password"`
-	HcdServ         string `long:"hcdserv" description:"Hostname/IP and port of hcd RPC server to connect to (default localhost:9109, testnet: localhost:19109, simnet: localhost:19556)"`
-	HcdCert         string `long:"hcdcert" description:"File containing the hcd certificate file"`
+	HcdUser          string `long:"hcduser" description:"Daemon RPC user name"`
+	HcdPass          string `long:"hcdpass" description:"Daemon RPC password"`
+	HcdServ          string `long:"hcdserv" description:"Hostname/IP and port of hcd RPC server to connect to (default localhost:9109, testnet: localhost:19109, simnet: localhost:19556)"`
+	HcdCert          string `long:"hcdcert" description:"File containing the hcd certificate file"`
 	DisableDaemonTLS bool   `long:"nodaemontls" description:"Disable TLS for the daemon RPC client -- NOTE: This is only allowed if the RPC client is connecting to localhost"`
 
 	// TODO
@@ -80,7 +80,7 @@ var (
 		DBUser:     defaultDBUser,
 		DBPass:     defaultDBPass,
 		DBTable:    defaultDBTableName,
-		HcdCert:   defaultDaemonRPCCertFile,
+		HcdCert:    defaultDaemonRPCCertFile,
 	}
 )
 
@@ -235,7 +235,7 @@ func loadConfig() (*config, error) {
 // const (
 //     defaultDBTableName = "hcexplorer"
 //     defaultDBUserName = "hcexplorer"
-//     defaultDBPass = "dcrpassword"
+//     defaultDBPass = "hcpassword"
 //     defaultDBFileName = "hcexplorer.sqlt.dat"
 //     defaultDBHostPort = "127.0.0.1:3660"
 // )

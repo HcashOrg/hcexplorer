@@ -9,7 +9,7 @@
   font-weight: normal;
   font-style: normal;
 }
-[class^="dcricon-"], [class*=" dcricon-"] {
+[class^="hcicon-"], [class*=" hcicon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;
   speak: none;
@@ -22,13 +22,13 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-.dcricon-sun-fill:before {
+.hcicon-sun-fill:before {
   content: "\e901";
 }
-.dcricon-sun-stroke:before {
+.hcicon-sun-stroke:before {
   content: "\e902";
 }
-.dcricon-coolsnady:before {
+.hcicon-coolsnady:before {
   content: "\e900";
 }
 
@@ -214,7 +214,7 @@ body.darkBG .json-block {
   margin-left: 8px;
   margin-right: 8px;
 }
-.top-nav .dcricon-coolsnady {
+.top-nav .hcicon-coolsnady {
   font-size: 22px;
 }
 .top-nav .menubtn {
@@ -339,16 +339,16 @@ body.darkBG .json-block {
 }
 
 /*content*/
-.dcr-total .dcr {
+.hc-total .hc {
   font-size: 28px;
 }
-.dcr-total .total-text {
+.hc-total .total-text {
   line-height: 11px;
   opacity: 0.8;
   font-weight: bold;
   letter-spacing: 0px;
 }
-.dcr-total .total-text .d-block {
+.hc-total .total-text .d-block {
   letter-spacing: 1px;
   font-weight: bold;
   font-size: 13px;

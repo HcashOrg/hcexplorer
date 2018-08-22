@@ -16,7 +16,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
@@ -434,8 +434,8 @@ func SSGenVoteChoices(tx *wire.MsgTx, params *chaincfg.Params) (BlockValidation,
 
 // FeeInfoBlock computes ticket fee statistics for the tickets included in the
 // specified block.
-func FeeInfoBlock(block *hcutil.Block) *dcrjson.FeeInfoBlock {
-	feeInfo := new(dcrjson.FeeInfoBlock)
+func FeeInfoBlock(block *hcutil.Block) *hcjson.FeeInfoBlock {
+	feeInfo := new(hcjson.FeeInfoBlock)
 	_, sstxMsgTxns := TicketsInBlock(block)
 
 	feeInfo.Height = uint32(block.Height())
@@ -487,8 +487,8 @@ func FeeInfoBlock(block *hcutil.Block) *dcrjson.FeeInfoBlock {
 
 // FeeRateInfoBlock computes ticket fee rate statistics for the tickets included
 // in the specified block.
-func FeeRateInfoBlock(block *hcutil.Block) *dcrjson.FeeInfoBlock {
-	feeInfo := new(dcrjson.FeeInfoBlock)
+func FeeRateInfoBlock(block *hcutil.Block) *hcjson.FeeInfoBlock {
+	feeInfo := new(hcjson.FeeInfoBlock)
 	_, sstxMsgTxns := TicketsInBlock(block)
 
 	feeInfo.Height = uint32(block.Height())
@@ -605,8 +605,8 @@ func TxFeeRate(msgTx *wire.MsgTx) (hcutil.Amount, hcutil.Amount) {
 	return hcutil.Amount(amtIn - amtOut), hcutil.Amount(1000 * (amtIn - amtOut) / int64(msgTx.SerializeSize()))
 }
 
-// TotalVout computes the total value of a slice of dcrjson.Vout
-func TotalVout(vouts []dcrjson.Vout) hcutil.Amount {
+// TotalVout computes the total value of a slice of hcjson.Vout
+func TotalVout(vouts []hcjson.Vout) hcutil.Amount {
 	var total hcutil.Amount
 	for _, v := range vouts {
 		a, err := hcutil.NewAmount(v.Value)

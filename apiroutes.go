@@ -2,17 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"path/filepath"
 	"fmt"
 	"io"
-	"os"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 
+	"github.com/HcashOrg/hcd/hcjson"
 	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcd/dcrjson"
 	"github.com/HcashOrg/hcrpcclient"
 )
 
@@ -23,22 +23,22 @@ type APIDataSource interface {
 	GetBlockHash(idx int64) (string, error)
 	GetBlockHeight(hash string) (int64, error)
 	//Get(idx int) *blockdata.BlockData
-	GetHeader(idx int) *dcrjson.GetBlockHeaderVerboseResult
-	GetBlockVerbose(idx int, verboseTx bool) *dcrjson.GetBlockVerboseResult
-	GetBlockVerboseByHash(hash string, verboseTx bool) *dcrjson.GetBlockVerboseResult
+	GetHeader(idx int) *hcjson.GetBlockHeaderVerboseResult
+	GetBlockVerbose(idx int, verboseTx bool) *hcjson.GetBlockVerboseResult
+	GetBlockVerboseByHash(hash string, verboseTx bool) *hcjson.GetBlockVerboseResult
 	GetRawTransaction(txid string) *apitypes.Tx
 	GetTransactionHex(txid string) string
 	GetTrimmedTransaction(txid string) *apitypes.TrimmedTx
 	GetVoteInfo(txid string) (*apitypes.VoteInfo, error)
-	GetVoteVersionInfo(ver uint32) (*dcrjson.GetVoteInfoResult, error)
-	GetStakeVersions(txHash string, count int32) (*dcrjson.GetStakeVersionsResult, error)
-	GetStakeVersionsLatest() (*dcrjson.StakeVersions, error)
+	GetVoteVersionInfo(ver uint32) (*hcjson.GetVoteInfoResult, error)
+	GetStakeVersions(txHash string, count int32) (*hcjson.GetStakeVersionsResult, error)
+	GetStakeVersionsLatest() (*hcjson.StakeVersions, error)
 	GetAllTxIn(txid string) []*apitypes.TxIn
 	GetAllTxOut(txid string) []*apitypes.TxOut
 	GetTransactionsForBlock(idx int64) *apitypes.BlockTransactions
 	GetTransactionsForBlockByHash(hash string) *apitypes.BlockTransactions
-	GetFeeInfo(idx int) *dcrjson.FeeInfoBlock
-	//GetStakeDiffEstimate(idx int) *dcrjson.EstimateStakeDiffResult
+	GetFeeInfo(idx int) *hcjson.FeeInfoBlock
+	//GetStakeDiffEstimate(idx int) *hcjson.EstimateStakeDiffResult
 	GetStakeInfoExtended(idx int) *apitypes.StakeInfoExtended
 	//needs db update: GetStakeInfoExtendedByHash(hash string) *apitypes.StakeInfoExtended
 	GetStakeDiffEstimates() *apitypes.StakeDiff
@@ -81,7 +81,7 @@ func newContext(client *hcrpcclient.Client, blockData APIDataSource, JSONIndent 
 			Height:          uint32(nodeHeight),
 			NodeConnections: conns,
 			APIVersion:      APIVersion,
-			DcrdataVersion:  ver.String(),
+			HcdataVersion:   ver.String(),
 		},
 		JSONIndent: JSONIndent,
 	}
@@ -679,7 +679,7 @@ func (c *appContext) getStakeDiffCurrent(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	stakeDiffCurrent := dcrjson.GetStakeDifficultyResult{
+	stakeDiffCurrent := hcjson.GetStakeDifficultyResult{
 		CurrentStakeDifficulty: stakeDiff.CurrentStakeDifficulty,
 		NextStakeDifficulty:    stakeDiff.NextStakeDifficulty,
 	}
@@ -1035,14 +1035,14 @@ func (c *appContext) getAddressTransactionsRaw(w http.ResponseWriter, r *http.Re
 
 func (c *appContext) getPoolList(w http.ResponseWriter, r *http.Request) {
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	b, err := ioutil.ReadFile(filepath.Join(dir,"public","poolList.json"))
-    if err != nil {
-        http.Error(w, http.StatusText(422), 422)
+	b, err := ioutil.ReadFile(filepath.Join(dir, "public", "poolList.json"))
+	if err != nil {
+		http.Error(w, http.StatusText(422), 422)
 		return
 	}
-	
+
 	var data interface{}
-	err = json.Unmarshal(b,&data)
+	err = json.Unmarshal(b, &data)
 	if err != nil {
 		http.Error(w, err.Error(), 422)
 		return

@@ -1,6 +1,6 @@
-# `package dcrpg`
+# `package hcpg`
 
-The `dcrpg` provides functions to manipulate PostgreSQL tables storing blocks, transactions, inputs, and outputs.
+The `hcpg` provides functions to manipulate PostgreSQL tables storing blocks, transactions, inputs, and outputs.
 
 ## Performance and Bulk Loading
 

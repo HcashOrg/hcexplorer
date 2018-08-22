@@ -24,7 +24,7 @@ import (
 	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcexplorer/mempool"
 	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/wire"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/go-chi/chi"
@@ -268,14 +268,14 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 	if chainHeight < pageSize {
 		pageSize = chainHeight
 	}
-	initialBlocks := make([]*dcrjson.GetBlockVerboseResult, 0, pageSize)
+	initialBlocks := make([]*hcjson.GetBlockVerboseResult, 0, pageSize)
 	for i := chainHeight; i > chainHeight-pageSize; i-- {
 		data := td.ExplorerSource.GetBlockVerbose(i, false)
 		initialBlocks = append(initialBlocks, data)
 	}
 
 	str, err := TemplateExecToString(td.templ, "home", struct {
-		InitialData []*dcrjson.GetBlockVerboseResult
+		InitialData []*hcjson.GetBlockVerboseResult
 		Data        WebTemplateData
 		StakeDiffWindowSize int64
 	}{

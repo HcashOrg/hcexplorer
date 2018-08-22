@@ -4,11 +4,11 @@
 package hcdataapi
 
 import (
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcexplorer/txhelpers"
-	"github.com/HcashOrg/hcd/dcrjson"
 )
 
-// much of the time, hcexplorer will be using the types in dcrjson, but others are
+// much of the time, hcexplorer will be using the types in hcjson, but others are
 // defined here
 
 // BlockTransactions models an array of stake and regular transactions for a
@@ -34,24 +34,24 @@ type Tx struct {
 
 // TxShort models info about transaction TxID
 type TxShort struct {
-	TxID     string        `json:"txid"`
-	Size     int32         `json:"size"`
-	Version  int32         `json:"version"`
-	Locktime uint32        `json:"locktime"`
-	Expiry   uint32        `json:"expiry"`
-	Vin      []dcrjson.Vin `json:"vin"`
-	Vout     []Vout        `json:"vout"`
+	TxID     string       `json:"txid"`
+	Size     int32        `json:"size"`
+	Version  int32        `json:"version"`
+	Locktime uint32       `json:"locktime"`
+	Expiry   uint32       `json:"expiry"`
+	Vin      []hcjson.Vin `json:"vin"`
+	Vout     []Vout       `json:"vout"`
 }
 
 // TrimmedTx models data to resemble to result of the decoderawtransaction
 // call
 type TrimmedTx struct {
-	TxID     string        `json:"txid"`
-	Version  int32         `json:"version"`
-	Locktime uint32        `json:"locktime"`
-	Expiry   uint32        `json:"expiry"`
-	Vin      []dcrjson.Vin `json:"vin"`
-	Vout     []Vout        `json:"vout"`
+	TxID     string       `json:"txid"`
+	Version  int32        `json:"version"`
+	Locktime uint32       `json:"locktime"`
+	Expiry   uint32       `json:"expiry"`
+	Vin      []hcjson.Vin `json:"vin"`
+	Vout     []Vout       `json:"vout"`
 }
 
 // VoteInfo models data about a SSGen transaction (vote)
@@ -149,16 +149,16 @@ type Address struct {
 // AddressTxRaw is modeled from SearchRawTransactionsResult but with size in
 // place of hex
 type AddressTxRaw struct {
-	Size          int32                `json:"size"`
-	TxID          string               `json:"txid"`
-	Version       int32                `json:"version"`
-	Locktime      uint32               `json:"locktime"`
-	Vin           []dcrjson.VinPrevOut `json:"vin"`
-	Vout          []Vout               `json:"vout"`
-	Confirmations int64                `json:"confirmations"`
-	BlockHash     string               `json:"blockhash"`
-	Time          int64                `json:"time,omitempty"`
-	Blocktime     int64                `json:"blocktime,omitempty"`
+	Size          int32               `json:"size"`
+	TxID          string              `json:"txid"`
+	Version       int32               `json:"version"`
+	Locktime      uint32              `json:"locktime"`
+	Vin           []hcjson.VinPrevOut `json:"vin"`
+	Vout          []Vout              `json:"vout"`
+	Confirmations int64               `json:"confirmations"`
+	BlockHash     string              `json:"blockhash"`
+	Time          int64               `json:"time,omitempty"`
+	Blocktime     int64               `json:"blocktime,omitempty"`
 }
 
 // AddressTxShort is a subset of AddressTxRaw with just the basic tx details
@@ -172,23 +172,23 @@ type AddressTxShort struct {
 }
 
 // BlockDataWithTxType adds an array of TxRawWithTxType to
-// dcrjson.GetBlockVerboseResult to include the stake transaction type
+// hcjson.GetBlockVerboseResult to include the stake transaction type
 type BlockDataWithTxType struct {
-	*dcrjson.GetBlockVerboseResult
+	*hcjson.GetBlockVerboseResult
 	Votes   []TxRawWithVoteInfo
-	Tickets []dcrjson.TxRawResult
-	Revs    []dcrjson.TxRawResult
+	Tickets []hcjson.TxRawResult
+	Revs    []hcjson.TxRawResult
 }
 
-// TxRawWithVoteInfo adds the vote info to dcrjson.TxRawResult
+// TxRawWithVoteInfo adds the vote info to hcjson.TxRawResult
 type TxRawWithVoteInfo struct {
-	dcrjson.TxRawResult
+	hcjson.TxRawResult
 	VoteInfo VoteInfo
 }
 
-// TxRawWithTxType adds the stake transaction type to dcrjson.TxRawResult
+// TxRawWithTxType adds the stake transaction type to hcjson.TxRawResult
 type TxRawWithTxType struct {
-	dcrjson.TxRawResult
+	hcjson.TxRawResult
 	TxType string
 }
 
@@ -221,7 +221,7 @@ type VinPrevOut struct {
 	Sequence    uint32     `json:"sequence"`
 }
 
-// end copy-paste from dcrjson
+// end copy-paste from hcjson
 
 // Status indicates the state of the server, including the API version and the
 // software version.
@@ -231,7 +231,7 @@ type Status struct {
 	Height          uint32 `json:"node_height"`
 	NodeConnections int64  `json:"node_connections"`
 	APIVersion      int    `json:"api_version"`
-	DcrdataVersion  string `json:"dcrdata_version"`
+	HcdataVersion   string `json:"hcdata_version"`
 }
 
 // TicketPoolInfo models data about ticket pool
@@ -278,37 +278,37 @@ type BlockExplorerBasic struct {
 // BlockExplorerExtraInfo contains supplemental block metadata used by the
 // explorer.
 type BlockExplorerExtraInfo struct {
-	TxLen            int                            `json:"tx"`
-	FormattedTime    string                         `json:"formatted_time"`
-	CoinSupply       int64                          `json:"coin_supply"`
-	NextBlockSubsidy *dcrjson.GetBlockSubsidyResult `json:"next_block_subsidy"`
+	TxLen            int                           `json:"tx"`
+	FormattedTime    string                        `json:"formatted_time"`
+	CoinSupply       int64                         `json:"coin_supply"`
+	NextBlockSubsidy *hcjson.GetBlockSubsidyResult `json:"next_block_subsidy"`
 }
 
 // StakeDiff represents data about the evaluated stake difficulty and estimates
 type StakeDiff struct {
-	dcrjson.GetStakeDifficultyResult
-	Estimates        dcrjson.EstimateStakeDiffResult `json:"estimates"`
-	IdxBlockInWindow int                             `json:"window_block_index"`
-	PriceWindowNum   int                             `json:"window_number"`
+	hcjson.GetStakeDifficultyResult
+	Estimates        hcjson.EstimateStakeDiffResult `json:"estimates"`
+	IdxBlockInWindow int                            `json:"window_block_index"`
+	PriceWindowNum   int                            `json:"window_number"`
 }
 
 // StakeInfoExtended models data about the fee, pool and stake difficulty
 type StakeInfoExtended struct {
-	Feeinfo          dcrjson.FeeInfoBlock `json:"feeinfo"`
-	StakeDiff        float64              `json:"stakediff"`
-	PriceWindowNum   int                  `json:"window_number"`
-	IdxBlockInWindow int                  `json:"window_block_index"`
-	PoolInfo         TicketPoolInfo       `json:"ticket_pool"`
+	Feeinfo          hcjson.FeeInfoBlock `json:"feeinfo"`
+	StakeDiff        float64             `json:"stakediff"`
+	PriceWindowNum   int                 `json:"window_number"`
+	IdxBlockInWindow int                 `json:"window_block_index"`
+	PoolInfo         TicketPoolInfo      `json:"ticket_pool"`
 }
 
 // StakeInfoExtendedEstimates is similar to StakeInfoExtended but includes stake
 // difficulty estimates with the stake difficulty
 type StakeInfoExtendedEstimates struct {
-	Feeinfo          dcrjson.FeeInfoBlock `json:"feeinfo"`
-	StakeDiff        StakeDiff            `json:"stakediff"`
-	PriceWindowNum   int                  `json:"window_number"`
-	IdxBlockInWindow int                  `json:"window_block_index"`
-	PoolInfo         TicketPoolInfo       `json:"ticket_pool"`
+	Feeinfo          hcjson.FeeInfoBlock `json:"feeinfo"`
+	StakeDiff        StakeDiff           `json:"stakediff"`
+	PriceWindowNum   int                 `json:"window_number"`
+	IdxBlockInWindow int                 `json:"window_block_index"`
+	PoolInfo         TicketPoolInfo      `json:"ticket_pool"`
 }
 
 // MempoolTicketFeeInfo models statistical ticket fee info at block height
@@ -316,7 +316,7 @@ type StakeInfoExtendedEstimates struct {
 type MempoolTicketFeeInfo struct {
 	Height uint32 `json:"height"`
 	Time   int64  `json:"time"`
-	dcrjson.FeeInfoMempool
+	hcjson.FeeInfoMempool
 	LowestMineable float64 `json:"lowest_mineable"`
 }
 

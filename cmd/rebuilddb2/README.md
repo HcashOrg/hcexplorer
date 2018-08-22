@@ -1,8 +1,8 @@
 # Command line app `rebuilddb2`
 
-The `rebuilddb2` app is used for maintenance of hcexplorer's `dcrpg` database (a.k.a. DB v2) that uses PostgreSQL to store a nearly complete record of the Hcd blockchain data.
+The `rebuilddb2` app is used for maintenance of hcexplorer's `hcpg` database (a.k.a. DB v2) that uses PostgreSQL to store a nearly complete record of the Hcd blockchain data.
 
-**IMPORTANT**: When performing a bulk data import (e.g. full chain scan from genesis block), be sure to configure PostgreSQL appropriately.  Please see [postgresql-tuning.conf](../../db/dcrpg/postgresql-tuning.conf) for tips.
+**IMPORTANT**: When performing a bulk data import (e.g. full chain scan from genesis block), be sure to configure PostgreSQL appropriately.  Please see [postgresql-tuning.conf](../../db/hcpg/postgresql-tuning.conf) for tips.
 
 ## Installation
 

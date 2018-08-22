@@ -14,7 +14,7 @@ import (
 	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcrpcclient"
 	"github.com/HcashOrg/hcd/wire"
@@ -84,11 +84,11 @@ func ConnectNodeRPC(host, user, pass, cert string, disableTLS bool,
 	return hcdClient, nodeVer, nil
 }
 
-// BuildBlockHeaderVerbose creates a *dcrjson.GetBlockHeaderVerboseResult from
+// BuildBlockHeaderVerbose creates a *hcjson.GetBlockHeaderVerboseResult from
 // an input *wire.BlockHeader and current best block height, which is used to
 // compute confirmations.  The next block hash may optionally be provided.
 func BuildBlockHeaderVerbose(header *wire.BlockHeader, params *chaincfg.Params,
-	currentHeight int64, nextHash ...string) *dcrjson.GetBlockHeaderVerboseResult {
+	currentHeight int64, nextHash ...string) *hcjson.GetBlockHeaderVerboseResult {
 	if header == nil {
 		return nil
 	}
@@ -100,7 +100,7 @@ func BuildBlockHeaderVerbose(header *wire.BlockHeader, params *chaincfg.Params,
 		next = nextHash[0]
 	}
 
-	blockHeaderResult := dcrjson.GetBlockHeaderVerboseResult{
+	blockHeaderResult := hcjson.GetBlockHeaderVerboseResult{
 		Hash:          header.BlockHash().String(),
 		Confirmations: currentHeight - int64(header.Height),
 		Version:       header.Version,
@@ -126,10 +126,10 @@ func BuildBlockHeaderVerbose(header *wire.BlockHeader, params *chaincfg.Params,
 	return &blockHeaderResult
 }
 
-// GetBlockHeaderVerbose creates a *dcrjson.GetBlockHeaderVerboseResult for the
+// GetBlockHeaderVerbose creates a *hcjson.GetBlockHeaderVerboseResult for the
 // block index specified by idx via an RPC connection to a chain server.
 func GetBlockHeaderVerbose(client *hcrpcclient.Client, params *chaincfg.Params,
-	idx int64) *dcrjson.GetBlockHeaderVerboseResult {
+	idx int64) *hcjson.GetBlockHeaderVerboseResult {
 	blockhash, err := client.GetBlockHash(idx)
 	if err != nil {
 		log.Errorf("GetBlockHash(%d) failed: %v", idx, err)
@@ -145,10 +145,10 @@ func GetBlockHeaderVerbose(client *hcrpcclient.Client, params *chaincfg.Params,
 	return blockHeaderVerbose
 }
 
-// GetBlockVerbose creates a *dcrjson.GetBlockVerboseResult for the block index
+// GetBlockVerbose creates a *hcjson.GetBlockVerboseResult for the block index
 // specified by idx via an RPC connection to a chain server.
 func GetBlockVerbose(client *hcrpcclient.Client, params *chaincfg.Params,
-	idx int64, verboseTx bool) *dcrjson.GetBlockVerboseResult {
+	idx int64, verboseTx bool) *hcjson.GetBlockVerboseResult {
 	blockhash, err := client.GetBlockHash(idx)
 	if err != nil {
 		log.Errorf("GetBlockHash(%d) failed: %v", idx, err)
@@ -164,10 +164,10 @@ func GetBlockVerbose(client *hcrpcclient.Client, params *chaincfg.Params,
 	return blockVerbose
 }
 
-// GetBlockVerboseByHash creates a *dcrjson.GetBlockVerboseResult for the
+// GetBlockVerboseByHash creates a *hcjson.GetBlockVerboseResult for the
 // specified block hash via an RPC connection to a chain server.
 func GetBlockVerboseByHash(client *hcrpcclient.Client, params *chaincfg.Params,
-	hash string, verboseTx bool) *dcrjson.GetBlockVerboseResult {
+	hash string, verboseTx bool) *hcjson.GetBlockVerboseResult {
 	blockhash, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
 		log.Errorf("Invalid block hash %s", hash)
@@ -195,7 +195,7 @@ func GetStakeDiffEstimates(client *hcrpcclient.Client) *apitypes.StakeDiff {
 		return nil
 	}
 	stakeDiffEstimates := apitypes.StakeDiff{
-		GetStakeDifficultyResult: dcrjson.GetStakeDifficultyResult{
+		GetStakeDifficultyResult: hcjson.GetStakeDifficultyResult{
 			CurrentStakeDifficulty: stakeDiff.CurrentStakeDifficulty,
 			NextStakeDifficulty:    stakeDiff.NextStakeDifficulty,
 		},
