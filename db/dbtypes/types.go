@@ -196,6 +196,7 @@ type DiffData struct {
 	Difficulty float64
 	Change     string
 	StrTime    string
+	StrDiff    string
 }
 
 type DiffStatsData struct {
