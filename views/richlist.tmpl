@@ -1,0 +1,353 @@
+{{define "richlist"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Address Rich List"}}
+<body>
+    {{template "navbar"}}
+    <div class="container">
+                <div >
+                    <div >
+                        <div id="richListCount" style="width: 80%;height:300px; margin:0 auto;min-width:1000px"></div>
+                        <div  style="color:#262626; font-size: 16px;margin-top:-25px;text-align: center;min-width: 1000px;"> Address Distribution </div>
+                    </div>
+                </div>
+
+                <div >
+                    <div >
+                        <div id="richListSum" style="width: 80%;height:300px;margin:0 auto;min-width:1000px"></div>
+                        <div style="color:#262626; font-size: 16px;margin-top:-25px;text-align: center;min-width: 1000px;"> Balance Distribution </div>
+                    </div>
+                </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-parent">
+                    <table class="table striped table-responsive" id="explorertable">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th><span class="d-none d-md-inline">Balance</span> </th>
+                                <th> <span >Last 30 Days Tx Count</span></th>
+                                <th>First Tx Time<span class="d-none d-md-inline">s</span></th>
+                                <th>Last Tx Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {{range .Data.TopAddr}}
+                            <tr id="{{ .Address }}">
+                                <td><a href="/explorer/address/{{.Address}}" class="fs18 height">{{ .Address }}</a></td>
+                                <td>{{.StringVal}}</td>
+                                 <td>{{.TxCount}}</td>
+                                  <td>{{.DStartTime}}</td>
+                                   <td>{{.DEndTime}}</td>
+                            </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{{template "footer"}}
+
+</body>
+
+
+<script>
+$(function(){
+
+                 var globals ={{ .Data.ChartData }};
+
+ var richListCount = echarts.init(document.getElementById('richListCount'));
+ var richListSum = echarts.init(document.getElementById('richListSum'));
+
+                    // 指定图表的配置项和数据
+                    var option1= {
+                        tooltip : {
+                            trigger: 'axis',
+                            formatter: '<table style="text-align: right">' +
+                                '<tr><td colspan="3" style="text-align: center">{b0}</td></tr>' +
+                                '<tr><td>{a0}&nbsp;:&nbsp;</td><td style="text-align: left"> {c0}</td></tr>' +
+                                '<tr><td>{a1}&nbsp;:&nbsp;</td><td style="text-align: left"> {c1} %</td></tr></table>'
+                        },
+                        toolbox: {
+                            show : false
+                        },
+                        calculable : true,
+                        legend: {
+                            data:['',''],
+                        },
+                        xAxis : {
+                                type : 'category',
+                                data : globals.balance_dist,
+                                axisLine: {            // 坐标轴线
+                                    show: true,        // 默认显示，属性show控制显示与否
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#AAA',
+                                        width: 1,
+                                    }
+                                },
+                                axisLabel:{
+                                    textStyle:{
+                                        color:'#AAA',
+                                        fontSize:'12px',
+                                    }
+                                },
+                                axisTick:{
+                                    show: true,
+                                    lineStyle: {
+                                        color: '#DDDDDD',
+                                        width: 1,
+                                    }
+                                },
+                                splitLine:{
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#DDD',
+                                        width: 1,
+                                    }
+                                }
+                                
+                            },
+                        yAxis : [
+                            {
+                                type : 'value',
+                                name : 'Count',
+                                axisLine: {            // 坐标轴线
+                                    show: true,        // 默认显示，属性show控制显示与否
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#AAA',
+                                        width: 1,
+                                    }
+                                },
+                                axisLabel : {
+                                    formatter: '{value}',
+                                    textStyle:{
+                                        color:'#AAA',
+                                        fontSize:'12px',
+                                    }
+                                },
+                                axisTick:{
+                                    show: true,
+                                    lineStyle: {
+                                        color: '#DDDDDD',
+                                        width: 1,
+                                    }
+                                },
+                                splitLine:{
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#DDD',
+                                        width: 1,
+
+                                    }
+                                }
+
+                            },
+                            {
+                                type : 'value',
+                                name : 'Percent',
+                                axisLine: {            // 坐标轴线
+                                    show: true,        // 默认显示，属性show控制显示与否
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#AAA',
+                                        width: 1,
+                                    }
+                                },
+                                axisLabel : {
+                                    formatter: '{value} %',
+                                    textStyle:{
+                                        color:'#AAA',
+                                        fontSize:'12px',
+                                    }
+                                },
+                                splitLine:{
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#DDD',
+                                        width: 1,
+                                        type:'dashed',
+                                    }
+                                }
+                            }
+                        ],
+                        series : [{
+                                name:'Count',
+                                type:'bar',
+                                data:globals.count_list,
+                                itemStyle:{
+                                    normal:{
+                                        color:'#529BD7'
+                                    },
+
+                                }
+                            },
+                            {
+                                name:'Percent',
+                                type:'line',
+                                yAxisIndex: 1,
+                                data:globals.count_percent,
+                                itemStyle:{
+                                    normal:{
+                                        color:'#7799bb',
+                                        lineStyle: {
+                                            color: '#AAA',
+                                            width: 2
+                                        },
+                                    }
+
+                                }
+                            }
+                        ]
+                    };
+
+
+                    var option2= {
+                        tooltip : {
+                            trigger: 'axis',
+                            formatter: '<table style="text-align: right">' +
+                            '<tr><td colspan="3" style="text-align: center">{b0}</td></tr>' +
+                            '<tr><td>{a0}&nbsp;:&nbsp;</td><td style="text-align: left"> {c0}</td></tr>' +
+                            '<tr><td>{a1}&nbsp;:&nbsp;</td><td style="text-align: left"> {c1} %</td></tr></table>'
+                        },
+                        toolbox: {
+                            show : false
+                        },
+                        calculable : true,
+                        legend: {
+                            data:['','']
+                        },
+                        xAxis : [
+                            {
+                                type : 'category',
+                                data : globals.balance_dist,
+                                axisLine: {            // 坐标轴线
+                                    show: true,        // 默认显示，属性show控制显示与否
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#AAA',
+                                        width: 1,
+                                    }
+                                },
+                                axisLabel:{
+                                    textStyle:{
+                                        color:'#AAA',
+                                        fontSize:'12px',
+                                    }
+                                },
+                                axisTick:{
+                                    show: true,
+                                    lineStyle: {
+                                        color: '#DDDDDD',
+                                        width: 1,
+                                    }
+                                },
+                                splitLine:{
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#DDD',
+                                        width: 1,
+                                    }
+                                }
+
+                            }
+                        ],
+                        yAxis : [
+                            {
+                                type : 'value',
+                                name : 'HC',
+                                axisLine: {            // 坐标轴线
+                                    show: true,        // 默认显示，属性show控制显示与否
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#AAA',
+                                        width: 1,
+                                    }
+                                },
+                                axisLabel : {
+                                    formatter: '{value}',
+                                    textStyle:{
+                                        color:'#AAA',
+                                        fontSize:'12px',
+                                    }
+                                },
+                                axisTick:{
+                                    show: true,
+                                    lineStyle: {
+                                        color: '#DDDDDD',
+                                        width: 1,
+                                    }
+                                },
+                                splitLine:{
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#DDD',
+                                        width: 1,
+
+                                    }
+                                }
+
+                            },
+                            {
+                                type : 'value',
+                                name : 'Percent',
+                                axisLine: {            // 坐标轴线
+                                    show: true,        // 默认显示，属性show控制显示与否
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#AAA',
+                                        width: 1,
+                                    }
+                                },
+                                axisLabel : {
+                                    formatter: '{value} %',
+                                    textStyle:{
+                                        color:'#AAA',
+                                        fontSize:'12px',
+                                    }
+                                },
+                                splitLine:{
+                                    lineStyle: {       // 属性lineStyle控制线条样式
+                                        color: '#DDD',
+                                        width: 1,
+                                        type:'dashed',
+                                    }
+                                }
+                            }
+                        ],
+                        series : [
+                            {
+                                name:'HC',
+                                type:'bar',
+                                data:globals.sum_list,
+                                itemStyle:{
+                                    normal:{
+                                        color:'#529BD7'
+                                    },
+
+                                }
+                            },
+                            {
+                                name:'Percent',
+                                type:'line',
+                                yAxisIndex: 1,
+                                data:globals.sum_percent,
+                                itemStyle:{
+                                    normal:{
+                                        color:'#7799bb',
+                                        lineStyle: {
+                                            color: '#AAA',
+                                            width: 2
+                                        },
+                                    }
+
+                                }
+                            }
+                        ]
+                    };
+                    // 使用刚指定的配置项和数据显示图表。
+                    richListCount.setOption(option1);
+                    richListSum.setOption(option2);
+              }
+             
+);
+</script>
+
+</html>
+{{ end }}

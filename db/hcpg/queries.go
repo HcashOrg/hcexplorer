@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/db/hcpg/internal"
@@ -292,6 +294,196 @@ func RetrieveAddressTxns(db *sql.DB, address string, N, offset int64) ([]uint64,
 func RetrieveAddressTxnsAlt(db *sql.DB, address string, N, offset int64) ([]uint64, []*dbtypes.AddressRow, error) {
 	return retrieveAddressTxns(db, address, N, offset,
 		internal.SelectAddressLimitNByAddress)
+}
+
+func RetriveChartValue(db *sql.DB) (*dbtypes.ChartValue, error) {
+
+	totalcountsql := `SELECT count(*),sum(value) FROM topaddresses;`
+	t1countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=0 and (value/100000000)<1;;`
+	t2countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=1 and (value/100000000)<10;`
+	t3countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=10 and (value/100000000)<100;`
+	t4countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=100 and (value/100000000)<1000;`
+	t5countsql := `SELECT count(*,sum(value)) FROM public.topaddresses where (value/100000000)>=1000 and (value/100000000)<10000;`
+	t6countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=10000 and (value/100000000)<100000;`
+	t7countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=100000;`
+	var a dbtypes.ChartValue
+	totalcount, totalValue := 0, 0.0
+	t1count, t1value := 0, 0.0
+	t2count, t2value := 0, 0.0
+	t3count, t3value := 0, 0.0
+	t4count, t4value := 0, 0.0
+	t5count, t5value := 0, 0.0
+	t6count, t6value := 0, 0.0
+	t7count, t7value := 0, 0.0
+	err := db.QueryRow(totalcountsql).Scan(&totalcount, &totalValue)
+	err = db.QueryRow(t1countsql).Scan(&t1count, &t1value)
+	err = db.QueryRow(t2countsql).Scan(&t2count, &t2value)
+	err = db.QueryRow(t3countsql).Scan(&t3count, &t3value)
+	err = db.QueryRow(t4countsql).Scan(&t4count, &t4value)
+	err = db.QueryRow(t5countsql).Scan(&t5count, &t5value)
+	err = db.QueryRow(t6countsql).Scan(&t6count, &t6value)
+	err = db.QueryRow(t7countsql).Scan(&t7count, &t7value)
+
+	a.BalanceDist = []string{"0 - 1", "1 - 10", "10 - 100", "100 - 1000", "1,000 - 10,000", "10,000 - 100,000", ">100,000"}
+	totalValue = totalValue / 100000000
+	a.CountList = []int{t1count, t2count, t3count, t4count, t5count, t6count, t7count}
+	t1value = t1value / 100000000
+	t2value = t2value / 100000000
+	t3value = t3value / 100000000
+	t4value = t4value / 100000000
+	t5value = t5value / 100000000
+	t6value = t6value / 100000000
+	t7value = t7value / 100000000
+
+	a.SumList = []float64{t1value, t2value, t3value, t4value, t5value, t6value, t7value}
+	countp1 := convertTo6(float64(t1count) / float64(totalcount))
+	countp2 := convertTo6(float64(t2count) / float64(totalcount))
+	countp3 := convertTo6(float64(t3count) / float64(totalcount))
+	countp4 := convertTo6(float64(t4count) / float64(totalcount))
+	countp5 := convertTo6(float64(t5count) / float64(totalcount))
+	countp6 := convertTo6(float64(t6count) / float64(totalcount))
+	countp7 := convertTo6(float64(t7count) / float64(totalcount))
+
+	a.CountPercent = []string{fmt.Sprintf("%f", countp1), fmt.Sprintf("%f", countp2), fmt.Sprintf("%f", countp3), fmt.Sprintf("%f", countp4), fmt.Sprintf("%f", countp5), fmt.Sprintf("%f", countp6), fmt.Sprintf("%f", countp7)}
+
+	sump1 := convertTo6(float64(t1value) / float64(totalValue))
+	sump2 := convertTo6(float64(t2value) / float64(totalValue))
+	sump3 := convertTo6(float64(t3value) / float64(totalValue))
+	sump4 := convertTo6(float64(t4value) / float64(totalValue))
+	sump5 := convertTo6(float64(t5value) / float64(totalValue))
+	sump6 := convertTo6(float64(t6value) / float64(totalValue))
+	sump7 := convertTo6(float64(t7value) / float64(totalValue))
+
+	a.SumPercent = []string{fmt.Sprintf("%f", sump1), fmt.Sprintf("%f", sump2), fmt.Sprintf("%f", sump3), fmt.Sprintf("%f", sump4), fmt.Sprintf("%f", sump5), fmt.Sprintf("%f", sump6), fmt.Sprintf("%f", sump7)}
+	return &a, err
+
+}
+
+func convertTo6(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.6f", value), 64)
+	return value
+}
+
+func convertTo3(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", value), 64)
+	return value
+}
+
+func RetrieveDiffChartData(db *sql.DB) ([]*dbtypes.DiffData, error) {
+	rows, err := db.Query(`select min(time), difficulty from blocks group by difficulty order by min(time) asc;`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	return scanDiffChartQueryRows(rows)
+}
+
+func scanDiffChartQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, err error) {
+	for rows.Next() {
+		var addr dbtypes.DiffData
+		err = rows.Scan(&addr.BlockTime,
+			&addr.Difficulty)
+		if err != nil {
+			return
+		}
+
+		/*if vinDbID.Valid {
+			addr.VinDbID = uint64(vinDbID.Int64)
+		}*/
+		addr.StrTime = time.Unix(int64(addr.BlockTime), 0).Format("2006-01-02 15:04:05")
+		//addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
+		addressRows = append(addressRows, &addr)
+	}
+
+	return
+}
+
+func RetrieveDiffData(db *sql.DB) ([]*dbtypes.DiffData, error) {
+	rows, err := db.Query(`select min(height) ,min(time), difficulty from blocks group by difficulty order by min(height) desc;`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	return scanDiffQueryRows(rows)
+}
+
+func scanDiffQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, err error) {
+	for rows.Next() {
+		var addr dbtypes.DiffData
+		err = rows.Scan(&addr.Height, &addr.BlockTime,
+			&addr.Difficulty)
+		if err != nil {
+			return
+		}
+
+		/*if vinDbID.Valid {
+			addr.VinDbID = uint64(vinDbID.Int64)
+		}*/
+		addr.StrTime = time.Unix(int64(addr.BlockTime), 0).Format("2006-01-02 15:04:05")
+		//addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
+		addressRows = append(addressRows, &addr)
+	}
+
+	for i := 0; i < len(addressRows)-1; i++ {
+		addr := addressRows[i]
+		preDiff := addressRows[i+1].Difficulty
+
+		value := convertTo3((((addr.Difficulty - preDiff) / preDiff) * 100))
+
+		if value > 0 {
+			addr.Change = "+" + fmt.Sprintf("%f", value) + "%"
+		} else {
+			addr.Change = fmt.Sprintf("%f", value) + "%"
+		}
+	}
+	return
+}
+
+func RetrieveTop100Address(db *sql.DB, N, offset int64) ([]uint64, []*dbtypes.TopAddressRow, error) {
+	rows, err := db.Query(internal.SelectTop100RichAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	return scanTopAddressQueryRows(rows)
+}
+
+func scanTopAddressQueryRows(rows *sql.Rows) (ids []uint64, addressRows []*dbtypes.TopAddressRow, err error) {
+	for rows.Next() {
+		var id uint64
+		var addr dbtypes.TopAddressRow
+		err = rows.Scan(&id, &addr.Address, &addr.Value,
+			&addr.TxCount, &addr.StartTime, &addr.EndTime)
+		if err != nil {
+			return
+		}
+
+		/*if vinDbID.Valid {
+			addr.VinDbID = uint64(vinDbID.Int64)
+		}*/
+
+		ids = append(ids, id)
+		addr.StringVal = fmt.Sprintf("%f", float64(addr.Value)/100000000)
+		addr.DStartTime = time.Unix(int64(addr.StartTime), 0).Format("2006-01-02 15:04:05")
+		addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
+		addressRows = append(addressRows, &addr)
+	}
+	return
 }
 
 func retrieveAddressTxns(db *sql.DB, address string, N, offset int64,

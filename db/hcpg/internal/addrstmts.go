@@ -42,7 +42,7 @@ const (
 		spending_tx_vin_index INT4,
 		vin_row_id INT8
 	);`
-
+	SelectTop100RichAddress            = `SELECT  * FROM topaddresses order by value desc limit 100;`
 	SelectAddressAllByAddress          = `SELECT * FROM addresses WHERE address=$1 order by id desc;`
 	SelectAddressRecvCount             = `SELECT COUNT(*) FROM addresses WHERE address=$1;`
 	SelectAddressUnspentCountAndValue  = `SELECT COUNT(*), SUM(value) FROM addresses WHERE address=$1 and spending_tx_row_id IS NULL;`

@@ -5,6 +5,7 @@ package hcpg
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -14,12 +15,12 @@ import (
 
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/explorer"
-	"github.com/HcashOrg/hcd/hcutil"
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -279,6 +280,56 @@ func (pgb *ChainDB) AddressHistory(address string, N, offset int64) ([]*dbtypes.
 	}
 
 	return addressRows, &balanceInfo, err
+}
+
+func (pgb *ChainDB) GetChartValue() (*dbtypes.ChartValue, error) {
+	var addressRows *dbtypes.ChartValue
+
+	addressRows, err := RetriveChartValue(pgb.db)
+
+	if err != nil {
+		return nil, err
+	}
+	return addressRows, err
+}
+
+func (pgb *ChainDB) SyncAddresses() error {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, err := pgb.db.ExecContext(ctx, `SELECT public.synctop();`)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pgb *ChainDB) GetTop100Addresses() ([]*dbtypes.TopAddressRow, error) {
+	var addressRows []*dbtypes.TopAddressRow
+
+	_, addressRows, err := RetrieveTop100Address(pgb.db, 0, 100)
+
+	if err != nil {
+		return nil, err
+	}
+	return addressRows, err
+}
+
+func (pgb *ChainDB) GetDiff() ([]*dbtypes.DiffData, error) {
+	addressRows, err := RetrieveDiffData(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	return addressRows, err
+}
+
+func (pgb *ChainDB) GetDiffChartData() ([]*dbtypes.DiffData, error) {
+	addressRows, err := RetrieveDiffChartData(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	return addressRows, err
 }
 
 // FillAddressTransactions is used to fill out the transaction details in an

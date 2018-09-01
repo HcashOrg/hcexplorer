@@ -1,0 +1,58 @@
+{{define "stats"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Stats"}}
+
+
+<body>
+    {{template "navbar"}}
+   
+        <div class="container">
+
+            <div  style="margin-left: -15px;margin-right: -15px;margin-bottom: 20px;"  >
+                <div style="background: #fff;border-radius: 3px;padding: 20px 20px 300px;" >
+                    <div class="appIndex-inner">
+
+                        <a class="appIndex-item" href="https://bch.btc.com/stats/block-size">
+                            <div class="appIndex-item-pic appIndex-item-pic-blockSize"></div>
+                            <div class="appIndex-item-caption">
+                                Block Size
+                            </div>
+                            <div class="appIndex-item-desc">View block size,&nbsp; Tx count and size</div>
+                        </a>
+
+                        <a class="appIndex-item" href="https://bch.btc.com/stats/fee">
+                            <div class="appIndex-item-pic appIndex-item-pic-fee"></div>
+                            <div class="appIndex-item-caption">
+                                Transaction Fees
+                            </div>
+                            <div class="appIndex-item-desc">View daily Tx fees, &nbsp;percentage (Tx fees/block reward) and actual Tx fees</div>
+                        </a>
+                        <a class="appIndex-item" href="https://bch.btc.com/stats/rich-list">
+                            <div class="appIndex-item-pic appIndex-item-pic-addressRichTop"></div>
+                            <div class="appIndex-item-caption">
+                                Address Rich List
+                            </div>
+                            <div class="appIndex-item-desc">View address,&nbsp; balance distribution and top richest addresses</div>
+                        </a>
+
+                        <a class="appIndex-item" href="https://bch.btc.com/stats/unconfirmed-tx">
+                            <div class="appIndex-item-pic appIndex-item-pic-unconfirmedTx"></div>
+                            <div class="appIndex-item-caption">
+                                Unconfirmed Transactions
+                            </div>
+                            <div class="appIndex-item-desc">View the current best Tx fees and the distribution of unconfirmed Tx fees</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+  
+
+{{template "footer"}}
+
+</body>
+
+</html>
+{{ end }}

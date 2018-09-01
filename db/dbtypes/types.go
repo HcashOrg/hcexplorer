@@ -166,6 +166,44 @@ type AddressRow struct {
 	VinDbID            uint64
 }
 
+//TopAddressRow represents a row in the topaddresses table
+type TopAddressRow struct {
+	Address    string
+	Value      float64
+	TxCount    uint64
+	StartTime  uint64
+	EndTime    uint64
+	DStartTime string
+	DEndTime   string
+	StringVal  string
+}
+
+type ChartValue struct {
+	BalanceDist  []string  `json:"balance_dist"`
+	CountList    []int     `json:"count_list"`
+	SumList      []float64 `json:"sum_list"`
+	CountPercent []string  `json:"count_percent"`
+	SumPercent   []string  `json:"sum_percent"`
+}
+
+type RichData struct {
+	TopAddr   []*TopAddressRow
+	ChartData *ChartValue
+}
+
+type DiffData struct {
+	Height     int
+	BlockTime  int64
+	Difficulty float64
+	Change     string
+	StrTime    string
+}
+
+type DiffStatsData struct {
+	ChartData []*DiffData
+	ListData  []*DiffData
+}
+
 // ScriptPubKeyData is part of the result of decodescript(ScriptPubKeyHex)
 type ScriptPubKeyData struct {
 	ReqSigs   uint32   `json:"reqSigs"`
