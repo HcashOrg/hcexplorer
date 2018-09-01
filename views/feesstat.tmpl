@@ -1,0 +1,339 @@
+{{define "feesstat"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Address Rich List"}}
+<body>
+{{template "navbar"}}
+<div class="container">
+    <div >
+        Latest 90 Days
+        <div >
+            <div id="daystats1" style="width: 80%;height:230px; margin:0 auto;min-width:1000px"></div>
+            <div  style="color:#262626; font-size: 16px;text-align: center;min-width: 1000px;"> Tx fees per day <p style="color: #aaa">Unit: HC (exclude block reward)</p> </div>
+        </div>
+        <div >
+            <div id="daystats2" style="width: 80%;height:230px; margin:0 auto;min-width:1000px"></div>
+            <div  style="color:#262626; font-size: 16px;text-align: center;min-width: 1000px;"> Tx fees % of block reward </div>
+        </div>
+        <div >
+            <div id="daystats3" style="width: 80%;height:230px; margin:0 auto;min-width:1000px"></div>
+            <div  style="color:#262626; font-size: 16px;text-align: center;min-width: 1000px;"> Tx fees per KB <p style="color: #aaa">(Tx fees/block size) Unit : HC / KB</p> </div>
+        </div>
+    </div>
+
+</div>
+<script>
+$(function(){
+    function numberFormat(number, decimals, decPoint, thousandsSep) {
+        decimals = isNaN(decimals) ? 2 : Math.abs(decimals);
+        decPoint = (decPoint === undefined) ? '.' : decPoint;
+        thousandsSep = (thousandsSep === undefined) ? ',' : thousandsSep;
+
+        var sign = number < 0 ? '-' : '';
+        number = Math.abs(+number || 0);
+
+        var intPart = parseInt(number.toFixed(decimals), 10) + '';
+        var j = intPart.length > 3 ? intPart.length % 3 : 0;
+
+        return sign + (j ? intPart.substr(0, j) + thousandsSep : '') + intPart.substr(j).replace(/(\d{3})(?=\d)/g, '$1' + thousandsSep) + (decimals ? decPoint + Math.abs(number - intPart).toFixed(decimals).slice(2) : '');
+    }
+
+    var dayStats1 = echarts.init(document.getElementById('daystats1'));
+    var dayStats2 = echarts.init(document.getElementById('daystats2'));
+    var dayStats3 = echarts.init(document.getElementById('daystats3'));
+
+    var option1 = {
+        title: {
+            text: ''
+        },
+        tooltip: {
+            trigger: 'axis',
+            formatter: function (params) {
+                var tipText = '<table class="text-sans-serif"><tr><td>' + params[0].name + '</td></tr>' +
+                        '<tr><td class="text-sans-serif">' + params[0].seriesName + ':&nbsp;</td><td class="text-sans-serif">' + numberFormat(params[0].value, 8) + '</td></tr>' +
+                        '</table>';
+                return tipText;
+            }
+        },
+        grid: {
+            y: 20,
+            x2: 0,
+            y2: 20
+        },
+        xAxis: {
+            data: [{{ range .Data }}{{.Time}},{{end}}],
+            type : 'category',
+            axisLine: {
+                show: true,
+                lineStyle: {
+                    color: '#AAAAAA',
+                    width: 1,
+                }
+            },
+            axisLabel:{
+                margin:7,
+                textStyle:{
+                    color:'#888888',
+                    fontSize:'12px',
+                }
+            },
+            axisTick:{
+                show: true,
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            },
+            splitLine:{
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            }
+        },
+        yAxis: {
+            axisLine: {
+                lineStyle: {
+                    color: '#AAAAAA',
+                    width: 1,
+                }
+            },
+            axisLabel:{
+                margin:7,
+                textStyle:{
+                    color:'#888888',
+                    fontSize:'12px',
+                }
+            },
+            axisTick:{
+                show: true,
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            },
+            splitLine:{
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            }
+        },
+        series: [{
+            name: 'Tx fees per day',
+            type: 'line',
+            data: [{{ range .Data }}{{.Fees}},{{end}}],
+            itemStyle:{
+                normal:{
+                    color:'#7799bb',
+                    lineStyle:{
+                        color:'#7799bb',
+                        width:2
+                    },
+                },
+
+            }
+        }]
+    };
+    var option2 = {
+        title: {
+            text: ''
+        },
+        tooltip: {
+            trigger: 'axis',
+            formatter: function (params) {
+                var tipText = '<table class="text-sans-serif"><tr><td>' + params[0].name + '</td></tr>' +
+                        '<tr><td class="text-sans-serif">' + params[0].seriesName + ':&nbsp;</td><td class="text-sans-serif">' + numberFormat(params[0].value, 2) + '%</td></tr>' +
+                        '</table>';
+                return tipText;
+            }
+        },
+        grid: {
+            y: 20,
+            x2: 0,
+            y2: 20
+        },
+        xAxis: {
+            data: [{{ range .Data }}{{.Time}},{{end}}],
+            axisLine: {
+                show: true,
+                lineStyle: {
+                    color: '#AAAAAA',
+                    width: 1,
+                }
+            },
+            axisLabel:{
+                margin:7,
+                textStyle:{
+                    color:'#888888',
+                    fontSize:'12px',
+                }
+            },
+            axisTick:{
+                show: true,
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            },
+            splitLine:{
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            }
+        },
+        yAxis: {
+            axisLine: {
+                lineStyle: {
+                    color: '#AAAAAA',
+                    width: 1,
+                }
+            },
+            axisLabel:{
+                type : 'value',
+                formatter: '{value} %',
+                margin:7,
+                textStyle:{
+                    color:'#888888',
+                    fontSize:'12px',
+                }
+            },
+            axisTick:{
+                show: true,
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            },
+            splitLine:{
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            }
+        },
+        series: [{
+            name: 'Tx fees % of block reward',
+            type: 'line',
+            data: [{{ range .Data }}{{.FeesRewards}},{{end}}],
+            itemStyle:{
+                normal:{
+                    color:'#7799bb',
+                    lineStyle:{
+                        color:'#7799bb',
+                        width:2
+                    },
+                },
+
+            }
+        }]
+    };
+    var option3 = {
+        title: {
+            text: ''
+        },
+        tooltip: {
+            trigger: 'axis',
+            formatter: function (params) {
+                var tipText = '<table class="text-sans-serif"><tr><td>' + params[0].name + '</td></tr>' +
+                        '<tr><td>' + params[0].seriesName + ':&nbsp;</td><td>' + numberFormat(params[0].value, 8) + '</td></tr>' +
+                        '</table>';
+                return tipText;
+            }
+        },
+        grid: {
+            y: 20,
+            x2: 0,
+            y2: 20
+        },
+        xAxis: {
+            data: [{{ range .Data }}{{.Time}},{{end}}],
+            axisLine: {
+                show: true,
+                lineStyle: {
+                    color: '#AAAAAA',
+                    width: 1,
+                }
+            },
+            axisLabel:{
+                margin:7,
+                textStyle:{
+                    color:'#888888',
+                    fontSize:'12px',
+                }
+            },
+            axisTick:{
+                show: true,
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            },
+            splitLine:{
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            }
+        },
+        yAxis: {
+            axisLine: {
+                lineStyle: {
+                    color: '#AAAAAA',
+                    width: 1,
+                }
+            },
+            axisLabel:{
+                margin:7,
+                textStyle:{
+                    color:'#888888',
+                    fontSize:'12px',
+                }
+            },
+            axisTick:{
+                show: true,
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            },
+            splitLine:{
+                lineStyle: {
+                    color: '#DDDDDD',
+                    width: 1,
+                }
+            }
+        },
+        series: [{
+            name: 'Tx fees per KB (Tx fees/block size)',
+            type: 'line',
+            data: [{{ range .Data }}{{.FeesPerkb}},{{end}}],
+            itemStyle:{
+                normal:{
+                    color:'#7799bb',
+                    lineStyle:{
+                        color:'#7799bb',
+                        width:2
+                    },
+                },
+
+            }
+        }]
+    };
+
+    dayStats1.setOption(option1);
+    dayStats2.setOption(option2);
+    dayStats3.setOption(option3);
+
+    echarts.connect([dayStats1, dayStats2, dayStats3]);
+})
+</script>
+
+{{template "footer"}}
+
+</body>
+
+</html>
+{{ end }}

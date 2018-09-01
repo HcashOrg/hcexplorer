@@ -1,0 +1,79 @@
+{{define "richlist"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Address Rich List"}}
+<body>
+    {{template "navbar"}}
+    <div class="container">
+                <div >
+                    <div >
+                        <div id="richListCount" style="width: 80%;height:300px; margin:0 auto;min-width:1000px"></div>
+                        <div  style="color:#262626; font-size: 16px;margin-top:-25px;text-align: center;min-width: 1000px;"> Address Distribution </div>
+                    </div>
+                </div>
+
+                <div >
+                    <div >
+                        <div id="richListSum" style="width: 80%;height:300px;margin:0 auto;min-width:1000px"></div>
+                        <div style="color:#262626; font-size: 16px;margin-top:-25px;text-align: center;min-width: 1000px;"> Balance Distribution </div>
+                    </div>
+                </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-parent">
+                    <table class="table striped table-responsive" id="explorertable">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th><span class="d-none d-md-inline">Balance</span> </th>
+                                <th> <span >Last 30 Days Tx Count</span></th>
+                                <th>First Tx Time<span class="d-none d-md-inline">s</span></th>
+                                <th>Last Tx Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {{range .Data}}
+                            <tr id="{{ .Address }}">
+                                <td><a href="/explorer/address/{{.Address}}" class="fs18 height">{{ .Address }}</a></td>
+                                <td>{{.StringVal}}</td>
+                                 <td>{{.TxCount}}</td>
+                                  <td>{{.DStartTime}}</td>
+                                   <td>{{.DEndTime}}</td>
+                            </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var heights = document.getElementsByClassName("height");
+        var first = parseInt(heights[0].innerText.replace(/,/g, ''));
+        var last = parseInt(heights[heights.length-1].innerText.replace(/,/g, ''));
+        var numBlocks = first - last + 1;
+        var prev = document.getElementById("prev");
+        var next = document.getElementById("next");
+        prev.addEventListener('click', function(event) {
+            event.preventDefault();
+            window.location.href = prev.href + '?height='+ (first-numBlocks).toString() + "&rows=" + (numBlocks).toString();
+        }, false);
+        next.addEventListener('click', function(event) {
+            event.preventDefault();
+            window.location.href = next.href + '?height='+ (first+numBlocks).toString() + "&rows=" + (numBlocks).toString();
+        }, false);
+        var best = document.getElementById("best");
+        if (parseInt(best.innerText) == first) {
+            next.className = "hidden"
+        }
+    </script>
+
+{{template "footer"}}
+
+</body>
+
+</html>
+{{ end }}

@@ -7,10 +7,13 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/db/hcpg/internal"
 	"github.com/lib/pq"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 func RetrievePkScriptByID(db *sql.DB, id uint64) (pkScript []byte, err error) {
@@ -292,6 +295,149 @@ func RetrieveAddressTxns(db *sql.DB, address string, N, offset int64) ([]uint64,
 func RetrieveAddressTxnsAlt(db *sql.DB, address string, N, offset int64) ([]uint64, []*dbtypes.AddressRow, error) {
 	return retrieveAddressTxns(db, address, N, offset,
 		internal.SelectAddressLimitNByAddress)
+}
+
+func RetriveChartValue(db *sql.DB) (*dbtypes.ChartValue, error) {
+
+	totalcountsql := `SELECT count(*),sum(value) FROM topaddresses;`
+	t1countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=0 and (value/100000000)<1;;`
+	t2countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=1 and (value/100000000)<10;`
+	t3countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=10 and (value/100000000)<100;`
+	t4countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=100 and (value/100000000)<1000;`
+	t5countsql := `SELECT count(*,sum(value)) FROM public.topaddresses where (value/100000000)>=1000 and (value/100000000)<10000;`
+	t6countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=10000 and (value/100000000)<100000;`
+	t7countsql := `SELECT count(*),sum(value) FROM public.topaddresses where (value/100000000)>=100000;`
+	var a dbtypes.ChartValue
+	totalcount, totalValue := 0, 0.0
+	t1count, t1value := 0, 0.0
+	t2count, t2value := 0, 0.0
+	t3count, t3value := 0, 0.0
+	t4count, t4value := 0, 0.0
+	t5count, t5value := 0, 0.0
+	t6count, t6value := 0, 0.0
+	t7count, t7value := 0, 0.0
+	err := db.QueryRow(totalcountsql).Scan(&totalcount, &totalValue)
+	err = db.QueryRow(t1countsql).Scan(&t1count, &t1value)
+	err = db.QueryRow(t2countsql).Scan(&t2count, &t2value)
+	err = db.QueryRow(t3countsql).Scan(&t3count, &t3value)
+	err = db.QueryRow(t4countsql).Scan(&t4count, &t4value)
+	err = db.QueryRow(t5countsql).Scan(&t5count, &t5value)
+	err = db.QueryRow(t6countsql).Scan(&t6count, &t6value)
+	err = db.QueryRow(t7countsql).Scan(&t7count, &t7value)
+
+	a.BalanceDist = []string{"0 - 1", "1 - 10", "10 - 100", "100 - 1000", "1,000 - 10,000", "10,000 - 100,000", ">100,000"}
+	totalValue = totalValue / 100000000
+	a.CountList = []int{t1count, t2count, t3count, t4count, t5count, t6count, t7count}
+	t1value = t1value / 100000000
+	t2value = t2value / 100000000
+	t3value = t3value / 100000000
+	t4value = t4value / 100000000
+	t5value = t5value / 100000000
+	t6value = t6value / 100000000
+	t7value = t7value / 100000000
+
+	a.SumList = []float64{t1value, t2value, t3value, t4value, t5value, t6value, t7value}
+	countp1 := convertTo6(float64(t1count) / float64(totalcount))
+	countp2 := convertTo6(float64(t2count) / float64(totalcount))
+	countp3 := convertTo6(float64(t3count) / float64(totalcount))
+	countp4 := convertTo6(float64(t4count) / float64(totalcount))
+	countp5 := convertTo6(float64(t5count) / float64(totalcount))
+	countp6 := convertTo6(float64(t6count) / float64(totalcount))
+	countp7 := convertTo6(float64(t7count) / float64(totalcount))
+
+	a.CountPercent = []string{fmt.Sprintf("%f", countp1), fmt.Sprintf("%f", countp2), fmt.Sprintf("%f", countp3), fmt.Sprintf("%f", countp4), fmt.Sprintf("%f", countp5), fmt.Sprintf("%f", countp6), fmt.Sprintf("%f", countp7)}
+
+	sump1 := convertTo6(float64(t1value) / float64(totalValue))
+	sump2 := convertTo6(float64(t2value) / float64(totalValue))
+	sump3 := convertTo6(float64(t3value) / float64(totalValue))
+	sump4 := convertTo6(float64(t4value) / float64(totalValue))
+	sump5 := convertTo6(float64(t5value) / float64(totalValue))
+	sump6 := convertTo6(float64(t6value) / float64(totalValue))
+	sump7 := convertTo6(float64(t7value) / float64(totalValue))
+
+	a.SumPercent = []string{fmt.Sprintf("%f", sump1), fmt.Sprintf("%f", sump2), fmt.Sprintf("%f", sump3), fmt.Sprintf("%f", sump4), fmt.Sprintf("%f", sump5), fmt.Sprintf("%f", sump6), fmt.Sprintf("%f", sump7)}
+	return &a, err
+
+}
+
+func convertTo6(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.6f", value), 64)
+	return value
+}
+
+func RetrieveTop100Address(db *sql.DB, N, offset int64) ([]uint64, []*dbtypes.TopAddressRow, error) {
+	rows, err := db.Query(internal.SelectTop100RichAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	return scanTopAddressQueryRows(rows)
+}
+
+func scanTopAddressQueryRows(rows *sql.Rows) (ids []uint64, addressRows []*dbtypes.TopAddressRow, err error) {
+	for rows.Next() {
+		var id uint64
+		var addr dbtypes.TopAddressRow
+		err = rows.Scan(&id, &addr.Address, &addr.Value,
+			&addr.TxCount, &addr.StartTime, &addr.EndTime)
+		if err != nil {
+			return
+		}
+
+		/*if vinDbID.Valid {
+			addr.VinDbID = uint64(vinDbID.Int64)
+		}*/
+
+		ids = append(ids, id)
+		addr.StringVal = fmt.Sprintf("%f", float64(addr.Value)/100000000)
+		addr.DStartTime = time.Unix(int64(addr.StartTime), 0).Format("2006-01-02 15:04:05")
+		addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
+		addressRows = append(addressRows, &addr)
+	}
+	return
+}
+func RetrieveBlocksizejson(db *sql.DB, N, offset int64) ([]uint64, *dbtypes.BlocksizeJson, error) {
+	//now := time.Now()
+	//before90day := strconv.FormatInt(24*day,10)
+	//d, _ := time.ParseDuration("-"+before90day+"h")  //24h*90
+	//d1 := now.Add(d)
+
+	rowsAll, err := db.Query("select sum(size) as totalsize,ROUND(avg(size),0) as avgsize,sum(numtx) as txsum,to_char(to_timestamp(time),'yyyy-MM-dd') as date  from blocks  group by date ORDER BY date")
+	if err != nil {
+		return nil, nil, nil
+	}
+	log.Info(rowsAll)
+	defer func() {
+		if e := rowsAll.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+	return scanBlocksizeRows(rowsAll)
+}
+	func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.BlocksizeJson, err error) {
+	blocksizejsons := &dbtypes.BlocksizeJson{make([]int64, 0), make([]int64, 0), make([]int64, 0), make([]string, 0)}
+	for rows.Next() {
+		var blocksize dbtypes.Blocksize
+
+		err1 := rows.Scan(&blocksize.TotalSize, &blocksize.AvgSize, &blocksize.TotalTx, &blocksize.Date)
+		if err1 != nil {
+			fmt.Println(err1)
+			return
+		}
+		log.Info(blocksize)
+		blocksizejsons.TotalSize = append(blocksizejsons.TotalSize, blocksize.TotalSize)
+		blocksizejsons.AvgSize = append(blocksizejsons.AvgSize, blocksize.AvgSize)
+		blocksizejsons.TotalTx = append(blocksizejsons.TotalTx, blocksize.TotalTx)
+		blocksizejsons.Date = append(blocksizejsons.Date, blocksize.Date)
+		log.Info(blocksizejson)
+	}
+	blocksizejson = blocksizejsons
+	return
 }
 
 func retrieveAddressTxns(db *sql.DB, address string, N, offset int64,
@@ -866,4 +1012,70 @@ func InsertTxns(db *sql.DB, dbTxns []*dbtypes.Tx, checked bool) ([]uint64, error
 	_ = stmt.Close()
 
 	return ids, dbtx.Commit()
+}
+
+// update fees stat
+func RetrieveFeesStatLastDay(db *sql.DB) (d int64, isInit bool, err error) {
+	err = db.QueryRow(`SELECT MAX(time) d FROM fees_stat;`).Scan(&d)
+	if err != nil {
+		err = db.QueryRow(`SELECT MIN(time) d FROM blocks;`).Scan(&d)
+		isInit = true
+		return
+	}
+	return
+}
+
+func UpdateFeesStatOneDay(db *sql.DB, day time.Time) (err error) {
+	startDate := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)
+	endDate := startDate.AddDate(0 ,0, 1)
+	size, min, max := 0, 0, 0
+	err = db.QueryRow(internal.RetrieveRangeBlockHeightOneDay, startDate.Unix(), endDate.Unix()).Scan(&size, &min, &max)
+	if err != nil {
+		return err
+	}
+	if min < 2 {
+		min = 2
+	}
+	rewards, fees := 0, 0
+	err = db.QueryRow(internal.RetrieveRewardsFeesOneDay, min, max).Scan(&rewards, &fees)
+	if err != nil {
+		return err
+	}
+	feesRewards := float64(fees) / float64(rewards)
+	feesPerkb := hcutil.Amount(fees).ToCoin() / float64(size) * 1000
+	id := 0
+	err = db.QueryRow(internal.InsertFeesStat, startDate.Unix(), fees, rewards, size, feesRewards, feesPerkb).Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	err = nil
+	return
+}
+
+// get fees stat
+func RetrieveFeesStat(db *sql.DB) (res []*dbtypes.FeesStat) {
+	rows, err := db.Query(internal.RetrieveLast90FeesStat)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for rows.Next() {
+		var timestamp int64
+		var fees int64
+		var feesRewards float64
+		var feesPerkb float64
+		err = rows.Scan(&timestamp, &fees, &feesRewards, &feesPerkb)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		log.Info(timestamp, fees, feesRewards, feesPerkb)
+		stat := dbtypes.FeesStat{
+			Time: time.Unix(timestamp, 0).Format("2006/01/02"),
+			Fees: hcutil.Amount(fees).ToCoin(),
+			FeesRewards: feesRewards * 100,
+			FeesPerkb: feesPerkb}
+		res = append(res, &stat)
+	}
+	return
 }
