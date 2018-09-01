@@ -335,7 +335,6 @@ func mainCore() error {
 	wg.Add(2)
 	go sdbChainMonitor.BlockConnectedHandler()
 	go sdbChainMonitor.ReorgHandler()
-	//db.SyncAddresses()
 	// Blockchain monitor for the wired sqlite DB
 	wiredDBChainMonitor := sqliteDB.NewChainMonitor(collector, quit, &wg,
 		ntfnChans.connectChanWiredDB, ntfnChans.reorgChanWiredDB)
@@ -438,6 +437,8 @@ func mainCore() error {
 
 	// Timed task
 	go db.UpdateFeesStat()
+
+	go db.SyncAddresses()
 
 	// Wait for notification handlers to quit
 	wg.Wait()
