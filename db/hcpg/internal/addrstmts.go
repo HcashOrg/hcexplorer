@@ -73,4 +73,5 @@ const (
 	IndexAddressTableOnFundingTx = `CREATE INDEX uix_addresses_funding_tx
 		ON addresses(funding_tx_hash, funding_tx_vout_index);`
 	DeindexAddressTableOnFundingTx = `DROP INDEX uix_addresses_funding_tx;`
+
 )

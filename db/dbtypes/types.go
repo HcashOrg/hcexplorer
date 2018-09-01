@@ -177,7 +177,6 @@ type TopAddressRow struct {
 	DEndTime   string
 	StringVal  string
 }
-
 type ChartValue struct {
 	BalanceDist  []string  `json:"balance_dist"`
 	CountList    []int     `json:"count_list"`
@@ -202,6 +201,25 @@ type DiffData struct {
 type DiffStatsData struct {
 	ChartData []*DiffData
 	ListData  []*DiffData
+}
+
+type Blocksize struct {
+	TotalSize int64
+	AvgSize   int64
+	TotalTx   int64
+	Date      string
+}
+type BlocksizeJson struct {
+	TotalSize []int64  `json:"totalsize"`
+	AvgSize   []int64  `json:avgsize`
+	TotalTx   []int64  `json:totaltx`
+	Date      []string `json:date`
+}
+type FeesStat struct {
+	Time        string
+	Fees        float64
+	FeesRewards float64
+	FeesPerkb   float64
 }
 
 // ScriptPubKeyData is part of the result of decodescript(ScriptPubKeyHex)

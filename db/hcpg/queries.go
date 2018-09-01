@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/db/hcpg/internal"
 	"github.com/lib/pq"
@@ -374,13 +375,21 @@ func RetrieveDiffChartData(db *sql.DB) ([]*dbtypes.DiffData, error) {
 	if err != nil {
 		return nil, err
 	}
+	return scanDiffChartQueryRows(rows)
+}
+
+func RetrieveTop100Address(db *sql.DB, N, offset int64) ([]uint64, []*dbtypes.TopAddressRow, error) {
+	rows, err := db.Query(internal.SelectTop100RichAddress)
+	if err != nil {
+		return nil, nil, err
+	}
 	defer func() {
 		if e := rows.Close(); e != nil {
 			log.Errorf("Close of Query failed: %v", e)
 		}
 	}()
 
-	return scanDiffChartQueryRows(rows)
+	return scanTopAddressQueryRows(rows)
 }
 
 func scanDiffChartQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, err error) {
@@ -388,19 +397,14 @@ func scanDiffChartQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, er
 		var addr dbtypes.DiffData
 		err = rows.Scan(&addr.BlockTime,
 			&addr.Difficulty)
-		if err != nil {
-			return
-		}
-
-		/*if vinDbID.Valid {
-			addr.VinDbID = uint64(vinDbID.Int64)
-		}*/
 		addr.StrTime = time.Unix(int64(addr.BlockTime), 0).Format("2006-01-02 15:04:05")
 		//addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
 		addressRows = append(addressRows, &addr)
+
 	}
 
 	return
+
 }
 
 func RetrieveDiffData(db *sql.DB) ([]*dbtypes.DiffData, error) {
@@ -449,20 +453,6 @@ func scanDiffQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, err err
 	return
 }
 
-func RetrieveTop100Address(db *sql.DB, N, offset int64) ([]uint64, []*dbtypes.TopAddressRow, error) {
-	rows, err := db.Query(internal.SelectTop100RichAddress)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer func() {
-		if e := rows.Close(); e != nil {
-			log.Errorf("Close of Query failed: %v", e)
-		}
-	}()
-
-	return scanTopAddressQueryRows(rows)
-}
-
 func scanTopAddressQueryRows(rows *sql.Rows) (ids []uint64, addressRows []*dbtypes.TopAddressRow, err error) {
 	for rows.Next() {
 		var id uint64
@@ -483,6 +473,44 @@ func scanTopAddressQueryRows(rows *sql.Rows) (ids []uint64, addressRows []*dbtyp
 		addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
 		addressRows = append(addressRows, &addr)
 	}
+	return
+}
+func RetrieveBlocksizejson(db *sql.DB, N, offset int64) ([]uint64, *dbtypes.BlocksizeJson, error) {
+	//now := time.Now()
+	//before90day := strconv.FormatInt(24*day,10)
+	//d, _ := time.ParseDuration("-"+before90day+"h")  //24h*90
+	//d1 := now.Add(d)
+
+	rowsAll, err := db.Query("select sum(size) as totalsize,ROUND(avg(size),0) as avgsize,sum(numtx) as txsum,to_char(to_timestamp(time),'yyyy-MM-dd') as date  from blocks  group by date ORDER BY date")
+	if err != nil {
+		return nil, nil, nil
+	}
+	log.Info(rowsAll)
+	defer func() {
+		if e := rowsAll.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+	return scanBlocksizeRows(rowsAll)
+}
+func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.BlocksizeJson, err error) {
+	blocksizejsons := &dbtypes.BlocksizeJson{make([]int64, 0), make([]int64, 0), make([]int64, 0), make([]string, 0)}
+	for rows.Next() {
+		var blocksize dbtypes.Blocksize
+
+		err1 := rows.Scan(&blocksize.TotalSize, &blocksize.AvgSize, &blocksize.TotalTx, &blocksize.Date)
+		if err1 != nil {
+			fmt.Println(err1)
+			return
+		}
+		log.Info(blocksize)
+		blocksizejsons.TotalSize = append(blocksizejsons.TotalSize, blocksize.TotalSize)
+		blocksizejsons.AvgSize = append(blocksizejsons.AvgSize, blocksize.AvgSize)
+		blocksizejsons.TotalTx = append(blocksizejsons.TotalTx, blocksize.TotalTx)
+		blocksizejsons.Date = append(blocksizejsons.Date, blocksize.Date)
+		log.Info(blocksizejson)
+	}
+	blocksizejson = blocksizejsons
 	return
 }
 
@@ -1058,4 +1086,70 @@ func InsertTxns(db *sql.DB, dbTxns []*dbtypes.Tx, checked bool) ([]uint64, error
 	_ = stmt.Close()
 
 	return ids, dbtx.Commit()
+}
+
+// update fees stat
+func RetrieveFeesStatLastDay(db *sql.DB) (d int64, isInit bool, err error) {
+	err = db.QueryRow(`SELECT MAX(time) d FROM fees_stat;`).Scan(&d)
+	if err != nil {
+		err = db.QueryRow(`SELECT MIN(time) d FROM blocks;`).Scan(&d)
+		isInit = true
+		return
+	}
+	return
+}
+
+func UpdateFeesStatOneDay(db *sql.DB, day time.Time) (err error) {
+	startDate := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)
+	endDate := startDate.AddDate(0, 0, 1)
+	size, min, max := 0, 0, 0
+	err = db.QueryRow(internal.RetrieveRangeBlockHeightOneDay, startDate.Unix(), endDate.Unix()).Scan(&size, &min, &max)
+	if err != nil {
+		return err
+	}
+	if min < 2 {
+		min = 2
+	}
+	rewards, fees := 0, 0
+	err = db.QueryRow(internal.RetrieveRewardsFeesOneDay, min, max).Scan(&rewards, &fees)
+	if err != nil {
+		return err
+	}
+	feesRewards := float64(fees) / float64(rewards)
+	feesPerkb := hcutil.Amount(fees).ToCoin() / float64(size) * 1000
+	id := 0
+	err = db.QueryRow(internal.InsertFeesStat, startDate.Unix(), fees, rewards, size, feesRewards, feesPerkb).Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	err = nil
+	return
+}
+
+// get fees stat
+func RetrieveFeesStat(db *sql.DB) (res []*dbtypes.FeesStat) {
+	rows, err := db.Query(internal.RetrieveLast90FeesStat)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for rows.Next() {
+		var timestamp int64
+		var fees int64
+		var feesRewards float64
+		var feesPerkb float64
+		err = rows.Scan(&timestamp, &fees, &feesRewards, &feesPerkb)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		log.Info(timestamp, fees, feesRewards, feesPerkb)
+		stat := dbtypes.FeesStat{
+			Time:        time.Unix(timestamp, 0).Format("2006/01/02"),
+			Fees:        hcutil.Amount(fees).ToCoin(),
+			FeesRewards: feesRewards * 100,
+			FeesPerkb:   feesPerkb}
+		res = append(res, &stat)
+	}
+	return
 }

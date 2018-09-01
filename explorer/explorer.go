@@ -40,9 +40,12 @@ const (
 	txTemplateIndex
 	addressTemplateIndex
 	decodeTxTemplateIndex
+
 	richlistTemplateIndex
 	statsTemplateIndex
 	diffTemplateIndex
+	blocksizeTemplateIndex
+	feesstatTemplateIndex
 )
 
 const (
@@ -75,11 +78,15 @@ type explorerDataSource interface {
 	FillAddressTransactions(addrInfo *AddressInfo) error
 	GetTop100Addresses() ([]*dbtypes.TopAddressRow, error)
 	GetChartValue() (*dbtypes.ChartValue, error)
+
 	SyncAddresses() error
 
 	GetDiff() ([]*dbtypes.DiffData, error)
 
 	GetDiffChartData() ([]*dbtypes.DiffData, error)
+
+	GetBloksizejson() (*dbtypes.BlocksizeJson, error)
+	GetFeesStat() ([]*dbtypes.FeesStat, error)
 }
 
 type explorerUI struct {
@@ -182,6 +189,31 @@ func (exp *explorerUI) stats(w http.ResponseWriter, r *http.Request) {
 
 	//AddressInfo
 	str, err := templateExecToString(exp.templates[statsTemplateIndex], "stats", nil)
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+
+func (exp *explorerUI) blocksizejson(w http.ResponseWriter, r *http.Request) {
+	blocksizeJson, errH := exp.explorerSource.GetBloksizejson()
+	log.Info(blocksizeJson)
+	if errH != nil {
+		log.Errorf("Unable to get blocksizejson")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+	writeJSON(w, blocksizeJson)
+}
+func (exp *explorerUI) blocksize(w http.ResponseWriter, r *http.Request) {
+
+	str, err := templateExecToString(exp.templates[blocksizeTemplateIndex], "blocksize", struct {
+		Data []*dbtypes.Blocksize
+	}{})
 
 	if err != nil {
 		log.Errorf("Template execute failure: %v", err)
@@ -215,6 +247,33 @@ func (exp *explorerUI) diff(w http.ResponseWriter, r *http.Request) {
 		Data dbtypes.DiffStatsData
 	}{
 		StatsData})
+
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+
+func (exp *explorerUI) feesstat(w http.ResponseWriter, r *http.Request) {
+
+	data, errH := exp.explorerSource.GetFeesStat()
+
+	if errH != nil {
+		log.Errorf("Unable to get feesstat")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+	log.Error(data)
+	//AddressInfo
+	str, err := templateExecToString(exp.templates[feesstatTemplateIndex], "feesstat", struct {
+		Data []*dbtypes.FeesStat
+	}{
+		data,
+	})
 
 	if err != nil {
 		log.Errorf("Template execute failure: %v", err)
@@ -674,8 +733,25 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	blocksizeTemlate, err := template.New("blocksize").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["blocksize"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	diffTemplate, err := template.New("diff").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["diff"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
+	feesstatTemplate, err := template.New("feesstat").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["feesstat"],
+
 		exp.templateFiles["extras"],
 	)
 	if err != nil {
@@ -692,6 +768,8 @@ func (exp *explorerUI) reloadTemplates() error {
 	exp.templates[statsTemplateIndex] = statsTemplate
 	exp.templates[diffTemplateIndex] = diffTemplate
 
+	exp.templates[blocksizeTemplateIndex] = blocksizeTemlate
+	exp.templates[feesstatTemplateIndex] = feesstatTemplate
 	return nil
 }
 
@@ -746,9 +824,13 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["address"] = filepath.Join("views", "address.tmpl")
 	exp.templateFiles["rawtx"] = filepath.Join("views", "rawtx.tmpl")
 	exp.templateFiles["richlist"] = filepath.Join("views", "richlist.tmpl")
+
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
+
+	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
+	exp.templateFiles["feesstat"] = filepath.Join("views", "feesstat.tmpl")
 
 	toInt64 := func(v interface{}) int64 {
 		switch vt := v.(type) {
@@ -848,7 +930,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 		},
 	}
 
-	exp.templates = make([]*template.Template, 0, 7)
+	exp.templates = make([]*template.Template, 0, 11)
 
 	explorerTemplate, err := template.New("explorer").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["explorer"],
@@ -906,6 +988,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 
 	statsTemplate, err := template.New("stats").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["stats"],
+
 		exp.templateFiles["extras"],
 	)
 	if err != nil {
@@ -921,8 +1004,26 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	if err != nil {
 		log.Errorf("Unable to create new html template: %v", err)
 	}
-
 	exp.templates = append(exp.templates, diffTemplate)
+
+	blocksizeTemplate, err := template.New("blocksize").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["blocksize"],
+
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, blocksizeTemplate)
+
+	feesstatTemplate, err := template.New("feesstat").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["feesstat"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, feesstatTemplate)
 
 	exp.addRoutes()
 
@@ -967,8 +1068,17 @@ func (exp *explorerUI) addRoutes() {
 	exp.Mux.Get("/", exp.root)
 	exp.Mux.Get("/ws", exp.rootWebsocket)
 	exp.Mux.Get("/richlist", exp.richlist)
+
 	exp.Mux.Get("/stats", exp.stats)
 	exp.Mux.Get("/diff", exp.diff)
+
+	exp.Mux.Get("/blocksizejson", exp.blocksizejson)
+	exp.Mux.Get("/blocksize", exp.blocksize)
+
+	exp.Mux.Route("/feesstat", func(r chi.Router) {
+		r.Get("/", exp.feesstat)
+		r.Get("/ws", exp.rootWebsocket)
+	})
 
 	exp.Mux.Route("/block", func(r chi.Router) {
 		r.Route("/{blockhash}", func(rd chi.Router) {

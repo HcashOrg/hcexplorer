@@ -322,6 +322,7 @@ func mainCore() error {
 		ntfnChans.connectChan, ntfnChans.recvTxBlockChan,
 		ntfnChans.reorgChanBlockData)
 	wg.Add(2)
+
 	go wsChainMonitor.BlockConnectedHandler()
 	// The blockdata reorg handler disables collection during reorg, leaving
 	// hcsqlite to do the switch, except for the last block which gets
@@ -434,6 +435,9 @@ func mainCore() error {
 		log.Criticalf("listenAndServeProto: %v", err)
 		close(quit)
 	}
+
+	// Timed task
+	go db.UpdateFeesStat()
 
 	// Wait for notification handlers to quit
 	wg.Wait()
