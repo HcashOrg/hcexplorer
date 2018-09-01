@@ -433,6 +433,7 @@ func scanDiffQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, err err
 		/*if vinDbID.Valid {
 			addr.VinDbID = uint64(vinDbID.Int64)
 		}*/
+		addr.StrDiff = fmt.Sprintf("%f", addr.Difficulty)
 		addr.StrTime = time.Unix(int64(addr.BlockTime), 0).Format("2006-01-02 15:04:05")
 		//addr.DEndTime = time.Unix(int64(addr.EndTime), 0).Format("2006-01-02 15:04:05")
 		addressRows = append(addressRows, &addr)

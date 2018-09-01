@@ -1067,10 +1067,18 @@ func (exp *explorerUI) addRoutes() {
 
 	exp.Mux.Get("/", exp.root)
 	exp.Mux.Get("/ws", exp.rootWebsocket)
-	exp.Mux.Get("/richlist", exp.richlist)
+
+	exp.Mux.Route("/richlist", func(r chi.Router) {
+		r.Get("/", exp.richlist)
+		r.Get("/ws", exp.rootWebsocket)
+	})
 
 	exp.Mux.Get("/stats", exp.stats)
-	exp.Mux.Get("/diff", exp.diff)
+
+	exp.Mux.Route("/diff", func(r chi.Router) {
+		r.Get("/", exp.diff)
+		r.Get("/ws", exp.rootWebsocket)
+	})
 
 	exp.Mux.Get("/blocksizejson", exp.blocksizejson)
 	exp.Mux.Get("/blocksize", exp.blocksize)
