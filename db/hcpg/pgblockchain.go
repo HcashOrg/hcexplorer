@@ -294,14 +294,23 @@ func (pgb *ChainDB) GetChartValue() (*dbtypes.ChartValue, error) {
 }
 
 func (pgb *ChainDB) SyncAddresses() error {
-
+	log.Info("Update topaddress stat")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err := pgb.db.ExecContext(ctx, `SELECT public.synctop();`)
+	_, err := pgb.db.ExecContext(ctx, `SELECT synctop();`)
 	if err != nil {
 		return err
 	}
+
+	t := time.Tick(time.Hour * 2)
+	for range t {
+		_, err := pgb.db.ExecContext(ctx, `SELECT synctop();`)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
