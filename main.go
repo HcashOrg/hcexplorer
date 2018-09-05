@@ -417,6 +417,7 @@ func mainCore() error {
 
 	webMux := chi.NewRouter()
 	webMux.Get("/", webUI.RootPage)
+	webMux.Get("/supply", webUI.Supply)
 	webMux.Get("/ws", webUI.WSBlockUpdater)
 	webMux.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./public/images/favicon.ico")
