@@ -437,7 +437,7 @@ func mainCore() error {
 	}
 
 	// Timed task
-	go db.UpdateFeesStat()
+	go db.UpdateFeesStatAndMempoolHistory(hcdClient)
 
 	go db.SyncAddresses()
 

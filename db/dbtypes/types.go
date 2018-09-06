@@ -223,6 +223,16 @@ type FeesStat struct {
 	FeesPerkb   float64
 }
 
+type MempoolHistory struct {
+	Time        string
+	Size        int64
+	Bytes       int64
+	Open        int64
+	Close       int64
+	High        int64
+	Low         int64
+}
+
 // ScriptPubKeyData is part of the result of decodescript(ScriptPubKeyHex)
 type ScriptPubKeyData struct {
 	ReqSigs   uint32   `json:"reqSigs"`

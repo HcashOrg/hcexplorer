@@ -46,6 +46,7 @@ const (
 	diffTemplateIndex
 	blocksizeTemplateIndex
 	feesstatTemplateIndex
+	mempoolhistoryTemplateIndex
 )
 
 const (
@@ -78,15 +79,12 @@ type explorerDataSource interface {
 	FillAddressTransactions(addrInfo *AddressInfo) error
 	GetTop100Addresses() ([]*dbtypes.TopAddressRow, error)
 	GetChartValue() (*dbtypes.ChartValue, error)
-
 	SyncAddresses() error
-
 	GetDiff() ([]*dbtypes.DiffData, error)
-
 	GetDiffChartData() ([]*dbtypes.DiffData, error)
-
 	GetBloksizejson() (*dbtypes.BlocksizeJson, error)
 	GetFeesStat() ([]*dbtypes.FeesStat, error)
+	GetMempoolHistory() ([]*dbtypes.MempoolHistory, []*dbtypes.MempoolHistory, error)
 }
 
 type explorerUI struct {
@@ -258,21 +256,46 @@ func (exp *explorerUI) diff(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, str)
 }
 
-func (exp *explorerUI) feesstat(w http.ResponseWriter, r *http.Request) {
+func (exp *explorerUI) feesStat(w http.ResponseWriter, r *http.Request) {
 
 	data, errH := exp.explorerSource.GetFeesStat()
 
 	if errH != nil {
-		log.Errorf("Unable to get feesstat")
+		log.Errorf("Unable to get fees stat")
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
 	}
-	log.Error(data)
-	//AddressInfo
+
 	str, err := templateExecToString(exp.templates[feesstatTemplateIndex], "feesstat", struct {
 		Data []*dbtypes.FeesStat
 	}{
 		data,
+	})
+
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+
+func (exp *explorerUI) mempoolHistory(w http.ResponseWriter, r *http.Request) {
+	history, kline, errH := exp.explorerSource.GetMempoolHistory()
+	if errH != nil {
+		log.Errorf("Unable to get mempool history")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	str, err := templateExecToString(exp.templates[mempoolhistoryTemplateIndex], "mempoolhistory", struct {
+		Data []*dbtypes.MempoolHistory
+		Kline []*dbtypes.MempoolHistory
+	}{
+		history,
+		kline,
 	})
 
 	if err != nil {
@@ -758,18 +781,26 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	mempoolhistoryTemplate, err := template.New("mempoolhistory").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["mempoolhistory"],
+
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	exp.templates[rootTemplateIndex] = explorerTemplate
 	exp.templates[blockTemplateIndex] = blockTemplate
 	exp.templates[txTemplateIndex] = txTemplate
 	exp.templates[addressTemplateIndex] = addressTemplate
 	exp.templates[decodeTxTemplateIndex] = decodeTxTemplate
 	exp.templates[richlistTemplateIndex] = richlistTemplate
-
 	exp.templates[statsTemplateIndex] = statsTemplate
 	exp.templates[diffTemplateIndex] = diffTemplate
-
 	exp.templates[blocksizeTemplateIndex] = blocksizeTemlate
 	exp.templates[feesstatTemplateIndex] = feesstatTemplate
+	exp.templates[mempoolhistoryTemplateIndex] = mempoolhistoryTemplate
 	return nil
 }
 
@@ -831,6 +862,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
 	exp.templateFiles["feesstat"] = filepath.Join("views", "feesstat.tmpl")
+	exp.templateFiles["mempoolhistory"] = filepath.Join("views", "mempoolhistory.tmpl")
 
 	toInt64 := func(v interface{}) int64 {
 		switch vt := v.(type) {
@@ -1025,6 +1057,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	}
 	exp.templates = append(exp.templates, feesstatTemplate)
 
+	mempoolhistoryTemplate, err := template.New("mempoolhistory").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["mempoolhistory"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, mempoolhistoryTemplate)
+
 	exp.addRoutes()
 
 	wsh := NewWebsocketHub()
@@ -1084,7 +1125,12 @@ func (exp *explorerUI) addRoutes() {
 	exp.Mux.Get("/blocksize", exp.blocksize)
 
 	exp.Mux.Route("/feesstat", func(r chi.Router) {
-		r.Get("/", exp.feesstat)
+		r.Get("/", exp.feesStat)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+
+	exp.Mux.Route("/mempoolhistory", func(r chi.Router) {
+		r.Get("/", exp.mempoolHistory)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 

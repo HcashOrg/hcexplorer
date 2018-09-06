@@ -1,0 +1,227 @@
+{{define "mempoolhistory"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Mempool History"}}
+<body>
+{{template "navbar"}}
+<div class="container">
+    <div >
+        <div >
+            <div id="recent" style="width: 80%;height:400px; margin:0 auto;min-width:1000px"></div>
+            <div  style="color:#262626; font-size: 16px;text-align: center;min-width: 1000px;"> Mempool Size </div>
+        </div>
+        <div >
+            <div id="kline" style="width: 80%;height:400px; margin:0 auto;min-width:1000px"></div>
+            <div  style="color:#262626; font-size: 16px;text-align: center;min-width: 1000px;"> Mempool Size Kline </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function(){
+        function numberFormat(number, decimals, decPoint, thousandsSep) {
+            decimals = isNaN(decimals) ? 2 : Math.abs(decimals);
+            decPoint = (decPoint === undefined) ? '.' : decPoint;
+            thousandsSep = (thousandsSep === undefined) ? ',' : thousandsSep;
+
+            var sign = number < 0 ? '-' : '';
+            number = Math.abs(+number || 0);
+
+            var intPart = parseInt(number.toFixed(decimals), 10) + '';
+            var j = intPart.length > 3 ? intPart.length % 3 : 0;
+
+            return sign + (j ? intPart.substr(0, j) + thousandsSep : '') + intPart.substr(j).replace(/(\d{3})(?=\d)/g, '$1' + thousandsSep) + (decimals ? decPoint + Math.abs(number - intPart).toFixed(decimals).slice(2) : '');
+        }
+
+        var recent = echarts.init(document.getElementById('recent'));
+        var kline = echarts.init(document.getElementById('kline'));
+
+        var option1 = {
+            title: {
+                text: ''
+            },
+            tooltip: {
+                trigger: 'axis',
+                formatter: function (params) {
+                    var tipText = '<table class="text-sans-serif"><tr><td>' + params[0].name + ' -- ' + numberFormat(params[0].value) + ' Bytes</td></tr></table>';
+                    return tipText;
+                }
+            },
+            grid: {
+                y: 20,
+                x2: 0,
+                y2: 20
+            },
+            xAxis: {
+                data: [{{ range .Data }}{{.Time}},{{end}}],
+                type : 'category',
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#AAAAAA',
+                        width: 1,
+                    }
+                },
+                axisLabel:{
+                    margin:7,
+                    textStyle:{
+                        color:'#888888',
+                        fontSize:'12px',
+                    }
+                },
+                axisTick:{
+                    show: true,
+                    lineStyle: {
+                        color: '#DDDDDD',
+                        width: 1,
+                    }
+                },
+                splitLine:{
+                    lineStyle: {
+                        color: '#DDDDDD',
+                        width: 1,
+                    }
+                }
+            },
+            yAxis: {
+                axisLine: {
+                    lineStyle: {
+                        color: '#AAAAAA',
+                        width: 1,
+                    }
+                },
+                axisLabel:{
+                    margin:7,
+                    textStyle:{
+                        color:'#888888',
+                        fontSize:'12px',
+                    }
+                },
+                axisTick:{
+                    show: true,
+                    lineStyle: {
+                        color: '#DDDDDD',
+                        width: 1,
+                    }
+                },
+                splitLine:{
+                    lineStyle: {
+                        color: '#DDDDDD',
+                        width: 1,
+                    }
+                }
+            },
+            series: [{
+                name: 'mempool size',
+                type: 'line',
+                data: [{{ range .Data }}{{.Bytes}},{{end}}],
+                itemStyle:{
+                    normal:{
+                        color:'#7799bb',
+                        lineStyle:{
+                            color:'#7799bb',
+                            width:2
+                        },
+                    },
+                },
+                areaStyle: {
+                    normal: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: '#7799bb'
+                        }, {
+                            offset: 1,
+                            color: '#F3EFF6'
+                        }])
+                    }
+                },
+            },{
+                name: 'Volume of transactions in mempool',
+                type: 'line',
+                data: [{{ range .Data }}{{.Size}},{{end}}],
+                itemStyle:{
+                    normal:{
+                        color:'#bad2db',
+                        lineStyle:{
+                            color:'#bad2db',
+                            width:2
+                        },
+                    },
+                },
+            }]
+        };
+
+        option2 = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross'
+                }
+            },
+            grid: {
+                left: '10%',
+                right: '10%',
+                bottom: '15%'
+            },
+            xAxis: {
+                type: 'category',
+                data: [{{ range .Kline }}{{.Time}},{{end}}],
+                scale: true,
+                boundaryGap : false,
+                axisLine: {onZero: false},
+                splitLine: {show: false},
+                splitNumber: 20,
+                min: 'dataMin',
+                max: 'dataMax'
+            },
+            yAxis: {
+                scale: true,
+                splitArea: {
+                    show: true
+                }
+            },
+            dataZoom: [
+                {
+                    type: 'inside',
+                    start: 50,
+                    end: 100
+                },
+                {
+                    show: true,
+                    type: 'slider',
+                    y: '90%',
+                    start: 50,
+                    end: 100
+                }
+            ],
+            series: [
+                {
+                    name: '日K',
+                    type: 'candlestick',
+                    data: [{{ range .Kline }}[{{.Open}},{{.Close}},{{.High}},{{.Low}}],{{end}}],
+                    itemStyle: {
+                        normal: {
+                            color: '#ec0000',
+                            color0: '#00da3c',
+                            borderColor: '#8A0000',
+                            borderColor0: '#008F28'
+                        }
+                    }
+                }
+
+            ]
+        };
+
+
+
+        recent.setOption(option1);
+        kline.setOption(option2);
+    })
+</script>
+
+{{template "footer"}}
+
+</body>
+
+</html>
+{{ end }}

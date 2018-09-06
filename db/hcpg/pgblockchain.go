@@ -22,6 +22,8 @@ import (
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/explorer"
 	humanize "github.com/dustin/go-humanize"
+	"github.com/HcashOrg/hcexplorer/rpcutils"
+	"github.com/HcashOrg/hcrpcclient"
 )
 
 var (
@@ -827,13 +829,23 @@ func (pgb *ChainDB) UpdateSpendingInfoInAllAddresses() (int64, error) {
 	return numAddresses, err
 }
 
-// update fees stat
-func (pgb *ChainDB) UpdateFeesStat() {
-	log.Info("Update fees stat")
+// update fees stat and mempool history
+func (pgb *ChainDB) UpdateFeesStatAndMempoolHistory(client *hcrpcclient.Client) {
+	log.Info("Update fees stat and mempool history")
 	pgb.updateFeesStat()
-	t := time.Tick(time.Minute * 10)
-	for range t {
-		pgb.updateFeesStat()
+	pgb.updateMempoolHistoryKline()
+	tk := time.Tick(time.Minute)
+	count := 0
+	for t := range tk {
+		// update mempool history per minute
+		pgb.updateMempoolHistory(client, t)
+		count++
+		// update fees stat and mempool history kline per 10 minutes
+		if count >= 10 {
+			count = 0
+			pgb.updateMempoolHistoryKline()
+			pgb.updateFeesStat()
+		}
 	}
 }
 
@@ -862,4 +874,45 @@ func (pgb *ChainDB) updateFeesStat() (err error) {
 func (pgb *ChainDB) GetFeesStat() ([]*dbtypes.FeesStat, error) {
 	res := RetrieveFeesStat(pgb.db)
 	return res, nil
+}
+
+func (pgb *ChainDB) updateMempoolHistory(client *hcrpcclient.Client, t time.Time) (err error) {
+	size, bs, err := rpcutils.GetMempoolInfo(client)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	_, err = UpdateMempoolHistory(pgb.db, t, size, bs)
+	if err != nil {
+		log.Error(err)
+	}
+	return
+}
+
+func (pgb *ChainDB) updateMempoolHistoryKline() (err error) {
+	now := time.Now()
+	d, isInit, err := RetrieveMempoolHistoryKlineLastDay(pgb.db)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	dTime := time.Unix(d, 0)
+	startDate := time.Date(dTime.Year(), dTime.Month(), dTime.Day(), 0, 0, 0, 0, time.UTC)
+	if !isInit {
+		startDate = startDate.AddDate(0, 0, 1)
+	}
+	endDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	for day := startDate; endDate.Sub(day) > 0; day = day.AddDate(0, 0, 1) {
+		err = UpdateMempoolHistoryKlineOneDay(pgb.db, day)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+	return
+}
+
+func (pgb *ChainDB) GetMempoolHistory() (h []*dbtypes.MempoolHistory, k []*dbtypes.MempoolHistory, err error) {
+	h = RetrieveMempoolRecentHistory(pgb.db)
+	k = RetrieveMempoolHistoryKline(pgb.db)
+	return
 }
