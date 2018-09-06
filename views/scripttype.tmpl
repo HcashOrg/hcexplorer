@@ -29,20 +29,24 @@
         </div>
 
         <div class="row">
-            <table  class="table table-hover table-bordered ">
-                <thead>
-                    <tr class="table-info">
-                    <th>脚本类型</th>
-                    <th>输入金额</th>
-                    <th>输出金额</th>
-                    <th>输入数量</th>
-                    <th>输出数量</th>
-                </tr>
-                </thead>
-                <tbody id="script_info">
-                    
-                </tbody>
-            </table>
+            <div class="col-md-12">
+                <div class="table-parent">
+                    <table  class="table striped table-responsive">
+                        <thead>
+                            <tr>
+                                <th>Script</th>
+                                <th>Inputs(HC)</th>
+                                <th>Outputs(HC)</th>
+                                <th>Inputs Count</th>
+                                <th>Outputs Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="script_info">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -62,11 +66,11 @@
                 var chart2 = echarts.init(document.getElementById('chart2'));
                 var chart3 = echarts.init(document.getElementById('chart3'));
                 var chart4 = echarts.init(document.getElementById('chart4'));
-                // 指定图表的配置项和数据
+
                 var option1 = {
                     title : {
-                        text: '数量统计',
-                        subtext: '输入数量',
+                        text: 'Count Stats',
+                        subtext: 'Inputs Count',
                         x:'center'
                     },
                     tooltip : {
@@ -81,7 +85,7 @@
                     },
                     series : [
                         {
-                            name: '输入数量',
+                            name: 'Inputs Count',
                             type: 'pie',
                             radius : '65%',
                             center: ['30%', '60%'],
@@ -106,8 +110,8 @@
                 };
                 var option2 = {
                     title : {
-                        text: '数量统计',
-                        subtext: '输出数量',
+                        text: 'Count Stats',
+                        subtext: 'Outputs Count',
                         x:'center'
                     },
                     tooltip : {
@@ -122,7 +126,7 @@
                     },
                     series : [
                         {
-                            name: '输出数量',
+                            name: 'Outputs(HC)',
                             type: 'pie',
                             radius : '65%',
                             center: ['30%', '60%'],
@@ -147,8 +151,8 @@
                 };
                 var option3 = {
                     title : {
-                        text: '金额统计',
-                        subtext: '输入金额',
+                        text: 'Amount Stats',
+                        subtext: 'Inputs(HC)',
                         x:'center'
                     },
                     tooltip : {
@@ -163,7 +167,7 @@
                     },
                     series : [
                         {
-                            name: '输入金额',
+                            name: 'Inputs(HC)',
                             type: 'pie',
                             radius : '65%',
                             center: ['30%', '60%'],
@@ -188,8 +192,8 @@
                 };
                 var option4 = {
                     title : {
-                        text: '金额统计',
-                        subtext: '输出金额',
+                        text: 'Amount Stats',
+                        subtext: 'Outputs(HC)',
                         x:'center'
                     },
                     tooltip : {
@@ -204,7 +208,7 @@
                     },
                     series : [
                         {
-                            name: '输出金额',
+                            name: 'Outputs(HC)',
                             type: 'pie',
                             radius : '65%',
                             center: ['30%', '60%'],
