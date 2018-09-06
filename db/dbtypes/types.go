@@ -204,6 +204,17 @@ type DiffStatsData struct {
 	ListData  []*DiffData
 }
 
+type OPReturnChartData struct {
+	OpReturnType  []string
+	OpReturnCount []int
+}
+
+type OPReturnListData struct {
+	Transaction string
+	Message     string
+	MessageType string
+}
+
 type Blocksize struct {
 	TotalSize int64
 	AvgSize   int64

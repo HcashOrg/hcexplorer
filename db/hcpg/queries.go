@@ -370,6 +370,59 @@ func convertTo3(value float64) float64 {
 	return value
 }
 
+func RetrieveOpReturnChartData(db *sql.DB) (*dbtypes.OPReturnChartData, error) {
+	totalcountsql := `SELECT  count(*) FROM vouts where script_type='nulldata';`
+	omnisql := `SELECT  count(*) FROM vouts where script_type='nulldata' and substring(encode(pkscript,'hex'),5,8)='6f6d6e69';`
+	totalcount := 0
+	omnicount := 0
+	err := db.QueryRow(totalcountsql).Scan(&totalcount)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.QueryRow(omnisql).Scan(&omnicount)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var a dbtypes.OPReturnChartData
+
+	a.OpReturnType = []string{"unknown", "omni_layer"}
+
+	a.OpReturnCount = []int{totalcount, omnicount}
+	//return scanDiffChartQueryRows(rows)
+	return &a, nil
+}
+
+func RetrieveOpReturnListData(db *sql.DB, N, offset int64) ([]*dbtypes.OPReturnListData, error) {
+	statement := `SELECT  tx_hash,encode(pkscript,'hex'),script_type FROM vouts where script_type='nulldata' order by id desc limit $1 offset $2;`
+	rows, err := db.Query(statement, N, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	return scanOPReturnDataQueryRows(rows)
+}
+
+func scanOPReturnDataQueryRows(rows *sql.Rows) (addressRows []*dbtypes.OPReturnListData, err error) {
+	for rows.Next() {
+		var addr dbtypes.OPReturnListData
+		err := rows.Scan(&addr.Transaction, &addr.Message, &addr.MessageType)
+		if err != nil {
+			return nil, err
+		}
+		addressRows = append(addressRows, &addr)
+	}
+	return
+}
+
 func RetrieveDiffChartData(db *sql.DB) ([]*dbtypes.DiffData, error) {
 	rows, err := db.Query(`select min(time), difficulty from blocks group by difficulty order by min(time) asc;`)
 	if err != nil {

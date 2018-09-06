@@ -46,6 +46,8 @@ const (
 	diffTemplateIndex
 	blocksizeTemplateIndex
 	feesstatTemplateIndex
+
+	opreturnTemplateIndex
 )
 
 const (
@@ -87,6 +89,10 @@ type explorerDataSource interface {
 
 	GetBloksizejson() (*dbtypes.BlocksizeJson, error)
 	GetFeesStat() ([]*dbtypes.FeesStat, error)
+
+	GetOPReturnChartData() (*dbtypes.OPReturnChartData, error)
+
+	GetOPReturnListData(N, offset int64) ([]*dbtypes.OPReturnListData, error)
 }
 
 type explorerUI struct {
@@ -247,6 +253,67 @@ func (exp *explorerUI) diff(w http.ResponseWriter, r *http.Request) {
 		Data dbtypes.DiffStatsData
 	}{
 		StatsData})
+
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+
+func (exp *explorerUI) opreturn(w http.ResponseWriter, r *http.Request) {
+
+	limitN, err := strconv.ParseInt(r.URL.Query().Get("n"), 10, 64)
+	if err != nil || limitN < 0 {
+		limitN = defaultAddressRows
+	} else if limitN > maxAddressRows {
+		log.Warnf("addressPage: requested up to %d address rows, "+
+			"limiting to %d", limitN, maxAddressRows)
+		limitN = maxAddressRows
+	}
+
+	// Number of outputs to skip (OFFSET in database query). For UX reasons, the
+	// "start" URL query parameter is used.
+	offsetAddrOuts, err := strconv.ParseInt(r.URL.Query().Get("start"), 10, 64)
+	if err != nil || offsetAddrOuts < 0 {
+		offsetAddrOuts = 0
+	}
+
+	dataList, errH := exp.explorerSource.GetOPReturnListData(limitN, offsetAddrOuts)
+
+	if errH != nil {
+		log.Errorf("Unable to get opreturn")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	chatData, errH := exp.explorerSource.GetOPReturnChartData()
+
+	if errH != nil {
+		log.Errorf("Unable to get opreturn")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	StatsData := struct {
+		ChartData *dbtypes.OPReturnChartData
+		ListData  []*dbtypes.OPReturnListData
+		Limit     int64
+		Offset    int64
+		Path      string
+	}{
+		ChartData: chatData,
+		ListData:  dataList,
+		Limit:     limitN,
+		Offset:    offsetAddrOuts,
+		Path:      r.URL.Path,
+	}
+
+	//diffInfo
+	str, err := templateExecToString(exp.templates[opreturnTemplateIndex], "opreturn", StatsData)
 
 	if err != nil {
 		log.Errorf("Template execute failure: %v", err)
@@ -758,6 +825,15 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	opreturnTemplate, err := template.New("opreturn").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["opreturn"],
+
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	exp.templates[rootTemplateIndex] = explorerTemplate
 	exp.templates[blockTemplateIndex] = blockTemplate
 	exp.templates[txTemplateIndex] = txTemplate
@@ -770,6 +846,8 @@ func (exp *explorerUI) reloadTemplates() error {
 
 	exp.templates[blocksizeTemplateIndex] = blocksizeTemlate
 	exp.templates[feesstatTemplateIndex] = feesstatTemplate
+
+	exp.templates[opreturnTemplateIndex] = opreturnTemplate
 	return nil
 }
 
@@ -831,6 +909,8 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
 	exp.templateFiles["feesstat"] = filepath.Join("views", "feesstat.tmpl")
+
+	exp.templateFiles["opreturn"] = filepath.Join("views", "opreturn.tmpl")
 
 	toInt64 := func(v interface{}) int64 {
 		switch vt := v.(type) {
@@ -1025,6 +1105,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	}
 	exp.templates = append(exp.templates, feesstatTemplate)
 
+	opreturnTemplate, err := template.New("opreturn").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["opreturn"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, opreturnTemplate)
+
 	exp.addRoutes()
 
 	wsh := NewWebsocketHub()
@@ -1077,6 +1166,11 @@ func (exp *explorerUI) addRoutes() {
 
 	exp.Mux.Route("/diff", func(r chi.Router) {
 		r.Get("/", exp.diff)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+
+	exp.Mux.Route("/opreturn", func(r chi.Router) {
+		r.Get("/", exp.opreturn)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 

@@ -325,6 +325,22 @@ func (pgb *ChainDB) GetTop100Addresses() ([]*dbtypes.TopAddressRow, error) {
 	return addressRows, err
 }
 
+func (pgb *ChainDB) GetOPReturnChartData() (*dbtypes.OPReturnChartData, error) {
+	addressRows, err := RetrieveOpReturnChartData(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	return addressRows, err
+}
+
+func (pgb *ChainDB) GetOPReturnListData(N, offset int64) ([]*dbtypes.OPReturnListData, error) {
+	addressRows, err := RetrieveOpReturnListData(pgb.db, N, offset)
+	if err != nil {
+		return nil, err
+	}
+	return addressRows, err
+}
+
 func (pgb *ChainDB) GetDiff() ([]*dbtypes.DiffData, error) {
 	addressRows, err := RetrieveDiffData(pgb.db)
 	if err != nil {
