@@ -20,12 +20,12 @@ import (
 
 	"golang.org/x/net/websocket"
 
-	"github.com/HcashOrg/hcexplorer/blockdata"
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcexplorer/mempool"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcexplorer/blockdata"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
+	"github.com/HcashOrg/hcexplorer/mempool"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/go-chi/chi"
 )
@@ -257,6 +257,45 @@ func (td *WebUI) StoreMPData(data *mempool.MempoolData, timestamp time.Time) err
 	return nil
 }
 
+// Supply is the http.HandlerFunc for the "/Supply" http path
+func (td *WebUI) Supply(w http.ResponseWriter, r *http.Request) {
+	chainHeight := td.ExplorerSource.GetHeight()
+	data := td.ExplorerSource.GetBlockVerbose(chainHeight, false)
+
+	retData := struct {
+		TOTALCIRCULATINGAMOUNT float64
+		TICKETPRICE            float64
+		TICKETSINMEMPOOL       uint32
+		TICKETWINDOWPROGRESS   int
+		PROOFOFWORKDIFFICULTY  float64
+		BLOCKREWARD            float64
+		POWREWARD              float64
+		POSREWARD              float64
+		DEVREWARD              float64
+	}{
+		TOTALCIRCULATINGAMOUNT: float64(td.TemplateData.BlockSummary.CoinSupply) / 100000000,
+		TICKETPRICE:            td.TemplateData.BlockSummary.StakeDiff,
+		TICKETSINMEMPOOL:       td.TemplateData.MempoolFeeInfo.Number,
+		TICKETWINDOWPROGRESS:   td.TemplateData.StakeSummary.IdxBlockInWindow,
+		PROOFOFWORKDIFFICULTY:  data.Difficulty,
+		BLOCKREWARD:            float64(td.TemplateData.BlockSummary.NextBlockSubsidy.Total) / 100000000,
+		POWREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.PoW) / 100000000,
+		POSREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.PoS) / 500000000,
+		DEVREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.Developer) / 100000000,
+	}
+
+	writeJSON2(w, retData)
+
+}
+
+func writeJSON2(w http.ResponseWriter, thing interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(thing); err != nil {
+		apiLog.Infof("JSON encode error: %v", err)
+	}
+}
+
 // RootPage is the http.HandlerFunc for the "/" http path
 func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 	td.templateDataMtx.RLock()
@@ -275,8 +314,8 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	str, err := TemplateExecToString(td.templ, "home", struct {
-		InitialData []*hcjson.GetBlockVerboseResult
-		Data        WebTemplateData
+		InitialData         []*hcjson.GetBlockVerboseResult
+		Data                WebTemplateData
 		StakeDiffWindowSize int64
 	}{
 		initialBlocks,
