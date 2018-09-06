@@ -1284,7 +1284,6 @@ func RetrieveFeesStat(db *sql.DB) (res []*dbtypes.FeesStat) {
 			log.Error(err)
 			continue
 		}
-		log.Info(timestamp, fees, feesRewards, feesPerkb)
 		stat := dbtypes.FeesStat{
 			Time:        time.Unix(timestamp, 0).Format("2006/01/02"),
 			Fees:        hcutil.Amount(fees).ToCoin(),
@@ -1292,6 +1291,119 @@ func RetrieveFeesStat(db *sql.DB) (res []*dbtypes.FeesStat) {
 			FeesPerkb:   feesPerkb}
 		res = append(res, &stat)
 	}
+	return
+}
+
+// update mempool history
+func UpdateMempoolHistory(db *sql.DB, t time.Time, size, bytes int64) (id int, err error) {
+	pressT := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), 0, 0, time.UTC)
+	err = db.QueryRow(internal.InsertMempoolHistory, pressT.Unix(), size, bytes).Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		return
+	}
+	return id, nil
+}
+
+// get mempool history
+func RetrieveMempoolRecentHistory(db *sql.DB) (res []*dbtypes.MempoolHistory) {
+	rows, err := db.Query(internal.RetrieveLastTwoDaysMempoolHistory, time.Now().AddDate(0, 0, -2).Unix())
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	local, _ := time.LoadLocation("Asia/Shanghai")
+	for rows.Next() {
+		var timestamp int64
+		var size int64
+		var bs int64
+		err = rows.Scan(&timestamp, &size, &bs)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		mh := dbtypes.MempoolHistory{
+			Time:        time.Unix(timestamp, 0).In(local).Format("2006-01-02 15:04"),
+			Size:        size,
+			Bytes:       bs}
+		res = append(res, &mh)
+	}
+	return
+}
+
+// get mempool history kline
+func RetrieveMempoolHistoryKline(db *sql.DB) (res []*dbtypes.MempoolHistory) {
+	rows, err := db.Query(internal.RetrieveMempoolHistoryKline)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for rows.Next() {
+		var timestamp int64
+		var o int64
+		var c int64
+		var h int64
+		var l int64
+		err = rows.Scan(&timestamp, &o, &c, &h, &l)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		mh := dbtypes.MempoolHistory{
+			Time:        time.Unix(timestamp, 0).Format("2006-01-02"),
+			Open:        o,
+			Close:       c,
+			High:        h,
+			Low:         l}
+		res = append(res, &mh)
+	}
+	return
+}
+
+// update mempool history kline
+func RetrieveMempoolHistoryKlineLastDay(db *sql.DB) (d int64, isInit bool, err error) {
+	err = db.QueryRow(`SELECT MAX(time) d FROM mempool_history WHERE is_day = true;`).Scan(&d)
+	if err != nil {
+		err = db.QueryRow(`SELECT MIN(time) d FROM mempool_history`).Scan(&d)
+		isInit = true
+		return
+	}
+	return
+}
+
+func UpdateMempoolHistoryKlineOneDay(db *sql.DB, day time.Time) (err error) {
+	startDate := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)
+	endDate := startDate.AddDate(0, 0, 1)
+	h, l, o, c := 0, 0, 0, 0
+	err = db.QueryRow(internal.RetrieveMempoolHistoryMinMaxOneDay, startDate.Unix(), endDate.Unix()).Scan(&h, &l)
+	if err != nil {
+		return err
+	}
+	err = db.QueryRow(internal.RetrieveMempoolHistoryOpenOneDay, startDate.Unix(), endDate.Unix()).Scan(&o)
+	if err != nil {
+		return err
+	}
+	err = db.QueryRow(internal.RetrieveMempoolHistoryCloseOneDay, startDate.Unix(), endDate.Unix()).Scan(&c)
+	if err != nil {
+		return err
+	}
+	count := 0
+	err = db.QueryRow(internal.RetrieveMempoolHistoryTimeExist, startDate.Unix()).Scan(&count)
+	if err != nil {
+		return err
+	}
+	id := 0
+	if count >= 1 {
+		err = db.QueryRow(internal.UpdateMempoolHistoryKline, o, c, h, l, startDate.Unix()).Scan(&id)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+	} else {
+		err = db.QueryRow(internal.InsertMempoolHistoryKline, o, c, h, l, startDate.Unix()).Scan(&id)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+	}
+	err = nil
 	return
 }
 
