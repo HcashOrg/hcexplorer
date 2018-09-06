@@ -21,6 +21,8 @@ import (
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/explorer"
+	"github.com/HcashOrg/hcexplorer/rpcutils"
+	"github.com/HcashOrg/hcrpcclient"
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -325,12 +327,12 @@ func (pgb *ChainDB) GetTop100Addresses() ([]*dbtypes.TopAddressRow, error) {
 	return addressRows, err
 }
 
-func (pgb *ChainDB) GetOPReturnChartData() (*dbtypes.OPReturnChartData, error) {
-	addressRows, err := RetrieveOpReturnChartData(pgb.db)
+func (pgb *ChainDB) GetOPReturnChartData() (*dbtypes.OPReturnChartData, int, error) {
+	addressRows, count, err := RetrieveOpReturnChartData(pgb.db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return addressRows, err
+	return addressRows, count, err
 }
 
 func (pgb *ChainDB) GetOPReturnListData(N, offset int64) ([]*dbtypes.OPReturnListData, error) {
@@ -366,6 +368,23 @@ func (pgb *ChainDB) GetBloksizejson() (*dbtypes.BlocksizeJson, error) {
 	log.Info(blocksizejson)
 	return blocksizejson, err
 
+}
+
+func (pgb *ChainDB) GetScriptTypejson() (*dbtypes.ScriptTypejson, error) {
+	ScriptTypejson, err := RetrieveScriptTypejson(pgb.db, 0, 90)
+	if err != nil {
+		return nil, err
+	}
+	return ScriptTypejson, err
+
+}
+
+func (pgb *ChainDB) GetBlockverjson() (*dbtypes.BlockVerJson, error) {
+	blockVerJson, err := RetrieveBlockVerJson(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	return blockVerJson, err
 }
 
 // FillAddressTransactions is used to fill out the transaction details in an
@@ -843,13 +862,23 @@ func (pgb *ChainDB) UpdateSpendingInfoInAllAddresses() (int64, error) {
 	return numAddresses, err
 }
 
-// update fees stat
-func (pgb *ChainDB) UpdateFeesStat() {
-	log.Info("Update fees stat")
+// update fees stat and mempool history
+func (pgb *ChainDB) UpdateFeesStatAndMempoolHistory(client *hcrpcclient.Client) {
+	log.Info("Update fees stat and mempool history")
 	pgb.updateFeesStat()
-	t := time.Tick(time.Minute * 10)
-	for range t {
-		pgb.updateFeesStat()
+	pgb.updateMempoolHistoryKline()
+	tk := time.Tick(time.Minute)
+	count := 0
+	for t := range tk {
+		// update mempool history per minute
+		pgb.updateMempoolHistory(client, t)
+		count++
+		// update fees stat and mempool history kline per 10 minutes
+		if count >= 10 {
+			count = 0
+			pgb.updateMempoolHistoryKline()
+			pgb.updateFeesStat()
+		}
 	}
 }
 
@@ -878,4 +907,54 @@ func (pgb *ChainDB) updateFeesStat() (err error) {
 func (pgb *ChainDB) GetFeesStat() ([]*dbtypes.FeesStat, error) {
 	res := RetrieveFeesStat(pgb.db)
 	return res, nil
+}
+
+func (pgb *ChainDB) updateMempoolHistory(client *hcrpcclient.Client, t time.Time) (err error) {
+	size, bs, err := rpcutils.GetMempoolInfo(client)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	_, err = UpdateMempoolHistory(pgb.db, t, size, bs)
+	if err != nil {
+		log.Error(err)
+	}
+	return
+}
+
+func (pgb *ChainDB) updateMempoolHistoryKline() (err error) {
+	now := time.Now()
+	d, isInit, err := RetrieveMempoolHistoryKlineLastDay(pgb.db)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	dTime := time.Unix(d, 0)
+	startDate := time.Date(dTime.Year(), dTime.Month(), dTime.Day(), 0, 0, 0, 0, time.UTC)
+	if !isInit {
+		startDate = startDate.AddDate(0, 0, 1)
+	}
+	endDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	for day := startDate; endDate.Sub(day) > 0; day = day.AddDate(0, 0, 1) {
+		err = UpdateMempoolHistoryKlineOneDay(pgb.db, day)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+	return
+}
+
+func (pgb *ChainDB) GetMempoolHistory() (h []*dbtypes.MempoolHistory, k []*dbtypes.MempoolHistory, err error) {
+	h = RetrieveMempoolRecentHistory(pgb.db)
+	k = RetrieveMempoolHistoryKline(pgb.db)
+	return
+}
+
+func (pgb *ChainDB) UpdateScriptInfo() error {
+	updateScriptInfo(pgb.db, true)
+	t := time.Tick(time.Minute * 10)
+	for range t {
+		updateScriptInfo(pgb.db, false)
+	}
+	return nil
 }
