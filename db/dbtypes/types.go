@@ -216,6 +216,26 @@ type BlocksizeJson struct {
 	TotalTx   []int64  `json:totaltx`
 	Date      []string `json:date`
 }
+type Value_type struct {
+	Value  int64  `json:"value"`
+	Script string `json:"name"`
+}
+type ScriptInfo struct {
+	SumVins     int64 `json:"sumvins"`
+	SumVouts    int64 `json:"sumvouts"`
+	AmountVins  int64 `json:"amountvins"`
+	AmountVouts int64 `json:"amountvouts"`
+}
+type ScriptTypejson struct {
+	Type []string
+
+	Amount_type_vouts []Value_type
+	Num_type_vouts    []Value_type
+	Amount_type_vins  []Value_type
+	Sum_type_vins     []Value_type
+	ScriptInfo        map[string]*ScriptInfo
+}
+
 type FeesStat struct {
 	Time        string
 	Fees        float64
@@ -324,4 +344,11 @@ type Block struct {
 	ExtraData    []byte  `json:"extradata"`
 	StakeVersion uint32  `json:"stakeversion"`
 	PreviousHash string  `json:"previousblockhash"`
+}
+
+type BlockVerJson struct {
+	Date  []string  `json:"date"`
+	V0    []float64 `json:"v0"`
+	V1    []float64 `json:"v1"`
+	Other []float64 `json:"other"`
 }

@@ -440,6 +440,7 @@ func mainCore() error {
 
 	go db.SyncAddresses()
 
+	go db.UpdateScriptInfo()
 	// Wait for notification handlers to quit
 	wg.Wait()
 

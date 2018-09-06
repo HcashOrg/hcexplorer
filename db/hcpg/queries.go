@@ -515,6 +515,146 @@ func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.Blo
 	return
 }
 
+func RetrieveBlockVerJson(db *sql.DB) (*dbtypes.BlockVerJson, error) {
+	rowsAll, err := db.Query("select to_char(to_timestamp(time),'YYYYMMDD') as date,count(*) FILTER (WHERE version = 0) AS v0,count(*) FILTER (WHERE version = 1) as v1,count(*) FILTER (WHERE version <> 1 and  version <> 0) as other from blocks  group by date order by date")
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	defer func() {
+		if e := rowsAll.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	return scanBlockVersionJson(rowsAll)
+}
+func scanBlockVersionJson(rows *sql.Rows) (*dbtypes.BlockVerJson, error) {
+	blockVerJson := &dbtypes.BlockVerJson{make([]string, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0)}
+	for rows.Next() {
+		var str string
+		var v0 int64
+		var v1 int64
+		var other int64
+		err := rows.Scan(&str, &v0, &v1, &other)
+		if err != nil {
+			log.Error(err)
+			return nil, err
+		}
+		temppercentv0 := float64(v0) / float64((v0 + v1 + other)) * 100
+		temppercentv1 := float64(v1) / float64((v0 + v1 + other)) * 100
+		temppercentother := float64(other) / float64((v0 + v1 + other)) * 100
+
+		percentv0, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", temppercentv0), 2)
+		percentv1, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", temppercentv1), 2)
+		percentother, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", temppercentother), 2)
+
+		blockVerJson.Date = append(blockVerJson.Date, str)
+		blockVerJson.V0 = append(blockVerJson.V0, percentv0)
+		blockVerJson.V1 = append(blockVerJson.V1, percentv1)
+		blockVerJson.Other = append(blockVerJson.Other, percentother)
+	}
+	return blockVerJson, nil
+}
+
+func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtypes.ScriptTypejson, err error) {
+	//now := time.Now()
+	//before90day := strconv.FormatInt(24*day,10)
+	//d, _ := time.ParseDuration("-"+before90day+"h")  //24h*90
+	//d1 := now.Add(d)
+	scriptTypejsons := &dbtypes.ScriptTypejson{make([]string, 0), make([]dbtypes.Value_type, 0), make([]dbtypes.Value_type, 0), make([]dbtypes.Value_type, 0), make([]dbtypes.Value_type, 0), make(map[string]*dbtypes.ScriptInfo)}
+	rowsType, err := db.Query("select script_type from vouts group by script_type")
+	if err != nil {
+		return nil, nil
+	}
+	for rowsType.Next() {
+		var scriptType string
+		err1 := rowsType.Scan(&scriptType)
+		if err1 != nil {
+			log.Error(err1)
+			return nil, err1
+		}
+		scriptTypejsons.Type = append(scriptTypejsons.Type, scriptType)
+		scriptTypejsons.ScriptInfo[scriptType] = &dbtypes.ScriptInfo{}
+	}
+	// temp data
+	var infoType dbtypes.Value_type
+	// Amount_type_vouts
+	rows_amount_type_vouts, err := db.Query("select count(*),script_type from vouts group by script_type")
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	for rows_amount_type_vouts.Next() {
+		err2 := rows_amount_type_vouts.Scan(&infoType.Value, &infoType.Script)
+		if err2 != nil {
+			log.Error(err2)
+			return nil, err2
+		}
+		scriptTypejsons.Amount_type_vouts = append(scriptTypejsons.Amount_type_vouts, infoType)
+		scriptTypejsons.ScriptInfo[infoType.Script].AmountVouts = infoType.Value
+	}
+	// Num_type_vouts
+	rows_sum_type_vouts, err3 := db.Query("select sum(value),script_type from vouts group by script_type")
+	if err3 != nil {
+		log.Error(err3)
+		return nil, err3
+	}
+	for rows_sum_type_vouts.Next() {
+		err2 := rows_sum_type_vouts.Scan(&infoType.Value, &infoType.Script)
+		if err2 != nil {
+			log.Error(err2)
+			return nil, err2
+		}
+		scriptTypejsons.Num_type_vouts = append(scriptTypejsons.Num_type_vouts, infoType)
+		scriptTypejsons.ScriptInfo[infoType.Script].SumVouts = infoType.Value
+	}
+	// Amount_type_vins / num_type_vins
+	rows_type_vins, err4 := db.Query("select * from scriptinfo_vins")
+	if err4 != nil {
+		log.Error(err4)
+		return nil, err4
+	}
+	for rows_type_vins.Next() {
+		var accountValue int64
+		var sumValue int64
+		var script_type string
+		rows_type_vins.Scan(&accountValue, &sumValue, &script_type)
+		infoType = dbtypes.Value_type{accountValue, script_type}
+		scriptTypejsons.Amount_type_vins = append(scriptTypejsons.Amount_type_vins, infoType)
+		infoType = dbtypes.Value_type{sumValue, script_type}
+		scriptTypejsons.Sum_type_vins = append(scriptTypejsons.Sum_type_vins, infoType)
+
+		scriptTypejsons.ScriptInfo[script_type].AmountVins = accountValue
+		scriptTypejsons.ScriptInfo[script_type].SumVins = sumValue
+
+	}
+	scriptTypejson = scriptTypejsons
+	return
+
+}
+
+// func scanScriptType(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.BlocksizeJson, err error) {
+// 	blocksizejsons := &dbtypes.BlocksizeJson{make([]int64, 0), make([]int64, 0), make([]int64, 0), make([]string, 0)}
+// 	for rows.Next() {
+// 		var blocksize dbtypes.Blocksize
+
+// 		err1 := rows.Scan(&blocksize.TotalSize, &blocksize.AvgSize, &blocksize.TotalTx, &blocksize.Date)
+// 		if err1 != nil {
+// 			fmt.Println(err1)
+// 			return
+// 		}
+// 		log.Info(blocksize)
+// 		blocksizejsons.TotalSize = append(blocksizejsons.TotalSize, blocksize.TotalSize)
+// 		blocksizejsons.AvgSize = append(blocksizejsons.AvgSize, blocksize.AvgSize)
+// 		blocksizejsons.TotalTx = append(blocksizejsons.TotalTx, blocksize.TotalTx)
+// 		blocksizejsons.Date = append(blocksizejsons.Date, blocksize.Date)
+// 		log.Info(blocksizejson)
+// 	}
+// 	blocksizejson = blocksizejsons
+// 	return
+// }
+
 func retrieveAddressTxns(db *sql.DB, address string, N, offset int64,
 	statement string) ([]uint64, []*dbtypes.AddressRow, error) {
 	rows, err := db.Query(statement, address, N, offset)
@@ -1153,4 +1293,71 @@ func RetrieveFeesStat(db *sql.DB) (res []*dbtypes.FeesStat) {
 		res = append(res, &stat)
 	}
 	return
+}
+
+func updateScriptInfo(db *sql.DB, first bool) error {
+	log.Info("updateScriptInfo")
+	if first {
+		db.Query("TRUNCATE TABLE scriptinfo_vins")
+	}
+
+	// create table
+	db.Query("create table IF not EXISTS public.scriptinfo_vins(count_value decimal,sum_value decimal,script_type varchar(50))")
+	// query count every script type
+	rowsCount, err := db.Query("select count(*),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type")
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// query totalvalue every script type
+	rowsSum, err := db.Query("select sum(vouts.value),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type")
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	defer func() {
+		if e := rowsCount.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+		if e := rowsSum.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+
+	for rowsCount.Next() {
+		var value int64
+		var script_type string
+		err = rowsCount.Scan(&value, &script_type)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if first {
+			_, err = db.Query(`insert into scriptinfo_vins(count_value,script_type)values($1,$2)`, value, script_type)
+		} else {
+			_, err = db.Exec(`UPDATE scriptinfo_vins SET count_value = $1 WHERE script_type = $2`, value, script_type)
+		}
+
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	for rowsSum.Next() {
+		var value int64
+		var script_type string
+		err = rowsSum.Scan(&value, &script_type)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+
+		_, err = db.Exec(`UPDATE scriptinfo_vins SET sum_value = $1 WHERE script_type = $2 `, value, script_type)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	return nil
 }
