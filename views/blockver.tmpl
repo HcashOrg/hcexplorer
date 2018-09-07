@@ -23,9 +23,6 @@
             dataType:'json',
             success:function(result){
                 var globals =result;
-                console.log(globals)
-                console.log(globals['date'])
-                console.log(globals.date)
                 function formatX(v) {
                     v = v.toString();
                     return v.substring(0, 4) + '/' + v.substring(4, 6) + '/' + v.substring(6, 8);
