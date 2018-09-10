@@ -1464,10 +1464,11 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 	log.Info("updateScriptInfo")
 	if first {
 		db.Query("TRUNCATE TABLE scriptinfo_vins")
+
+		// create table
+		db.Query("create table IF not EXISTS public.scriptinfo_vins(count_value decimal,sum_value decimal,script_type varchar(50))")
 	}
 
-	// create table
-	db.Query("create table IF not EXISTS public.scriptinfo_vins(count_value decimal,sum_value decimal,script_type varchar(50))")
 	// query count every script type
 	rowsCount, err := db.Query("select count(*),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type")
 	if err != nil {
