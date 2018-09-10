@@ -298,7 +298,6 @@ func (c *appContext) getIndentQuery(r *http.Request) (indent string) {
 	if useIndentation == "1" || useIndentation == "true" {
 		indent = c.JSONIndent
 	}
-
 	return
 }
 

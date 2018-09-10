@@ -24,89 +24,10 @@
     <link href="/css/bootstrap.css" rel="stylesheet">
     <link href="/css/main.css" rel="stylesheet">
     <!-- <link rel="stylesheet/less" type="text/css" href="/css/dynamic.less"> -->
-    <style type="text/css" >
-    .appIndex-inner {
-    margin-right: -20px;
-    margin-bottom: -20px;
-    font-size: 0;
-}
-
-.appIndex-item {
-    display: inline-block;
-    margin-right: 20px;
-    padding-right: 28px;
-    width: 560px;
-    background: #f3f4f7;
-    vertical-align: middle;
-    margin-bottom: 20px;
-}
-
-.appIndex-item-pic-poolShare {
-    background-position: -190px -396.5px;
-        background-repeat: no-repeat;
-}
-
-.appIndex-item-pic {
-    float: left;
-    margin-right: 28px;
-        width: 114px;
-    height: 114px;
-    background-size: 100%;
-}
-
-.appIndex-item-pic-blockSize {
-    background-image: url(/images/stats/block_size.png);
-}
-
-.appIndex-item-pic-fee {
-    background-image: url(/images/stats/transaction_fees.png);
-}
-
-.appIndex-item-pic-addressRichTop {
-    background-image: url(/images/stats/address_rich_list.png);
-}
-
-.appIndex-item-pic-blockVersion {
-    background-image: url(/images/stats/block_version.png);
-}
-
-.appIndex-item-pic-difficulty {
-    background-image: url(/images/stats/difficulty.png);
-}
-
-.appIndex-item-pic-mempoolHistory {
-    background-image: url(/images/stats/mempool_size.png);
-}
-
-.appIndex-item-pic-scriptType {
-    background-image: url(/images/stats/script_types.png);
-}
-
-.appIndex-item-pic-opReturn {
-    background-image: url(/images/stats/op_return.png);
-}
-
-
-.appIndex-item-caption {
-    font-size: 16px;
-    line-height: 21px;
-    color: #262626;
-    margin-bottom: 10px;
-    margin-top: 25px;
-}
-
-.appIndex-item-desc {
-    font-size: 14px;
-    line-height: 19px;
-    color: #888;
-}
-    </style>
     <script src="/js/messagesocket.js"></script>
     <script src="/js/humanize.js"></script>
     <script src="/js/turbolinks.js"></script>
     <script src="/js/jquery.js"></script>
-    <script src="/js/echarts.min.js"></script>
-    <script src="/js/highcharts.js"></script>
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -176,7 +97,6 @@
                 <div class="col-sm-auto nav3">
 					<a href="/" title="Explorer">Home</a>
 					<a href="/explorer" title="Explorer">Block</a>
-                    <a href="/explorer/stats" title="Stats">Stats</a>
 					<!-- <a href="/explorer" title="Explorer">Network</a> -->
 					<!-- <a href="/explorer" title="Explorer">Movement</a> -->
 					<!-- <a href="/explorer" title="Explorer">Explore</a> -->
@@ -457,9 +377,6 @@ $(function(){
     $('.scriptDataStar').on('click',function(){
         $(this).next('.scriptData').slideToggle();
     });
-
-
-
 });
 </script>
 {{end}}
