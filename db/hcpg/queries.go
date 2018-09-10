@@ -535,7 +535,7 @@ func RetrieveBlocksizejson(db *sql.DB, N, offset int64) ([]uint64, *dbtypes.Bloc
 	//d, _ := time.ParseDuration("-"+before90day+"h")  //24h*90
 	//d1 := now.Add(d)
 
-	rowsAll, err := db.Query("select sum(size) as totalsize,ROUND(avg(size),0) as avgsize,sum(numtx) as txsum,to_char(to_timestamp(time),'yyyy-MM-dd') as date  from blocks  group by date ORDER BY date")
+	rowsAll, err := db.Query("select sum(size) as totalsize,ROUND(avg(size),0) as avgsize,sum(numtx) as txsum,to_char(to_timestamp(time),'yyyy-MM-dd') as date  from blocks  group by date ORDER BY date;")
 	if err != nil {
 		return nil, nil, nil
 	}
@@ -569,7 +569,7 @@ func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.Blo
 }
 
 func RetrieveBlockVerJson(db *sql.DB) (*dbtypes.BlockVerJson, error) {
-	rowsAll, err := db.Query("select to_char(to_timestamp(time),'YYYYMMDD') as date,count(*) FILTER (WHERE version = 0) AS v0,count(*) FILTER (WHERE version = 1) as v1,count(*) FILTER (WHERE version <> 1 and  version <> 0) as other from blocks  group by date order by date")
+	rowsAll, err := db.Query("select to_char(to_timestamp(time),'YYYYMMDD') as date,count(*) FILTER (WHERE version = 0) AS v0,count(*) FILTER (WHERE version = 1) as v1,count(*) FILTER (WHERE version <> 1 and  version <> 0) as other from blocks  group by date order by date;")
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -616,7 +616,7 @@ func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtype
 	//d, _ := time.ParseDuration("-"+before90day+"h")  //24h*90
 	//d1 := now.Add(d)
 	scriptTypejsons := &dbtypes.ScriptTypejson{make([]string, 0), make([]dbtypes.Value_type, 0), make([]dbtypes.Value_type, 0), make([]dbtypes.Value_type, 0), make([]dbtypes.Value_type, 0), make(map[string]*dbtypes.ScriptInfo)}
-	rowsType, err := db.Query("select script_type from vouts group by script_type")
+	rowsType, err := db.Query("select script_type from vouts group by script_type;")
 	if err != nil {
 		return nil, nil
 	}
@@ -633,7 +633,7 @@ func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtype
 	// temp data
 	var infoType dbtypes.Value_type
 	// Amount_type_vouts
-	rows_amount_type_vouts, err := db.Query("select count(*),script_type from vouts group by script_type")
+	rows_amount_type_vouts, err := db.Query("select count(*),script_type from vouts group by script_type;")
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -648,7 +648,7 @@ func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtype
 		scriptTypejsons.ScriptInfo[infoType.Script].AmountVouts = infoType.Value
 	}
 	// Num_type_vouts
-	rows_sum_type_vouts, err3 := db.Query("select sum(value),script_type from vouts group by script_type")
+	rows_sum_type_vouts, err3 := db.Query("select sum(value),script_type from vouts group by script_type;")
 	if err3 != nil {
 		log.Error(err3)
 		return nil, err3
@@ -663,7 +663,7 @@ func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtype
 		scriptTypejsons.ScriptInfo[infoType.Script].SumVouts = infoType.Value
 	}
 	// Amount_type_vins / num_type_vins
-	rows_type_vins, err4 := db.Query("select * from scriptinfo_vins")
+	rows_type_vins, err4 := db.Query("select * from scriptinfo_vins;")
 	if err4 != nil {
 		log.Error(err4)
 		return nil, err4
@@ -684,16 +684,16 @@ func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtype
 	}
 	defer func() {
 		if e := rowsType.Close(); e != nil {
-			log.Errorf("Close of rowsType Query failed: %v", e)
+			log.Errorf("Close of rowsType Query failed: %v;", e)
 		}
 		if e := rows_amount_type_vouts.Close(); e != nil {
-			log.Errorf("Close of rows_amount_type_vouts Query failed: %v", e)
+			log.Errorf("Close of rows_amount_type_vouts Query failed: %v;", e)
 		}
 		if e := rows_sum_type_vouts.Close(); e != nil {
-			log.Errorf("Close of rows_sum_type_vouts Query failed: %v", e)
+			log.Errorf("Close of rows_sum_type_vouts Query failed: %v;", e)
 		}
 		if e := rows_type_vins.Close(); e != nil {
-			log.Errorf("Close of rows_type_vins Query failed: %v", e)
+			log.Errorf("Close of rows_type_vins Query failed: %v;", e)
 		}
 	}()
 	scriptTypejson = scriptTypejsons
