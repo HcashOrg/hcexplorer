@@ -1,0 +1,86 @@
+{{define "stats"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Stats"}}
+
+
+<body>
+    {{template "navbar"}}
+   
+        <div class="container">
+
+            <div  style="margin-left: -15px;margin-right: -15px;margin-bottom: 20px;"  >
+                <div style="background: #fff;border-radius: 3px;padding: 20px 20px 300px;max-width: 1200px;margin: 0 auto;" >
+                    <div class="appIndex-inner">
+
+                        <a class="appIndex-item" href="/explorer/blocksize">
+                            <div class="appIndex-item-pic appIndex-item-pic-blockSize"></div>
+                            <div class="appIndex-item-caption">
+                                Block Size
+                            </div>
+                            <div class="appIndex-item-desc">View block size,&nbsp; Tx count and size</div>
+                        </a>
+
+                        <a class="appIndex-item" href="/explorer/feesstat">
+                            <div class="appIndex-item-pic appIndex-item-pic-fee"></div>
+                            <div class="appIndex-item-caption">
+                                Transaction Fees
+                            </div>
+                            <div class="appIndex-item-desc">View daily Tx fees, &nbsp;percentage (Tx fees/block reward) and actual Tx fees</div>
+                        </a>
+                        <a class="appIndex-item" href="/explorer/blockver">
+                            <div class="appIndex-item-pic appIndex-item-pic-blockVersion"></div>
+                            <div class="appIndex-item-caption">
+                                Block Version
+                            </div>
+                            <div class="appIndex-item-desc">View block version and historical trendss</div>
+                        </a>
+                        <a class="appIndex-item" href="/explorer/richlist">
+                            <div class="appIndex-item-pic appIndex-item-pic-addressRichTop"></div>
+                            <div class="appIndex-item-caption">
+                                Address Rich List
+                            </div>
+                            <div class="appIndex-item-desc">View address,&nbsp; balance distribution and top richest addresses</div>
+                        </a>
+
+                        <a class="appIndex-item" href="/explorer/diff">
+                            <div class="appIndex-item-pic appIndex-item-pic-difficulty"></div>
+                            <div class="appIndex-item-caption">
+                                Difficulty
+                            </div>
+                            <div class="appIndex-item-desc">Historical difficulty information and next change predictions</div>
+                        </a>
+                        <a class="appIndex-item" href="/explorer/mempoolhistory">
+                            <div class="appIndex-item-pic appIndex-item-pic-mempoolHistory"></div>
+                            <div class="appIndex-item-caption">
+                                Mempool Size
+                            </div>
+                            <div class="appIndex-item-desc">View the mempool size and kline</div>
+                        </a>
+                        <a class="appIndex-item" href="/explorer/scripttype">
+                            <div class="appIndex-item-pic appIndex-item-pic-scriptType"></div>
+                            <div class="appIndex-item-caption">
+                                Script Types
+                            </div>
+                            <div class="appIndex-item-desc">View transaction amount of each script</div>
+                        </a>
+                        <a class="appIndex-item" href="/explorer/opreturn">
+                            <div class="appIndex-item-pic appIndex-item-pic-opReturn"></div>
+                            <div class="appIndex-item-caption">
+                                OP_RETURN
+                            </div>
+                            <div class="appIndex-item-desc">View OP_RETURN message typest</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+  
+
+{{template "footer"}}
+
+</body>
+
+</html>
+{{ end }}

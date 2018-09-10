@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/db/hcpg"
@@ -25,7 +26,6 @@ import (
 	"github.com/HcashOrg/hcexplorer/rpcutils"
 	"github.com/HcashOrg/hcexplorer/semver"
 	"github.com/HcashOrg/hcexplorer/txhelpers"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcrpcclient"
 	"github.com/go-chi/chi"
 )
@@ -280,7 +280,7 @@ func mainCore() error {
 	mempoolSavers = append(mempoolSavers, sqliteDB.MPC)
 
 	// Web template data. WebUI implements BlockDataSaver interface
-	webUI := NewWebUI(&sqliteDB,activeChain)
+	webUI := NewWebUI(&sqliteDB, activeChain)
 	if webUI == nil {
 		return fmt.Errorf("Failed to start WebUI. Missing HTML resources?")
 	}
@@ -322,6 +322,7 @@ func mainCore() error {
 		ntfnChans.connectChan, ntfnChans.recvTxBlockChan,
 		ntfnChans.reorgChanBlockData)
 	wg.Add(2)
+
 	go wsChainMonitor.BlockConnectedHandler()
 	// The blockdata reorg handler disables collection during reorg, leaving
 	// hcsqlite to do the switch, except for the last block which gets
@@ -334,7 +335,6 @@ func mainCore() error {
 	wg.Add(2)
 	go sdbChainMonitor.BlockConnectedHandler()
 	go sdbChainMonitor.ReorgHandler()
-
 	// Blockchain monitor for the wired sqlite DB
 	wiredDBChainMonitor := sqliteDB.NewChainMonitor(collector, quit, &wg,
 		ntfnChans.connectChanWiredDB, ntfnChans.reorgChanWiredDB)
@@ -417,6 +417,7 @@ func mainCore() error {
 
 	webMux := chi.NewRouter()
 	webMux.Get("/", webUI.RootPage)
+	webMux.Get("/supply", webUI.Supply)
 	webMux.Get("/ws", webUI.WSBlockUpdater)
 	webMux.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./public/images/favicon.ico")
@@ -435,6 +436,12 @@ func mainCore() error {
 		close(quit)
 	}
 
+	// Timed task
+	go db.UpdateFeesStatAndMempoolHistory(hcdClient)
+
+	go db.SyncAddresses()
+
+	go db.UpdateScriptInfo()
 	// Wait for notification handlers to quit
 	wg.Wait()
 

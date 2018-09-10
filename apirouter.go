@@ -34,6 +34,8 @@ func newAPIRouter(app *appContext, userRealIP bool) apiMux {
 
 	mux.HandleFunc("/status", app.status)
 
+	//mux.HandleFunc("/status", app.status)
+
 	mux.Route("/block", func(r chi.Router) {
 		r.Route("/best", func(rd chi.Router) {
 			rd.Use(app.BlockIndexLatestCtx)
@@ -158,7 +160,7 @@ func newAPIRouter(app *appContext, userRealIP bool) apiMux {
 			rd.With(NPathCtx).Get("/details/{N}", app.getSSTxDetails)
 		})
 	})
-	
+
 	mux.Route("/pool", func(r chi.Router) {
 		r.Route("/list", func(rd chi.Router) {
 			rd.Get("/", app.getPoolList)

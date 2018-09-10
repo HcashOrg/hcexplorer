@@ -166,6 +166,104 @@ type AddressRow struct {
 	VinDbID            uint64
 }
 
+//TopAddressRow represents a row in the topaddresses table
+type TopAddressRow struct {
+	Address    string
+	Value      float64
+	TxCount    uint64
+	StartTime  uint64
+	EndTime    uint64
+	DStartTime string
+	DEndTime   string
+	StringVal  string
+}
+type ChartValue struct {
+	BalanceDist  []string  `json:"balance_dist"`
+	CountList    []int     `json:"count_list"`
+	SumList      []float64 `json:"sum_list"`
+	CountPercent []string  `json:"count_percent"`
+	SumPercent   []string  `json:"sum_percent"`
+}
+
+type RichData struct {
+	TopAddr   []*TopAddressRow
+	ChartData *ChartValue
+}
+
+type DiffData struct {
+	Height     int
+	BlockTime  int64
+	Difficulty float64
+	Change     string
+	StrTime    string
+	StrDiff    string
+}
+
+type DiffStatsData struct {
+	ChartData []*DiffData
+	ListData  []*DiffData
+}
+
+type OPReturnChartData struct {
+	OpReturnType  []string
+	OpReturnCount []int
+}
+
+type OPReturnListData struct {
+	Transaction string
+	Message     string
+	MessageType string
+}
+
+type Blocksize struct {
+	TotalSize int64
+	AvgSize   int64
+	TotalTx   int64
+	Date      string
+}
+type BlocksizeJson struct {
+	TotalSize []int64  `json:"totalsize"`
+	AvgSize   []int64  `json:avgsize`
+	TotalTx   []int64  `json:totaltx`
+	Date      []string `json:date`
+}
+type Value_type struct {
+	Value  int64  `json:"value"`
+	Script string `json:"name"`
+}
+type ScriptInfo struct {
+	SumVins     int64 `json:"sumvins"`
+	SumVouts    int64 `json:"sumvouts"`
+	AmountVins  int64 `json:"amountvins"`
+	AmountVouts int64 `json:"amountvouts"`
+}
+type ScriptTypejson struct {
+	Type []string
+
+	Amount_type_vouts []Value_type
+	Num_type_vouts    []Value_type
+	Amount_type_vins  []Value_type
+	Sum_type_vins     []Value_type
+	ScriptInfo        map[string]*ScriptInfo
+}
+
+type FeesStat struct {
+	Time        string
+	Fees        float64
+	FeesRewards float64
+	FeesPerkb   float64
+}
+
+type MempoolHistory struct {
+	Time        string
+	Size        int64
+	Bytes       int64
+	Open        int64
+	Close       int64
+	High        int64
+	Low         int64
+}
+
 // ScriptPubKeyData is part of the result of decodescript(ScriptPubKeyHex)
 type ScriptPubKeyData struct {
 	ReqSigs   uint32   `json:"reqSigs"`
@@ -267,4 +365,11 @@ type Block struct {
 	ExtraData    []byte  `json:"extradata"`
 	StakeVersion uint32  `json:"stakeversion"`
 	PreviousHash string  `json:"previousblockhash"`
+}
+
+type BlockVerJson struct {
+	Date  []string  `json:"date"`
+	V0    []float64 `json:"v0"`
+	V1    []float64 `json:"v1"`
+	Other []float64 `json:"other"`
 }
