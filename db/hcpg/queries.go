@@ -1514,6 +1514,7 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 		}
 		if first {
 			_, err = db.Query(`insert into scriptinfo_vins(count_value,script_type)values($1,$2);`, value, script_type)
+
 		} else {
 			_, err = db.Exec(`UPDATE scriptinfo_vins SET count_value = $1 WHERE script_type = $2;`, value, script_type)
 		}
