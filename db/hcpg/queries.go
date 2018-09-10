@@ -682,6 +682,20 @@ func RetrieveScriptTypejson(db *sql.DB, N, offset int64) (scriptTypejson *dbtype
 		scriptTypejsons.ScriptInfo[script_type].SumVins = sumValue
 
 	}
+	defer func() {
+		if e := rowsType.Close(); e != nil {
+			log.Errorf("Close of rowsType Query failed: %v", e)
+		}
+		if e := rows_amount_type_vouts.Close(); e != nil {
+			log.Errorf("Close of rows_amount_type_vouts Query failed: %v", e)
+		}
+		if e := rows_sum_type_vouts.Close(); e != nil {
+			log.Errorf("Close of rows_sum_type_vouts Query failed: %v", e)
+		}
+		if e := rows_type_vins.Close(); e != nil {
+			log.Errorf("Close of rows_type_vins Query failed: %v", e)
+		}
+	}()
 	scriptTypejson = scriptTypejsons
 	return
 
@@ -1200,7 +1214,7 @@ func InsertAddressOuts(db *sql.DB, dbAs []*dbtypes.AddressRow) ([]uint64, error)
 
 	stmt, err := dbtx.Prepare(internal.InsertAddressRow)
 	if err != nil {
-		log.Errorf("AddressRow INSERT prepare: %v", err)
+		log.Errorf("AddressRow INSERT prepare: %v ", err)
 		_ = dbtx.Rollback() // try, but we want the Prepare error back
 		return nil, err
 	}
@@ -1463,20 +1477,20 @@ func UpdateMempoolHistoryKlineOneDay(db *sql.DB, day time.Time) (err error) {
 func updateScriptInfo(db *sql.DB, first bool) error {
 	log.Info("updateScriptInfo")
 	if first {
-		db.Query("TRUNCATE TABLE scriptinfo_vins")
+		db.Query("TRUNCATE TABLE scriptinfo_vins;")
+		// create table
+		db.Query("create table IF not EXISTS public.scriptinfo_vins(count_value decimal,sum_value decimal,script_type varchar(50));")
 	}
 
-	// create table
-	db.Query("create table IF not EXISTS public.scriptinfo_vins(count_value decimal,sum_value decimal,script_type varchar(50))")
 	// query count every script type
-	rowsCount, err := db.Query("select count(*),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type")
+	rowsCount, err := db.Query("select count(*),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type;")
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
 	// query totalvalue every script type
-	rowsSum, err := db.Query("select sum(vouts.value),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type")
+	rowsSum, err := db.Query("select sum(vouts.value),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type;")
 	if err != nil {
 		log.Error(err)
 		return err
@@ -1499,9 +1513,9 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 			return err
 		}
 		if first {
-			_, err = db.Query(`insert into scriptinfo_vins(count_value,script_type)values($1,$2)`, value, script_type)
+			_, err = db.Query(`insert into scriptinfo_vins(count_value,script_type)values($1,$2);`, value, script_type)
 		} else {
-			_, err = db.Exec(`UPDATE scriptinfo_vins SET count_value = $1 WHERE script_type = $2`, value, script_type)
+			_, err = db.Exec(`UPDATE scriptinfo_vins SET count_value = $1 WHERE script_type = $2;`, value, script_type)
 		}
 
 		if err != nil {
@@ -1518,7 +1532,7 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 			return err
 		}
 
-		_, err = db.Exec(`UPDATE scriptinfo_vins SET sum_value = $1 WHERE script_type = $2 `, value, script_type)
+		_, err = db.Exec(`UPDATE scriptinfo_vins SET sum_value = $1 WHERE script_type = $2; `, value, script_type)
 		if err != nil {
 			log.Error(err)
 			return err
