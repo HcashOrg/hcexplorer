@@ -19,6 +19,8 @@ var createTableStatements = map[string]string{
 	"vouts":        internal.CreateVoutTable,
 	"block_chain":  internal.CreateBlockPrevNextTable,
 	"addresses":    internal.CreateAddressTable,
+	"fees_stat":    internal.CreateFeesStatTable,
+	"mempool_history": internal.CreateMempoolHistory,
 }
 
 var createTypeStatements = map[string]string{

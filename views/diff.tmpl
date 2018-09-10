@@ -1,0 +1,91 @@
+{{define "diff"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "difficulty"}}
+<body>
+    {{template "navbar"}}
+    <div class="container">
+                <div >
+                    <div >
+                        <div id="diffListCount" style="width: 80%;height:300px; margin:0 auto;min-width:1000px"></div>
+                        <div  style="color:#262626; font-size: 16px;margin-top:-25px;text-align: center;min-width: 1000px;"> Address Distribution </div>
+                    </div>
+                </div>
+
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-parent">
+                    <table class="table striped table-responsive" id="explorertable">
+                        <thead>
+                            <tr>
+                                <th>Height</th>
+                                <th><span class="d-none d-md-inline">Block Time</span> </th>
+                                <th> <span >Difficulty</span></th>
+                                <th>Change<span class="d-none d-md-inline"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {{range .Data.ListData}}
+                            <tr id="{{ .Height }}">
+                                <td><a href="/explorer/block/{{.Height}}" class="fs18 height">{{ .Height }}</a></td>
+                                <td>{{.StrTime}}</td>
+                                 <td>{{.StrDiff}}</td>
+                                  <td>{{.Change}}</td>
+                            </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{{template "footer"}}
+
+</body>
+<script>
+$(function(){
+
+    var richListCount = echarts.init(document.getElementById('diffListCount'));
+
+    option = {
+         tooltip : {
+                            trigger: 'axis',
+                            formatter: '<table style="text-align: right">' +
+                            '<tr><td colspan="3" style="text-align: center">{b0}</td></tr>' +
+                            '<tr><td style="text-align: left"> {c0}</td></tr>'
+                        },
+    xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: [ {{range .Data.ChartData }} {{.StrTime}}, {{end}}]
+    },
+    yAxis: {
+        type: 'value'
+    },
+    series: [{
+        data: [ {{range .Data.ChartData }} {{.Difficulty}}, {{end}}],
+        type: 'line',
+        areaStyle: {},
+        itemStyle:{
+        normal:{
+            color:'#7799bb',
+            lineStyle:{
+                color:'#7799bb',
+                width:2
+            }
+        }
+        }
+    }]
+    };
+
+     richListCount.setOption(option);
+
+
+})
+</script>
+</html>
+{{ end }}

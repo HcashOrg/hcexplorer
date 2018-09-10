@@ -1,0 +1,117 @@
+{{define "blockver"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "block size"}}
+<body>
+    {{template "navbar"}}
+
+    <div class="container">
+        <div class="row">
+            <div  style="color:#262626; font-size: 16px;text-align: center;width: 80%;margin:0 auto;min-width:1000px;background-color: rgb(255, 255, 255)"> block version history </div>
+            <div id="chart1" style="width: 80%;height:300px; margin:0 auto;min-width:1000px"></div>
+            
+        </div>
+    </div>
+
+    <script>
+         // Average blocksize 
+        $.ajax({
+            url: "/explorer/blockverjson",
+            data:{},
+            type: "GET",
+            dataType:'json',
+            success:function(result){
+                var globals =result;
+                function formatX(v) {
+                    v = v.toString();
+                    return v.substring(0, 4) + '/' + v.substring(4, 6) + '/' + v.substring(6, 8);
+                }
+                // var chart1 = echarts.init(document.getElementById('chart1'));
+                $('#chart1').highcharts({
+                    chart: {
+                        type: 'area'
+                    },
+                    title: {
+                        text: ''
+                    },
+                    subtitle: {
+                        text: ''
+                    },
+                    credits: {
+                        enabled:false
+                    },
+                    xAxis: {
+                        categories: globals['date'],
+                        tickmarkPlacement: 'on',
+                        title: {
+                            enabled: false
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Percent'
+                        },
+                        labels: {
+                            formatter: function () {
+                                return this.value + '%';
+                            }
+                        },
+                    },
+                    tooltip: {
+                        useHTML: true,
+                        formatter: function() {
+                            var ret = '<table><caption style="text-align: right">' + formatX(this.x) + '</caption>';
+                            for (var i = 0, ii = this.points.length; i < ii; i++) {
+                                ret += '<tr><td style="text-align: right; padding-right: 3px; font-weight: 700;">' + this.points[i].series.name + '</td><td style="text-align: right; padding-left: 3px;color: black">';
+                                ret += this.points[i].y.toFixed(2) + '%</td></tr>';
+                            }
+                            ret += '</table>';
+                            return ret;
+                        },
+                        crosshairs: [{
+                            width: 1,
+                            color: 'black',
+                        }],
+                        shared: true
+                    },
+                    plotOptions: {
+                        area: {
+                            stacking: 'percent',
+                            lineColor: '#ffffff',
+                            lineWidth: 1,
+                            marker: {
+                                lineWidth: 1,
+                                lineColor: '#ffffff'
+                            },
+                            enabled: false,
+                            states: {
+                                hover: { enabled: false }
+                            }
+                        }
+                    },
+                    series: [{
+                            name: 'v0',
+                            data: globals['v0']
+                        }, {
+                            name: 'v1',
+                            data: globals['v1']
+                        }, {
+                        name: 'other',
+                        data: globals['other']
+                    }]
+                });
+            },
+            error:function(err){
+                alert(err)
+            }
+        })
+        
+    </script>
+
+{{template "footer"}}
+
+</body>
+
+</html>
+{{ end }}
