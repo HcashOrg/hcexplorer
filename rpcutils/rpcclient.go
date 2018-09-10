@@ -220,17 +220,3 @@ func GetBlock(ind int64, client *hcrpcclient.Client) (*hcutil.Block, *chainhash.
 
 	return block, blockhash, nil
 }
-
-// GetMempoolInfo get memory pool info
-func GetMempoolInfo(client *hcrpcclient.Client) (size, bytes int64, err error) {
-	rawMempoolVerboseResults, err := client.GetRawMempoolVerbose("all")
-	if err != nil {
-		return 0, 0, fmt.Errorf("GetMempoolInfo failed: %v", err)
-	}
-
-	for _, rawMempoolVerboseResult := range rawMempoolVerboseResults {
-		size++
-		bytes += int64(rawMempoolVerboseResult.Size)
-	}
-	return
-}

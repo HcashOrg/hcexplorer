@@ -4,10 +4,10 @@
 package explorer
 
 import (
-	"github.com/HcashOrg/hcd/hcjson"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
 	"github.com/HcashOrg/hcexplorer/txhelpers"
+	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // BlockBasic models data for the explorer's explorer page
@@ -22,12 +22,6 @@ type BlockBasic struct {
 	BlockTime      int64  `json:"time"`
 	FormattedTime  string `json:"formatted_time"`
 	FormattedBytes string
-}
-
-//RichList models data for the RichList's page
-type RichList struct {
-	Address string  `json:"address"`
-	Value   float64 `json:"value"`
 }
 
 // TxBasic models data for transactions on the block page
