@@ -1341,6 +1341,11 @@ func RetrieveFeesStat(db *sql.DB) (res []*dbtypes.FeesStat) {
 		log.Error(err)
 		return
 	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
 	for rows.Next() {
 		var timestamp int64
 		var fees int64
@@ -1378,6 +1383,11 @@ func RetrieveMempoolRecentHistory(db *sql.DB) (res []*dbtypes.MempoolHistory) {
 		log.Error(err)
 		return
 	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
 	local, _ := time.LoadLocation("Asia/Shanghai")
 	for rows.Next() {
 		var timestamp int64
@@ -1404,6 +1414,11 @@ func RetrieveMempoolHistoryKline(db *sql.DB) (res []*dbtypes.MempoolHistory) {
 		log.Error(err)
 		return
 	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
 	for rows.Next() {
 		var timestamp int64
 		var o int64
@@ -1430,7 +1445,7 @@ func RetrieveMempoolHistoryKline(db *sql.DB) (res []*dbtypes.MempoolHistory) {
 func RetrieveMempoolHistoryKlineLastDay(db *sql.DB) (d int64, isInit bool, err error) {
 	err = db.QueryRow(`SELECT MAX(time) d FROM mempool_history WHERE is_day = true;`).Scan(&d)
 	if err != nil {
-		err = db.QueryRow(`SELECT MIN(time) d FROM mempool_history`).Scan(&d)
+		err = db.QueryRow(`SELECT MIN(time) d FROM mempool_history;`).Scan(&d)
 		isInit = true
 		return
 	}
