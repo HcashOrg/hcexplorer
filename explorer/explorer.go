@@ -45,6 +45,7 @@ const (
 	statsTemplateIndex
 	diffTemplateIndex
 	blocksizeTemplateIndex
+	ticketpriceTemplateIndex
 	blockverTemplateIndex
 	scripttypeTemplateIndex
 	feesstatTemplateIndex
@@ -88,6 +89,7 @@ type explorerDataSource interface {
 	GetDiff() ([]*dbtypes.DiffData, error)
 	GetDiffChartData() ([]*dbtypes.DiffData, error)
 	GetBloksizejson() (*dbtypes.BlocksizeJson, error)
+	GetTicketPricejson() (*dbtypes.TicketPrice, error)
 	GetScriptTypejson() (*dbtypes.ScriptTypejson, error)
 	GetBlockverjson() (*dbtypes.BlockVerJson, error)
 	GetFeesStat() ([]*dbtypes.FeesStat, error)
@@ -223,6 +225,31 @@ func (exp *explorerUI) blocksize(w http.ResponseWriter, r *http.Request) {
 
 	str, err := templateExecToString(exp.templates[blocksizeTemplateIndex], "blocksize", struct {
 		Data []*dbtypes.Blocksize
+	}{})
+
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+func (exp *explorerUI) ticketpricejson(w http.ResponseWriter, r *http.Request) {
+	ticketpriceJson, errH := exp.explorerSource.GetTicketPricejson()
+	if errH != nil {
+		log.Errorf("Unable to get blocksizejson")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+	writeJSON(w, ticketpriceJson)
+}
+
+func (exp *explorerUI) ticketprice(w http.ResponseWriter, r *http.Request) {
+
+	str, err := templateExecToString(exp.templates[ticketpriceTemplateIndex], "ticketprice", struct {
+		Data []*dbtypes.TicketPrice
 	}{})
 
 	if err != nil {
@@ -887,6 +914,14 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	ticketpriceTemplate, err := template.New("ticketprice").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["ticketprice"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	blockverTemplate, err := template.New("blockver").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["blockver"],
 		exp.templateFiles["extras"],
@@ -946,6 +981,7 @@ func (exp *explorerUI) reloadTemplates() error {
 	exp.templates[statsTemplateIndex] = statsTemplate
 	exp.templates[diffTemplateIndex] = diffTemplate
 	exp.templates[blocksizeTemplateIndex] = blocksizeTemplate
+	exp.templates[ticketpriceTemplateIndex] = ticketpriceTemplate
 	exp.templates[blockverTemplateIndex] = blockverTemplate
 	exp.templates[scripttypeTemplateIndex] = scripttypeTemplate
 	exp.templates[feesstatTemplateIndex] = feesstatTemplate
@@ -1010,6 +1046,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
+	exp.templateFiles["ticketprice"] = filepath.Join("views", "ticketprice.tmpl")
 	exp.templateFiles["blockver"] = filepath.Join("views", "blockver.tmpl")
 	exp.templateFiles["scripttype"] = filepath.Join("views", "scripttype.tmpl")
 	exp.templateFiles["feesstat"] = filepath.Join("views", "feesstat.tmpl")
@@ -1198,6 +1235,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	}
 	exp.templates = append(exp.templates, blocksizeTemplate)
 
+	ticketpriceTemplate, err := template.New("ticketprice").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["ticketprice"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, ticketpriceTemplate)
+
 	blockverTemplate, err := template.New("blockver").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["blockver"],
 		exp.templateFiles["extras"],
@@ -1305,6 +1351,12 @@ func (exp *explorerUI) addRoutes() {
 	exp.Mux.Get("/blocksizejson", exp.blocksizejson)
 	exp.Mux.Route("/blocksize", func(r chi.Router) {
 		r.Get("/", exp.blocksize)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+
+	exp.Mux.Get("/ticketpricejson", exp.ticketpricejson)
+	exp.Mux.Route("/ticketprice", func(r chi.Router) {
+		r.Get("/", exp.ticketprice)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 

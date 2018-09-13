@@ -227,6 +227,11 @@ type BlocksizeJson struct {
 	TotalTx   []int64  `json:totaltx`
 	Date      []string `json:date`
 }
+type TicketPrice struct {
+	Price []float64 `json:"price"`
+	Date  []string  `json:date`
+}
+
 type Value_type struct {
 	Value  int64  `json:"value"`
 	Script string `json:"name"`
@@ -255,13 +260,13 @@ type FeesStat struct {
 }
 
 type MempoolHistory struct {
-	Time        string
-	Size        int64
-	Bytes       int64
-	Open        int64
-	Close       int64
-	High        int64
-	Low         int64
+	Time  string
+	Size  int64
+	Bytes int64
+	Open  int64
+	Close int64
+	High  int64
+	Low   int64
 }
 
 // ScriptPubKeyData is part of the result of decodescript(ScriptPubKeyHex)

@@ -370,6 +370,16 @@ func (pgb *ChainDB) GetBloksizejson() (*dbtypes.BlocksizeJson, error) {
 
 }
 
+func (pgb *ChainDB) GetTicketPricejson() (*dbtypes.TicketPrice, error) {
+	var TicketPricejson *dbtypes.TicketPrice
+	TicketPricejson, err := RetrieveTicketPricejson(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	return TicketPricejson, err
+
+}
+
 func (pgb *ChainDB) GetScriptTypejson() (*dbtypes.ScriptTypejson, error) {
 	ScriptTypejson, err := RetrieveScriptTypejson(pgb.db, 0, 90)
 	if err != nil {
