@@ -568,6 +568,38 @@ func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.Blo
 	return
 }
 
+func RetrieveTicketPricejson(db *sql.DB) (*dbtypes.TicketPrice, error) {
+	rowsAll, err := db.Query("select round(avg(sbits),2),to_char(to_timestamp(time),'yyyy-MM-dd') as date from blocks group by date order by date;")
+	if err != nil {
+		return nil, nil
+	}
+	defer func() {
+		if e := rowsAll.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+	return scanTicketPriceRows(rowsAll)
+}
+func scanTicketPriceRows(rows *sql.Rows) (ticketpricejson *dbtypes.TicketPrice, err error) {
+	ticketpricejsons := &dbtypes.TicketPrice{make([]float64, 0), make([]string, 0)}
+	for rows.Next() {
+		var price float64
+		var pricedate string
+
+		err1 := rows.Scan(&price, &pricedate)
+		if err1 != nil {
+			err = err1
+			log.Error(err1)
+			return
+		}
+		ticketpricejsons.Price = append(ticketpricejsons.Price, price)
+		ticketpricejsons.Date = append(ticketpricejsons.Date, pricedate)
+
+	}
+	ticketpricejson = ticketpricejsons
+	return
+}
+
 func RetrieveBlockVerJson(db *sql.DB) (*dbtypes.BlockVerJson, error) {
 	rowsAll, err := db.Query("select to_char(to_timestamp(time),'YYYYMMDD') as date,count(*) FILTER (WHERE version = 0) AS v0,count(*) FILTER (WHERE version = 1) as v1,count(*) FILTER (WHERE version <> 1 and  version <> 0) as other from blocks  group by date order by date;")
 	if err != nil {
