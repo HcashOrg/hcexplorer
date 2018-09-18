@@ -436,12 +436,14 @@ func mainCore() error {
 		close(quit)
 	}
 
-	// Timed task
-	go db.UpdateFeesStatAndMempoolHistory(hcdClient)
+	if usePG {
+		// Timed task
+		go db.UpdateFeesStatAndMempoolHistory(hcdClient)
+		go db.SyncAddresses()
+		go db.UpdateScriptInfo()
+	}
 
-	go db.SyncAddresses()
 
-	go db.UpdateScriptInfo()
 	// Wait for notification handlers to quit
 	wg.Wait()
 
