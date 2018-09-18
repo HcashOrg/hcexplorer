@@ -5,3 +5,8 @@ ffldb_stake/
 vendor/
 .DS_Store
 debug
+hcexplorer.sqlt.db
+hcexplorer.conf
+rebuilddb2.conf
+cmd/rebuilddb/rebuilddb
+cmd/rebuilddb2/rebuilddb2
