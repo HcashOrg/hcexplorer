@@ -239,7 +239,7 @@ func (exp *explorerUI) blocksize(w http.ResponseWriter, r *http.Request) {
 func (exp *explorerUI) ticketpricejson(w http.ResponseWriter, r *http.Request) {
 	ticketpriceJson, errH := exp.explorerSource.GetTicketPricejson()
 	if errH != nil {
-		log.Errorf("Unable to get blocksizejson")
+		log.Errorf("Unable to get ticketpricejson")
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -689,6 +689,75 @@ func (exp *explorerUI) txPage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, str)
 }
+func (exp *explorerUI) balancejson (w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query();
+	addrPar, ok := params["addr"]
+	if !ok {
+		log.Trace("address not set")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	address := addrPar[0]
+	log.Info("address:",addrPar[0])
+	// Number of outputs for the address to query the database for. The URL
+	// query parameter "n" is used to specify the limit (e.g. "?n=20").
+	limitN, err := strconv.ParseInt(r.URL.Query().Get("n"), 10, 64)
+	if err != nil || limitN < 0 {
+		limitN = defaultAddressRows
+	} else if limitN > maxAddressRows {
+		log.Warnf("addressPage: requested up to %d address rows, "+
+			"limiting to %d", limitN, maxAddressRows)
+		limitN = maxAddressRows
+	}
+
+	// Number of outputs to skip (OFFSET in database query). For UX reasons, the
+	// "start" URL query parameter is used.
+	offsetAddrOuts, err := strconv.ParseInt(r.URL.Query().Get("start"), 10, 64)
+	var addrData *AddressInfo
+	if exp.liteMode {
+		addrData = exp.blockData.GetExplorerAddress(address, limitN, offsetAddrOuts)
+		if addrData == nil {
+			log.Errorf("Unable to get address %s", address)
+			http.Redirect(w, r, "/error/"+address, http.StatusTemporaryRedirect)
+			return
+		}
+	} else {
+		// Get addresses table rows for the address
+		addrHist, balance, errH := exp.explorerSource.AddressHistory(
+			address, limitN, offsetAddrOuts)
+		if errH != nil {
+			log.Errorf("Unable to get address %s history: %v", address, errH)
+			http.Redirect(w, r, "/error/"+address, http.StatusTemporaryRedirect)
+			return
+		}
+
+		// Generate AddressInfo skeleton from the address table rows
+		addrData = ReduceAddressHistory(addrHist)
+		if addrData == nil {
+			log.Debugf("empty address history (%s): n=%d&start=%d", address, limitN, offsetAddrOuts)
+			http.Redirect(w, r, "/error/"+address, http.StatusTemporaryRedirect)
+			return
+		}
+		addrData.Limit, addrData.Offset = limitN, offsetAddrOuts
+		addrData.KnownFundingTxns = balance.NumSpent + balance.NumUnspent
+		addrData.Balance = balance
+		addrData.Path = r.URL.Path
+		// still need []*AddressTx filled out and NumUnconfirmed
+
+		// Query database for transaction details
+		err = exp.explorerSource.FillAddressTransactions(addrData)
+		if err != nil {
+			log.Errorf("Unable to fill address %s transactions: %v", address, err)
+			http.Redirect(w, r, "/error/"+address, http.StatusTemporaryRedirect)
+			return
+		}
+	}
+	fmt.Println("explorer.go:addrData",addrData)
+	fmt.Println("explorer.go:addrData.balance",addrData.Balance)
+	writeJSON(w,addrData.Balance)
+
+}
 
 func (exp *explorerUI) addressPage(w http.ResponseWriter, r *http.Request) {
 	// Get the address URL parameter, which should be set in the request context
@@ -758,6 +827,7 @@ func (exp *explorerUI) addressPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+
 	confirmHeights := make([]int64, len(addrData.Transactions))
 	for i, v := range addrData.Transactions {
 		confirmHeights[i] = exp.NewBlockData.Height - int64(v.Confirmations)
@@ -769,7 +839,6 @@ func (exp *explorerUI) addressPage(w http.ResponseWriter, r *http.Request) {
 		addrData,
 		confirmHeights,
 	}
-
 	str, err := templateExecToString(exp.templates[addressTemplateIndex], "address", pageData)
 	if err != nil {
 		log.Errorf("Template execute failure: %v", err)
@@ -1400,6 +1469,7 @@ func (exp *explorerUI) addRoutes() {
 			rd.Get("/ws", exp.rootWebsocket)
 		})
 	})
+	exp.Mux.Get("/balance", exp.balancejson)
 	exp.Mux.Route("/address", func(r chi.Router) {
 		r.Route("/{address}", func(rd chi.Router) {
 			rd.Use(addressPathCtx)
