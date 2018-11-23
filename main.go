@@ -406,7 +406,7 @@ func mainCore() error {
 	}
 
 	// Start web API
-	app := newContext(hcdClient, &sqliteDB, cfg.IndentJSON)
+	app := newContext(hcdClient, &sqliteDB, cfg.IndentJSON, cfg.LiteMode)
 	// Start notification hander to keep /status up-to-date
 	wg.Add(1)
 	go app.StatusNtfnHandler(&wg, quit)
@@ -442,7 +442,6 @@ func mainCore() error {
 		go db.SyncAddresses()
 		go db.UpdateScriptInfo()
 	}
-
 
 	// Wait for notification handlers to quit
 	wg.Wait()

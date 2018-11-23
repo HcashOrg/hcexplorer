@@ -32,6 +32,21 @@ type Tx struct {
 	Block         *BlockID `json:"block,omitempty"`
 }
 
+// TrimmedTx models data to resemble to result of the decoderawtransaction RPC.
+type TrimmedTx struct {
+	TxID     string       `json:"txid"`
+	Version  int32        `json:"version"`
+	Locktime uint32       `json:"locktime"`
+	Expiry   uint32       `json:"expiry"`
+	Vin      []hcjson.Vin `json:"vin"`
+	Vout     []Vout       `json:"vout"`
+}
+
+// Txns models the multi transaction post data structure
+type Txns struct {
+	Transactions []string `json:"transactions"`
+}
+
 // TxShort models info about transaction TxID
 type TxShort struct {
 	TxID     string       `json:"txid"`
@@ -43,15 +58,10 @@ type TxShort struct {
 	Vout     []Vout       `json:"vout"`
 }
 
-// TrimmedTx models data to resemble to result of the decoderawtransaction
-// call
-type TrimmedTx struct {
-	TxID     string       `json:"txid"`
-	Version  int32        `json:"version"`
-	Locktime uint32       `json:"locktime"`
-	Expiry   uint32       `json:"expiry"`
-	Vin      []hcjson.Vin `json:"vin"`
-	Vout     []Vout       `json:"vout"`
+// TxInputID specifies a transaction input as hash:vin_index.
+type TxInputID struct {
+	Hash  string `json:"hash"`
+	Index uint32 `json:"vin_index"`
 }
 
 // VoteInfo models data about a SSGen transaction (vote)

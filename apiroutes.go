@@ -68,10 +68,11 @@ type appContext struct {
 	Status     apitypes.Status
 	statusMtx  sync.RWMutex
 	JSONIndent string
+	LiteMode   bool
 }
 
 // Constructor for appContext
-func newContext(client *hcrpcclient.Client, blockData APIDataSource, JSONIndent string) *appContext {
+func newContext(client *hcrpcclient.Client, blockData APIDataSource, JSONIndent string, liteMode bool) *appContext {
 	conns, _ := client.GetConnectionCount()
 	nodeHeight, _ := client.GetBlockCount()
 	return &appContext{
@@ -84,6 +85,7 @@ func newContext(client *hcrpcclient.Client, blockData APIDataSource, JSONIndent 
 			HcdataVersion:   ver.String(),
 		},
 		JSONIndent: JSONIndent,
+		LiteMode:   liteMode,
 	}
 }
 
@@ -1049,4 +1051,107 @@ func (c *appContext) getPoolList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, data, c.getIndentQuery(r))
+}
+
+func (c *appContext) getTransactions(w http.ResponseWriter, r *http.Request) {
+	txids := GetTxnsCtx(r)
+	if txids == nil {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+
+	// Look up any spending transactions for each output of this transaction.
+	// This is only done in full mode, and when the client requests spends with
+	// the URL query ?spends=true.
+
+	//spendParam := r.URL.Query().Get("spends")
+	//withSpends := spendParam == "1" || strings.EqualFold(spendParam, "true")
+
+	txns := make([]*apitypes.Tx, 0, len(txids))
+	for i := range txids {
+		tx := c.BlockData.GetRawTransaction(txids[i])
+		if tx == nil {
+			apiLog.Errorf("Unable to get transaction %s", txids[i])
+			http.Error(w, http.StatusText(422), 422)
+			return
+		}
+
+		/*	if withSpends && !c.LiteMode {
+			if err := c.setTxSpends(tx); err != nil {
+				apiLog.Errorf("Unable to get spending transaction info for outputs of %s: %v", txids[i], err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+				return
+			}
+		}*/
+
+		txns = append(txns, tx)
+	}
+
+	writeJSON(w, txns, c.getIndentQuery(r))
+}
+
+/*
+
+// setTxSpends retrieves spending transaction information for each output of the
+// given transaction. This sets the tx.Vout[i].Spend fields for each output that
+// is spent. For unspent outputs, the Spend field remains a nil pointer.
+func (c *appContext) setTxSpends(tx *apitypes.Tx) error {
+	return c.setOutputSpends(tx.TxID, tx.Vout)
+}
+
+// setOutputSpends retrieves spending transaction information for each output of
+// the specified transaction. This sets the vouts[i].Spend fields for each
+// output that is spent. For unspent outputs, the Spend field remains a nil
+// pointer.
+func (c *appContext) setOutputSpends(txid string, vouts []apitypes.Vout) error {
+	if c.LiteMode {
+		apiLog.Warnf("Not setting spending transaction data in lite mode.")
+		return nil
+	}
+
+	// For each output of this transaction, look up any spending transactions,
+	// and the index of the spending transaction input.
+	spendHashes, spendVinInds, voutInds, err := c.BlockData.SpendingTransactions(txid)
+	if dbtypes.IsTimeoutErr(err) {
+		return fmt.Errorf("SpendingTransactions: %v", err)
+	}
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("unable to get spending transaction info for outputs of %s", txid)
+	}
+	if len(voutInds) > len(vouts) {
+		return fmt.Errorf("invalid spending transaction data for %s", txid)
+	}
+	for i, vout := range voutInds {
+		if int(vout) >= len(vouts) {
+			return fmt.Errorf("invalid spending transaction data (%s:%d)", txid, vout)
+		}
+		vouts[vout].Spend = &apitypes.TxInputID{
+			Hash:  spendHashes[i],
+			Index: spendVinInds[i],
+		}
+	}
+	return nil
+}
+*/
+
+func (c *appContext) getDecodedTransactions(w http.ResponseWriter, r *http.Request) {
+	txids := GetTxnsCtx(r)
+	if txids == nil {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
+
+	txns := make([]*apitypes.TrimmedTx, 0, len(txids))
+	for i := range txids {
+		tx := c.BlockData.GetTrimmedTransaction(txids[i])
+		if tx == nil {
+			apiLog.Errorf("Unable to get transaction %v", tx)
+			http.Error(w, http.StatusText(422), 422)
+			return
+		}
+		txns = append(txns, tx)
+	}
+
+	writeJSON(w, txns, c.getIndentQuery(r))
 }
