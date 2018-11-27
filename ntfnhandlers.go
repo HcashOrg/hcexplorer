@@ -132,8 +132,13 @@ func (q *collectionQueue) ProcessBlocks() {
 func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *collectionQueue) {
 	blockQueue := NewCollectionQueue()
 	go blockQueue.ProcessBlocks()
+	var metuxOnBlock sync.Mutex
 	return &hcrpcclient.NotificationHandlers{
 		OnBlockConnected: func(blockHeaderSerialized []byte, transactions [][]byte) {
+			metuxOnBlock.Lock()
+			defer func(){
+				metuxOnBlock.Unlock()
+			}
 			blockHeader := new(wire.BlockHeader)
 			err := blockHeader.FromBytes(blockHeaderSerialized)
 			if err != nil {
@@ -150,6 +155,10 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 		},
 		OnReorganization: func(oldHash *chainhash.Hash, oldHeight int32,
 			newHash *chainhash.Hash, newHeight int32) {
+				metuxOnBlock.Lock()
+			defer func(){
+				metuxOnBlock.Unlock()
+			}
 			// Send reorg data to hcsqlite's monitor
 			select {
 			case ntfnChans.reorgChanWiredDB <- &hcsqlite.ReorgData{
