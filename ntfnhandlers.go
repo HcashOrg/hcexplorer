@@ -138,7 +138,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 			metuxOnBlock.Lock()
 			defer func(){
 				metuxOnBlock.Unlock()
-			}
+			}()
 			blockHeader := new(wire.BlockHeader)
 			err := blockHeader.FromBytes(blockHeaderSerialized)
 			if err != nil {
@@ -158,7 +158,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 				metuxOnBlock.Lock()
 			defer func(){
 				metuxOnBlock.Unlock()
-			}
+			}()
 			// Send reorg data to hcsqlite's monitor
 			select {
 			case ntfnChans.reorgChanWiredDB <- &hcsqlite.ReorgData{
