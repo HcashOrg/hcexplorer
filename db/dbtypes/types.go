@@ -221,12 +221,23 @@ type Blocksize struct {
 	TotalTx   int64
 	Date      string
 }
+
 type BlocksizeJson struct {
 	TotalSize []int64  `json:"totalsize"`
 	AvgSize   []int64  `json:avgsize`
 	TotalTx   []int64  `json:totaltx`
 	Date      []string `json:date`
 }
+type Hashrate struct {
+	Hashrate int64
+	Date     string
+}
+
+type HashRateJson struct {
+	HashRate []float64  `json:"hash_rate"`
+	Date     []string `json:"date"`
+}
+
 type TicketPrice struct {
 	Price []float64 `json:"price"`
 	Date  []string  `json:date`

@@ -27,7 +27,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/dbtypes"
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
@@ -45,6 +45,7 @@ const (
 	statsTemplateIndex
 	diffTemplateIndex
 	blocksizeTemplateIndex
+	hashrateTemplateIndex
 	ticketpriceTemplateIndex
 	blockverTemplateIndex
 	scripttypeTemplateIndex
@@ -89,6 +90,7 @@ type explorerDataSource interface {
 	GetDiff() ([]*dbtypes.DiffData, error)
 	GetDiffChartData() ([]*dbtypes.DiffData, error)
 	GetBloksizejson() (*dbtypes.BlocksizeJson, error)
+	GetHashrateJson() (*dbtypes.HashRateJson, error)
 	GetTicketPricejson() (*dbtypes.TicketPrice, error)
 	GetScriptTypejson() (*dbtypes.ScriptTypejson, error)
 	GetBlockverjson() (*dbtypes.BlockVerJson, error)
@@ -227,6 +229,28 @@ func (exp *explorerUI) blocksize(w http.ResponseWriter, r *http.Request) {
 		Data []*dbtypes.Blocksize
 	}{})
 
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+func (exp *explorerUI) hashratejson(w http.ResponseWriter, r *http.Request) {
+	blocksizeJson, err := exp.explorerSource.GetHashrateJson()
+	if err != nil {
+		log.Errorf("Unable to get hashratejson")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+	writeJSON(w, blocksizeJson)
+}
+func (exp *explorerUI) hashrate(w http.ResponseWriter, r *http.Request) {
+	str, err := templateExecToString(exp.templates[hashrateTemplateIndex], "hashrate", struct {
+		Data []*dbtypes.Hashrate
+	}{})
 	if err != nil {
 		log.Errorf("Template execute failure: %v", err)
 		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
@@ -689,7 +713,7 @@ func (exp *explorerUI) txPage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, str)
 }
-func (exp *explorerUI) balancejson (w http.ResponseWriter, r *http.Request) {
+func (exp *explorerUI) balancejson(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query();
 	addrPar, ok := params["addr"]
 	if !ok {
@@ -699,7 +723,7 @@ func (exp *explorerUI) balancejson (w http.ResponseWriter, r *http.Request) {
 	}
 
 	address := addrPar[0]
-	log.Info("address:",addrPar[0])
+	log.Info("address:", addrPar[0])
 	// Number of outputs for the address to query the database for. The URL
 	// query parameter "n" is used to specify the limit (e.g. "?n=20").
 	limitN, err := strconv.ParseInt(r.URL.Query().Get("n"), 10, 64)
@@ -753,9 +777,9 @@ func (exp *explorerUI) balancejson (w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Println("explorer.go:addrData",addrData)
-	fmt.Println("explorer.go:addrData.balance",addrData.Balance)
-	writeJSON(w,addrData.Balance)
+	fmt.Println("explorer.go:addrData", addrData)
+	fmt.Println("explorer.go:addrData.balance", addrData.Balance)
+	writeJSON(w, addrData.Balance)
 
 }
 
@@ -826,7 +850,6 @@ func (exp *explorerUI) addressPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 
 	confirmHeights := make([]int64, len(addrData.Transactions))
 	for i, v := range addrData.Transactions {
@@ -982,6 +1005,13 @@ func (exp *explorerUI) reloadTemplates() error {
 	if err != nil {
 		return err
 	}
+	hashrateTemplate, err := template.New("hashrate").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["hashrate"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
 
 	ticketpriceTemplate, err := template.New("ticketprice").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["ticketprice"],
@@ -1050,6 +1080,7 @@ func (exp *explorerUI) reloadTemplates() error {
 	exp.templates[statsTemplateIndex] = statsTemplate
 	exp.templates[diffTemplateIndex] = diffTemplate
 	exp.templates[blocksizeTemplateIndex] = blocksizeTemplate
+	exp.templates[hashrateTemplateIndex] = hashrateTemplate
 	exp.templates[ticketpriceTemplateIndex] = ticketpriceTemplate
 	exp.templates[blockverTemplateIndex] = blockverTemplate
 	exp.templates[scripttypeTemplateIndex] = scripttypeTemplate
@@ -1115,6 +1146,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
+	exp.templateFiles["hashrate"] = filepath.Join("views","hashrate.tmpl")
 	exp.templateFiles["ticketprice"] = filepath.Join("views", "ticketprice.tmpl")
 	exp.templateFiles["blockver"] = filepath.Join("views", "blockver.tmpl")
 	exp.templateFiles["scripttype"] = filepath.Join("views", "scripttype.tmpl")
@@ -1304,6 +1336,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	}
 	exp.templates = append(exp.templates, blocksizeTemplate)
 
+	hashrateTemplate, err := template.New("hashrate").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["hashrate"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, hashrateTemplate)
+
 	ticketpriceTemplate, err := template.New("ticketprice").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["ticketprice"],
 		exp.templateFiles["extras"],
@@ -1423,6 +1464,12 @@ func (exp *explorerUI) addRoutes() {
 	exp.Mux.Get("/blocksizejson", exp.blocksizejson)
 	exp.Mux.Route("/blocksize", func(r chi.Router) {
 		r.Get("/", exp.blocksize)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+
+	exp.Mux.Get("/hashratejson", exp.hashratejson)
+	exp.Mux.Route("/hashrate", func(r chi.Router) {
+		r.Get("/", exp.hashrate)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 

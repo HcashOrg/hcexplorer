@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -238,7 +239,7 @@ func RetrieveAddressSpent(db *sql.DB, address string) (count, totalAmount int64,
 }
 
 func RetrieveAddressSpentUnspent(db *sql.DB, address string) (numSpent, numUnspent,
-	totalSpent, totalUnspent int64, err error) {
+totalSpent, totalUnspent int64, err error) {
 	dbtx, err := db.Begin()
 	if err != nil {
 		err = fmt.Errorf("unable to begin database transaction: %v", err)
@@ -547,6 +548,43 @@ func RetrieveBlocksizejson(db *sql.DB, N, offset int64) ([]uint64, *dbtypes.Bloc
 	}()
 	return scanBlocksizeRows(rowsAll)
 }
+func RetrieveHashratejson(db *sql.DB) (*dbtypes.HashRateJson, error) {
+	rowsAll, err := db.Query("select avg(bits),avg(difficulty),to_char(to_timestamp(time),'yyyy-MM-dd') as date  from blocks  group by date ORDER BY date; ")
+	if err != nil {
+		return nil, nil
+	}
+	defer func() {
+		if e := rowsAll.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+	return scanHashrateRows(rowsAll)
+}
+func scanHashrateRows(rows *sql.Rows) (hashratejson *dbtypes.HashRateJson, err error) {
+	hashratejsons := &dbtypes.HashRateJson{make([]float64, 0), make([]string, 0)}
+	for rows.Next() {
+		var bitsbyte []uint8
+		var diff float64
+		var date string
+
+		err = rows.Scan(&bitsbyte, &diff, &date)
+		if err != nil {
+			return
+		}
+		//bits := binary.BigEndian.Uint32(bitsbyte)
+		// diff to hashrate
+		hashrate_h_s := diff * (math.Pow(2, 32)) / 150 // h/s
+		hashrate_th_s := hashrate_h_s/math.Pow(10,12) // th/s
+		//hashrate := blockchain.CalcWork(bits).Int64()
+		//fmt.Println(hashrate)
+		fmt.Println(date)
+		hashratejsons.HashRate = append(hashratejsons.HashRate, hashrate_th_s)
+		hashratejsons.Date = append(hashratejsons.Date, date)
+	}
+	hashratejson = hashratejsons
+	return
+}
+
 func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.BlocksizeJson, err error) {
 	blocksizejsons := &dbtypes.BlocksizeJson{make([]int64, 0), make([]int64, 0), make([]int64, 0), make([]string, 0)}
 	for rows.Next() {
@@ -557,12 +595,10 @@ func scanBlocksizeRows(rows *sql.Rows) (ids []uint64, blocksizejson *dbtypes.Blo
 			fmt.Println(err1)
 			return
 		}
-		log.Info(blocksize)
 		blocksizejsons.TotalSize = append(blocksizejsons.TotalSize, blocksize.TotalSize)
 		blocksizejsons.AvgSize = append(blocksizejsons.AvgSize, blocksize.AvgSize)
 		blocksizejsons.TotalTx = append(blocksizejsons.TotalTx, blocksize.TotalTx)
 		blocksizejsons.Date = append(blocksizejsons.Date, blocksize.Date)
-		log.Info(blocksizejson)
 	}
 	blocksizejson = blocksizejsons
 	return

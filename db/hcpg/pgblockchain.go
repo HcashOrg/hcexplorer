@@ -72,7 +72,7 @@ func NewChainDB(dbi *DBInfo, params *chaincfg.Params) (*ChainDB, error) {
 	// empty or not yet created, it is not an error.
 	bestHeight, _, _, err := RetrieveBestBlockHeight(db)
 	if err != nil && !(err == sql.ErrNoRows ||
-		strings.HasSuffix(err.Error(), "does not exist")) {
+		strings.HasSuffix(err.Error(), "does not exist") || strings.HasSuffix(err.Error(),`关系 "blocks" 不存在`)) {
 		return nil, err
 	}
 	_, devSubsidyAddresses, _, err := txscript.ExtractPkScriptAddrs(
@@ -368,6 +368,16 @@ func (pgb *ChainDB) GetBloksizejson() (*dbtypes.BlocksizeJson, error) {
 	log.Info(blocksizejson)
 	return blocksizejson, err
 
+}
+
+func (pgb *ChainDB) GetHashrateJson() (*dbtypes.HashRateJson, error) {
+	var hashratejson *dbtypes.HashRateJson
+	hashratejson, err := RetrieveHashratejson(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(hashratejson)
+	return hashratejson, err
 }
 
 func (pgb *ChainDB) GetTicketPricejson() (*dbtypes.TicketPrice, error) {
