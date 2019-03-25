@@ -62,6 +62,14 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td class="text-right pr-2 lh1rem pt-1">HASH RATE</td>
+                                <td>
+                                    <div class="mono lh1rem p03rem0 fs14-decimal fs24">
+                                        <span id="bsubsidy_total">{{template "decimalParts" (float64AsDecimalParts $.HashRate true)}}</span><span class="unit"> TH/s</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="text-right pr-2 lh1rem pt-1">BLOCK REWARD</td>
                                 <td>
                                     <div class="mono lh1rem p03rem0 fs14-decimal fs24">

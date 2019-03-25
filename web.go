@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -312,15 +313,18 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 		data := td.ExplorerSource.GetBlockVerbose(i, false)
 		initialBlocks = append(initialBlocks, data)
 	}
-
+	hashrate_h_s := initialBlocks[1].Difficulty * (math.Pow(2, 32)) / 150 // h/s
+	hashrate_th_s := hashrate_h_s/math.Pow(10,12) // Th/s
 	str, err := TemplateExecToString(td.templ, "home", struct {
 		InitialData         []*hcjson.GetBlockVerboseResult
 		Data                WebTemplateData
 		StakeDiffWindowSize int64
+		HashRate float64
 	}{
 		initialBlocks,
 		td.TemplateData,
 		td.params.StakeDiffWindowSize,
+		hashrate_th_s,
 	})
 	td.templateDataMtx.RUnlock()
 	if err != nil {
