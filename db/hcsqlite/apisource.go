@@ -736,6 +736,16 @@ func (db *wiredDB) GetAddressTransactionsRaw(addr string, count int) []*apitypes
 	return txarray
 }
 
+func (db *wiredDB)GetNetWorkHashRate()float64{
+	hashRate,err := db.client.GetNetworkHashPS()
+	if err != nil{
+		log.Errorf("get networkhashrate error:%v",err)
+		return 0
+	}
+	return float64(hashRate)
+
+}
+
 func makeExplorerBlockBasic(data *hcjson.GetBlockVerboseResult) *explorer.BlockBasic {
 	block := &explorer.BlockBasic{
 		Height:         data.Height,
