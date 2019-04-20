@@ -313,8 +313,8 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 		data := td.ExplorerSource.GetBlockVerbose(i, false)
 		initialBlocks = append(initialBlocks, data)
 	}
-	hashrate_h_s := initialBlocks[1].Difficulty * (math.Pow(2, 32)) / 150 // h/s
-	hashrate_th_s := hashrate_h_s/math.Pow(10,12) // Th/s
+	// hashrate_h_s := initialBlocks[1].Difficulty * (math.Pow(2, 32)) / 150 // h/s
+	hashrate_th_s := td.ExplorerSource.GetNetWorkHashRate()/math.Pow(10,12) // Th/s
 	str, err := TemplateExecToString(td.templ, "home", struct {
 		InitialData         []*hcjson.GetBlockVerboseResult
 		Data                WebTemplateData
