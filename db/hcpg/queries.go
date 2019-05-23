@@ -1573,7 +1573,7 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 	}
 
 	// query totalvalue every script type
-	rowsSum, err := db.Query("select sum(vouts.value),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type;")
+	rowsSum, err := db.Query("select sum(vouts.value/100000000),vouts.script_type from vins,vouts where vins.prev_tx_hash = vouts.tx_hash group by vouts.script_type;")
 	if err != nil {
 		log.Error(err)
 		return err
