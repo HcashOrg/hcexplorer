@@ -166,7 +166,7 @@ func (exp *explorerUI) richlist(w http.ResponseWriter, r *http.Request) {
 	addrList, errH := exp.explorerSource.GetTop100Addresses()
 
 	if errH != nil {
-		log.Errorf("Unable to get richlist")
+		log.Errorf("Unable to get richlist %v",errH)
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
 	}
