@@ -10,3 +10,4 @@ hcexplorer.conf
 rebuilddb2.conf
 cmd/rebuilddb/rebuilddb
 cmd/rebuilddb2/rebuilddb2
+hcexplorer.sqlt.db
