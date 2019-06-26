@@ -152,13 +152,29 @@ func (p *mempoolMonitor) TxHandler(client *hcrpcclient.Client) {
 				log.Tracef("Received ticket purchase %v, price %v",
 					tx.Hash(), hcutil.Amount(price).ToCoin())
 				// txHeight = tx.MsgTx().TxIn[0].BlockHeight // uh, no
+			case stake.TxTypeAiSStx:
+				// Ticket purchase
+				price := tx.MsgTx().TxOut[0].Value
+				log.Tracef("Received ticket purchase %v, price %v",
+					tx.Hash(), hcutil.Amount(price).ToCoin())
+				// txHeight = tx.MsgTx().TxIn[0].BlockHeight // uh, no
 			case stake.TxTypeSSGen:
 				// Vote
 				voteHash := &tx.MsgTx().TxIn[1].PreviousOutPoint.Hash
 				log.Tracef("Received vote %v for ticket %v", tx.Hash(), voteHash)
 				// TODO: Show subsidy for this vote (Vout[2] - Vin[1] ?)
 				continue
+			case stake.TxTypeAiSSGen:
+				// Vote
+				voteHash := &tx.MsgTx().TxIn[1].PreviousOutPoint.Hash
+				log.Tracef("Received vote %v for ticket %v", tx.Hash(), voteHash)
+				// TODO: Show subsidy for this vote (Vout[2] - Vin[1] ?)
+				continue
 			case stake.TxTypeSSRtx:
+				// Revoke
+				log.Tracef("Received revoke transaction: %v", tx.Hash())
+				continue
+			case stake.TxTypeAiSSRtx:
 				// Revoke
 				log.Tracef("Received revoke transaction: %v", tx.Hash())
 				continue

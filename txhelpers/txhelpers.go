@@ -556,10 +556,16 @@ func DetermineTxTypeString(msgTx *wire.MsgTx) string {
 	switch stake.DetermineTxType(msgTx) {
 	case stake.TxTypeSSGen:
 		return "Vote"
+	case stake.TxTypeAiSSGen:
+		return "AiVote"
 	case stake.TxTypeSStx:
 		return "Ticket"
+	case stake.TxTypeAiSStx:
+		return "AiTicket"
 	case stake.TxTypeSSRtx:
 		return "Revocation"
+	case stake.TxTypeAiSSRtx:
+		return "AiRevocation"
 	default:
 		return "Regular"
 	}
@@ -570,9 +576,15 @@ func IsStakeTx(msgTx *wire.MsgTx) bool {
 	switch stake.DetermineTxType(msgTx) {
 	case stake.TxTypeSSGen:
 		fallthrough
+	case stake.TxTypeAiSSGen:
+		fallthrough
 	case stake.TxTypeSStx:
 		fallthrough
+	case stake.TxTypeAiSStx:
+		fallthrough
 	case stake.TxTypeSSRtx:
+		return true
+	case stake.TxTypeAiSSRtx:
 		return true
 	default:
 		return false
