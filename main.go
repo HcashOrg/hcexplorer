@@ -28,6 +28,7 @@ import (
 	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcrpcclient"
 	"github.com/go-chi/chi"
+	_ "net/http/pprof"
 )
 
 // mainCore does all the work. Deferred functions do not run after os.Exit(),

@@ -10,16 +10,16 @@ import (
 	"strings"
 	"sync"
 
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcexplorer/rpcutils"
-	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcrpcclient"
 	"github.com/HcashOrg/hcd/wire"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
+	"github.com/HcashOrg/hcexplorer/rpcutils"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
+	"github.com/HcashOrg/hcrpcclient"
 )
 
 // PoolInfoCache contains a map of block hashes to ticket pool info data at that
@@ -66,6 +66,10 @@ type StakeDatabase struct {
 	liveTicketMtx   sync.Mutex
 	liveTicketCache map[chainhash.Hash]int64
 	poolInfo        *PoolInfoCache
+
+	// added for ai
+	aiLiveTicketMtx   sync.Mutex
+	aiLiveTicketCache map[chainhash.Hash]int64
 }
 
 const (
@@ -226,6 +230,9 @@ func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 	revokedTickets := txhelpers.RevokedTicketsInBlock(block)
 	spentTickets := txhelpers.TicketsSpentInBlock(block)
 
+	revotedAiTickets := txhelpers.RevokedTicketsInBlock(block)
+	spentAiTickets := txhelpers.TicketsSpentInBlock(block)
+
 	db.nodeMtx.Lock()
 	bestNodeHeight := int64(db.BestNode.Height())
 	db.nodeMtx.Unlock()
@@ -233,11 +240,11 @@ func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 		return fmt.Errorf("cannot connect block height %d at height %d", height, bestNodeHeight)
 	}
 
-	return db.connectBlock(block, spentTickets, revokedTickets, maturingTickets)
+	return db.connectBlock(block, spentTickets, spentAiTickets, revokedTickets, revotedAiTickets, maturingTickets)
 }
 
-func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Hash,
-	revoked []chainhash.Hash, maturing []chainhash.Hash) error {
+func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Hash, aiSpent []chainhash.Hash,
+	revoked []chainhash.Hash, aiRevoked []chainhash.Hash, maturing []chainhash.Hash) error {
 	db.nodeMtx.Lock()
 
 	cleanLiveTicketCache := func() {
@@ -251,6 +258,17 @@ func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Has
 		db.liveTicketMtx.Unlock()
 	}
 	defer cleanLiveTicketCache()
+	//cleanAiLiveTicketCache := func() {
+	//	db.aiLiveTicketMtx.Lock()
+	//	for i := range aiSpent{
+	//		delete(db.aiLiveTicketCache,aiSpent[i])
+	//	}
+	//	for i:= range aiRevoked{
+	//		delete(db.liveTicketCache,aiRevoked[i])
+	//	}
+	//	db.liveTicketMtx.Unlock()
+	//}
+	//defer cleanAiLiveTicketCache()
 
 	var err error
 	db.BestNode, err = db.BestNode.ConnectNode(block.MsgBlock().Header,
@@ -258,6 +276,12 @@ func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Has
 	if err != nil {
 		return err
 	}
+
+	//db.AiBestNode, err = db.AiBestNode.ConnectNode(block.MsgBlock().Header,
+	//	spent, revoked, maturing)
+	//if err != nil {
+	//	return err
+	//}
 
 	if err = db.StakeDB.Update(func(dbTx database.Tx) error {
 		return stake.WriteConnectedBestNode(dbTx, db.BestNode, *block.Hash())

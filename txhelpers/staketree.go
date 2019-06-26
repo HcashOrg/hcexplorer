@@ -10,8 +10,8 @@ import (
 	"github.com/HcashOrg/hcd/database"
 	_ "github.com/HcashOrg/hcd/database/ffldb" // init the ffldb driver
 	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcrpcclient"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcrpcclient"
 )
 
 const (
@@ -193,6 +193,18 @@ func VotesInBlock(bl *hcutil.Block) []chainhash.Hash {
 	return votes
 }
 
+// AiVotesInBlock finds all the AI votes in the block.
+func AiVotedInBlock(bl *hcutil.Block) []chainhash.Hash {
+	aivotes := make([]chainhash.Hash, 0)
+	for _, stx := range bl.STransactions() {
+		if stake.DetermineTxType(stx.MsgTx()) == stake.TxTypeAiSSGen {
+			h := stx.Hash()
+			aivotes = append(aivotes, *h)
+		}
+	}
+	return aivotes
+}
+
 // RevokedTicketsInBlock finds all the revoked tickets in the block.
 func RevokedTicketsInBlock(bl *hcutil.Block) []chainhash.Hash {
 	tickets := make([]chainhash.Hash, 0)
@@ -203,4 +215,15 @@ func RevokedTicketsInBlock(bl *hcutil.Block) []chainhash.Hash {
 	}
 
 	return tickets
+}
+
+// RevokedAiTicketsInBlock finds all the revoked aitickets in the block.
+func RevokedAiTicketsInBlock(bl *hcutil.Block) []chainhash.Hash {
+	aiTickets := make([]chainhash.Hash, 0)
+	for _, stx := range bl.STransactions() {
+		if stake.DetermineTxType(stx.MsgTx()) == stake.TxTypeAiSSRtx {
+			aiTickets = append(aiTickets, stx.MsgTx().TxIn[0].PreviousOutPoint.Hash)
+		}
+	}
+	return aiTickets
 }

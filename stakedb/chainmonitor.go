@@ -147,7 +147,7 @@ out:
 
 // switchToSideChain attempts to switch to a new side chain by: determining a
 // common ancestor block, disconnecting blocks from the main chain back to this
-// block, and connecting the side chain blocks onto the mainchain.
+// block, and connecting the side chain blocks onto the mainchain. 1 to 105 (0 live)...
 func (p *ChainMonitor) switchToSideChain() (int32, *chainhash.Hash, error) {
 	if len(p.sideChain) == 0 {
 		return 0, nil, fmt.Errorf("no side chain")

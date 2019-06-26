@@ -99,8 +99,7 @@ func (db *wiredDB) SyncDB(wg *sync.WaitGroup, quit chan struct{}) error {
 // SyncDBAsync is like SyncDBWithPoolValue except it also takes a result channel
 // where the caller should wait to receive the result. As such, this method
 // should be called as a gorouine.
-func (db *wiredDB) SyncDBAsync(res chan dbtypes.SyncResult,
-	quit chan struct{}) {
+func (db *wiredDB) SyncDBAsync(res chan dbtypes.SyncResult, quit chan struct{}) {
 	// hack around the old waitgroup input
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -736,10 +735,10 @@ func (db *wiredDB) GetAddressTransactionsRaw(addr string, count int) []*apitypes
 	return txarray
 }
 
-func (db *wiredDB)GetNetWorkHashRate()float64{
-	hashRate,err := db.client.GetNetworkHashPS()
-	if err != nil{
-		log.Errorf("get networkhashrate error:%v",err)
+func (db *wiredDB) GetNetWorkHashRate() float64 {
+	hashRate, err := db.client.GetNetworkHashPS()
+	if err != nil {
+		log.Errorf("get networkhashrate error:%v", err)
 		return 0
 	}
 	return float64(hashRate)
