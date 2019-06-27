@@ -13,13 +13,13 @@ import (
 )
 
 var createTableStatements = map[string]string{
-	"blocks":       internal.CreateBlockTable,
-	"transactions": internal.CreateTransactionTable,
-	"vins":         internal.CreateVinTable,
-	"vouts":        internal.CreateVoutTable,
-	"block_chain":  internal.CreateBlockPrevNextTable,
-	"addresses":    internal.CreateAddressTable,
-	"fees_stat":    internal.CreateFeesStatTable,
+	"blocks":          internal.CreateBlockTable,
+	"transactions":    internal.CreateTransactionTable,
+	"vins":            internal.CreateVinTable,
+	"vouts":           internal.CreateVoutTable,
+	"block_chain":     internal.CreateBlockPrevNextTable,
+	"addresses":       internal.CreateAddressTable,
+	"fees_stat":       internal.CreateFeesStatTable,
 	"mempool_history": internal.CreateMempoolHistory,
 }
 

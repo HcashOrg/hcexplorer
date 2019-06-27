@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"sort"
 	"strings"
 	"sync"
@@ -747,12 +748,15 @@ func (db *wiredDB) GetNetWorkHashRate() float64 {
 
 func makeExplorerBlockBasic(data *hcjson.GetBlockVerboseResult) *explorer.BlockBasic {
 	block := &explorer.BlockBasic{
-		Height:         data.Height,
-		Size:           data.Size,
-		Valid:          true, // we do not know this, TODO with DB v2
-		Voters:         data.Voters,
-		Transactions:   len(data.RawTx),
-		FreshStake:     data.FreshStake,
+		Height:       data.Height,
+		Size:         data.Size,
+		Valid:        true, // we do not know this, TODO with DB v2
+		Voters:       data.Voters,
+		AiVoters:     data.AiVoters,
+		Transactions: len(data.RawTx),
+		FreshStake:   data.FreshStake,
+		AiFreshStake: data.AiFreshStake,
+
 		BlockTime:      data.Time,
 		FormattedBytes: humanize.Bytes(uint64(data.Size)),
 		FormattedTime:  time.Unix(data.Time, 0).Format("2006-01-02 15:04:05"),
@@ -767,6 +771,9 @@ func makeExplorerBlockBasic(data *hcjson.GetBlockVerboseResult) *explorer.BlockB
 		}
 		if isRev, _ := stake.IsSSRtx(msgTx); isRev {
 			block.Revocations++
+		}
+		if isAiRev, _ := aistake.IsAiSSRtx(msgTx); isAiRev {
+			block.AiRevocations++
 		}
 	}
 	return block
@@ -865,8 +872,10 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 		VoteBits:              data.VoteBits,
 		FinalState:            data.FinalState,
 		PoolSize:              data.PoolSize,
+		AiPoolSize:            data.AiPoolSize,
 		Bits:                  data.Bits,
 		SBits:                 data.SBits,
+		AiSBits:               data.AiSBits,
 		Difficulty:            data.Difficulty,
 		ExtraData:             data.ExtraData,
 		StakeVersion:          data.StakeVersion,
@@ -879,40 +888,72 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 	revocations := make([]*explorer.TxBasic, 0, block.Revocations)
 	tickets := make([]*explorer.TxBasic, 0, block.FreshStake)
 
+	aiVotes := make([]*explorer.TxBasic, 0, block.AiVoters)
+	aiRevocations := make([]*explorer.TxBasic, 0, block.AiRevocations)
+	aiTickets := make([]*explorer.TxBasic, 0, block.AiFreshStake)
+
 	for _, tx := range data.RawSTx {
 		msgTx := txhelpers.MsgTxFromHex(tx.Hex)
 		if msgTx == nil {
 			log.Errorf("Unknown transaction %s", tx.Txid)
 			return nil
 		}
+		fmt.Println(stake.DetermineTxType(msgTx))
 		switch stake.DetermineTxType(msgTx) {
 		case stake.TxTypeSSGen:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			stx.Fee, stx.FeeRate = 0.0, 0.0
 			votes = append(votes, stx)
+		case stake.TxTypeAiSSGen:
+			stx := makeExplorerTxBasic(tx, msgTx, db.params)
+			stx.Fee, stx.FeeRate = 0.0, 0.0
+			aiVotes = append(aiVotes, stx)
 		case stake.TxTypeSStx:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			tickets = append(tickets, stx)
+		case stake.TxTypeAiSStx:
+			stx := makeExplorerTxBasic(tx, msgTx, db.params)
+			aiTickets = append(aiTickets, stx)
 		case stake.TxTypeSSRtx:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			revocations = append(revocations, stx)
+		case stake.TxTypeAiSSRtx:
+			stx := makeExplorerTxBasic(tx, msgTx, db.params)
+			aiRevocations = append(aiRevocations, stx)
 		}
 	}
 
 	txs := make([]*explorer.TxBasic, 0, block.Transactions)
+	itxs := make([]*explorer.TxBasic, 0, block.Transactions)
 	for _, tx := range data.RawTx {
-		exptx := makeExplorerTxBasic(tx, txhelpers.MsgTxFromHex(tx.Hex), db.params)
-		for _, vin := range tx.Vin {
-			if vin.IsCoinBase() {
-				exptx.Fee, exptx.FeeRate = 0.0, 0.0
+		if _, ok := txscript.IsInstantTx(txhelpers.MsgTxFromHex(tx.Hex)); ok {
+			aiexptx := makeExplorerTxBasic(tx, txhelpers.MsgTxFromHex(tx.Hex), db.params)
+			for _, vin := range tx.Vin {
+				if vin.IsCoinBase() {
+					aiexptx.Fee, aiexptx.FeeRate = 0.0, 0.0
+				}
 			}
+			txs = append(txs, aiexptx)
+		} else {
+			exptx := makeExplorerTxBasic(tx, txhelpers.MsgTxFromHex(tx.Hex), db.params)
+			for _, vin := range tx.Vin {
+				if vin.IsCoinBase() {
+					exptx.Fee, exptx.FeeRate = 0.0, 0.0
+				}
+			}
+			txs = append(txs, exptx)
 		}
-		txs = append(txs, exptx)
+
 	}
 	block.Tx = txs
+	block.ItTx = itxs
 	block.Votes = votes
 	block.Revs = revocations
 	block.Tickets = tickets
+
+	block.AiVotes = aiVotes
+	block.AiRevs = aiRevocations
+	block.AiTickets = aiTickets
 
 	sortTx := func(txs []*explorer.TxBasic) {
 		sort.Slice(txs, func(i, j int) bool {
@@ -921,9 +962,14 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 	}
 
 	sortTx(block.Tx)
+	sortTx(block.ItTx)
 	sortTx(block.Votes)
 	sortTx(block.Revs)
 	sortTx(block.Tickets)
+
+	sortTx(block.AiVotes)
+	sortTx(block.AiRevs)
+	sortTx(block.AiTickets)
 
 	getTotalFee := func(txs []*explorer.TxBasic) (total hcutil.Amount) {
 		for _, tx := range txs {
@@ -942,9 +988,12 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 		return
 	}
 	block.TotalSent = (getTotalSent(block.Tx) + getTotalSent(block.Revs) +
-		getTotalSent(block.Tickets) + getTotalSent(block.Votes)).ToCoin()
+		getTotalSent(block.Tickets) + getTotalSent(block.Votes) + getTotalSent(block.AiRevs) +
+		getTotalSent(block.AiTickets) + getTotalSent(block.AiVotes)).ToCoin()
+
 	block.MiningFee = getTotalFee(block.Tx) + getTotalFee(block.Revs) +
-		getTotalFee(block.Tickets)
+		getTotalFee(block.Tickets) +
+		getTotalFee(block.AiRevs) + getTotalFee(block.AiTickets)
 
 	return block
 }

@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btclog"
 	"github.com/HcashOrg/hcexplorer/db/hcpg"
 	"github.com/HcashOrg/hcexplorer/rpcutils"
 	"github.com/HcashOrg/hcrpcclient"
+	"github.com/btcsuite/btclog"
 )
 
 var (

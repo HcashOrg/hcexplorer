@@ -12,13 +12,17 @@ import (
 
 // BlockBasic models data for the explorer's explorer page
 type BlockBasic struct {
-	Height         int64  `json:"height"`
-	Size           int32  `json:"size"`
-	Valid          bool   `json:"valid"`
-	Voters         uint16 `json:"votes"`
+	Height   int64  `json:"height"`
+	Size     int32  `json:"size"`
+	Valid    bool   `json:"valid"`
+	Voters   uint16 `json:"votes"`
+	AiVoters uint16 `json:"aivotes"`
+
 	Transactions   int    `json:"tx"`
 	FreshStake     uint8  `json:"tickets"`
+	AiFreshStake   uint8  `json:"aitickets"`
 	Revocations    uint32 `json:"revocations"`
+	AiRevocations  uint32 `json:"airevocations"`
 	BlockTime      int64  `json:"time"`
 	FormattedTime  string `json:"formatted_time"`
 	FormattedBytes string
@@ -111,21 +115,28 @@ type Vout struct {
 // BlockInfo models data for display on the block page
 type BlockInfo struct {
 	*BlockBasic
-	Hash                  string
-	Version               int32
-	Confirmations         int64
-	StakeRoot             string
-	MerkleRoot            string
-	Tx                    []*TxBasic
-	Tickets               []*TxBasic
-	Revs                  []*TxBasic
-	Votes                 []*TxBasic
-	Nonce                 uint32
-	VoteBits              uint16
-	FinalState            string
-	PoolSize              uint32
+	Hash          string
+	Version       int32
+	Confirmations int64
+	StakeRoot     string
+	MerkleRoot    string
+	Tx            []*TxBasic
+	ItTx          []*TxBasic //instant transaction
+	Tickets       []*TxBasic
+	Revs          []*TxBasic
+	Votes         []*TxBasic
+	AiTickets     []*TxBasic
+	AiRevs        []*TxBasic
+	AiVotes       []*TxBasic
+	Nonce         uint32
+	VoteBits      uint16
+	FinalState    string
+	PoolSize      uint32
+	AiPoolSize    uint32
+
 	Bits                  string
 	SBits                 float64
+	AiSBits               float64
 	Difficulty            float64
 	ExtraData             string
 	StakeVersion          uint32

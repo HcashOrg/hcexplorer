@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/btcsuite/btclog"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/hcpg"
 	"github.com/HcashOrg/hcexplorer/db/hcsqlite"
@@ -19,6 +18,7 @@ import (
 	"github.com/HcashOrg/hcexplorer/rpcutils"
 	"github.com/HcashOrg/hcexplorer/stakedb"
 	"github.com/HcashOrg/hcrpcclient"
+	"github.com/btcsuite/btclog"
 	"github.com/jrick/logrotate/rotator"
 )
 

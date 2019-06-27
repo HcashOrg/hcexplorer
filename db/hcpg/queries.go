@@ -239,7 +239,7 @@ func RetrieveAddressSpent(db *sql.DB, address string) (count, totalAmount int64,
 }
 
 func RetrieveAddressSpentUnspent(db *sql.DB, address string) (numSpent, numUnspent,
-totalSpent, totalUnspent int64, err error) {
+	totalSpent, totalUnspent int64, err error) {
 	dbtx, err := db.Begin()
 	if err != nil {
 		err = fmt.Errorf("unable to begin database transaction: %v", err)
@@ -573,8 +573,8 @@ func scanHashrateRows(rows *sql.Rows) (hashratejson *dbtypes.HashRateJson, err e
 		}
 		//bits := binary.BigEndian.Uint32(bitsbyte)
 		// diff to hashrate
-		hashrate_h_s := diff * (math.Pow(2, 32)) / 150 // h/s
-		hashrate_th_s := hashrate_h_s/math.Pow(10,12) // th/s
+		hashrate_h_s := diff * (math.Pow(2, 32)) / 150   // h/s
+		hashrate_th_s := hashrate_h_s / math.Pow(10, 12) // th/s
 		//hashrate := blockchain.CalcWork(bits).Int64()
 		//fmt.Println(hashrate)
 		fmt.Println(date)

@@ -4,13 +4,13 @@
 package main
 
 import (
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/hcsqlite"
 	"github.com/HcashOrg/hcexplorer/mempool"
 	"github.com/HcashOrg/hcexplorer/stakedb"
 	"github.com/HcashOrg/hcexplorer/txhelpers"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -41,6 +41,7 @@ var ntfnChans struct {
 	spendTxBlockChan, recvTxBlockChan chan *txhelpers.BlockWatchedTx
 	relevantTxMempoolChan             chan *hcutil.Tx
 	newTxChan                         chan *mempool.NewTx
+	newItTxChan                       chan *mempool.NewItTx
 }
 
 func makeNtfnChans(cfg *config) {

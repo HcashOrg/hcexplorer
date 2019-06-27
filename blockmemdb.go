@@ -8,10 +8,10 @@ package main
 import (
 	"sync"
 
-	"github.com/HcashOrg/hcexplorer/blockdata"
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcexplorer/blockdata"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 )
 
 // BlockDataToMemdb models the block data and block data basic as maps

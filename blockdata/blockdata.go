@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcexplorer/stakedb"
-	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcrpcclient"
 	"github.com/HcashOrg/hcd/wire"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
+	"github.com/HcashOrg/hcexplorer/stakedb"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
+	"github.com/HcashOrg/hcrpcclient"
 )
 
 // BlockData contains all the data collected by a Collector and stored
@@ -88,26 +88,26 @@ func (b *BlockData) ToBlockExplorerSummary() apitypes.BlockExplorerBasic {
 		FreshStake:             b.Header.FreshStake,
 		StakeDiff:              b.Header.SBits,
 		BlockExplorerExtraInfo: extra,
-		Time: b.Header.Time,
+		Time:                   b.Header.Time,
 	}
 }
 
 // Collector models a structure for the source of the blockdata
 type Collector struct {
-	mtx          sync.Mutex
+	mtx         sync.Mutex
 	hcdChainSvr *hcrpcclient.Client
-	netParams    *chaincfg.Params
-	stakeDB      *stakedb.StakeDatabase
+	netParams   *chaincfg.Params
+	stakeDB     *stakedb.StakeDatabase
 }
 
 // NewCollector creates a new Collector.
 func NewCollector(hcdChainSvr *hcrpcclient.Client, params *chaincfg.Params,
 	stakeDB *stakedb.StakeDatabase) *Collector {
 	return &Collector{
-		mtx:          sync.Mutex{},
+		mtx:         sync.Mutex{},
 		hcdChainSvr: hcdChainSvr,
-		netParams:    params,
-		stakeDB:      stakeDB,
+		netParams:   params,
+		stakeDB:     stakeDB,
 	}
 }
 

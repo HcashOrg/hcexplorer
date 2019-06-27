@@ -59,7 +59,7 @@ type APIDataSource interface {
 	GetMempoolSSTxDetails(N int) *apitypes.MempoolTicketDetails
 	GetAddressTransactions(addr string, count int) *apitypes.Address
 	GetAddressTransactionsRaw(addr string, count int) []*apitypes.AddressTxRaw
-	GetNetWorkHashRate()float64
+	GetNetWorkHashRate() float64
 }
 
 // hcexplorer application context used by all route handlers

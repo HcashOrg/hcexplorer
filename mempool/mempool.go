@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcrpcclient"
 )
 
@@ -27,6 +27,11 @@ import (
 type NewTx struct {
 	Hash *chainhash.Hash
 	T    time.Time
+}
+type NewItTx struct {
+	Hash   *chainhash.Hash
+	Resend bool
+	T      time.Time
 }
 
 // MempoolInfo models basic data about the node's mempool
@@ -152,13 +157,29 @@ func (p *mempoolMonitor) TxHandler(client *hcrpcclient.Client) {
 				log.Tracef("Received ticket purchase %v, price %v",
 					tx.Hash(), hcutil.Amount(price).ToCoin())
 				// txHeight = tx.MsgTx().TxIn[0].BlockHeight // uh, no
+			case stake.TxTypeAiSStx:
+				// Ticket purchase
+				price := tx.MsgTx().TxOut[0].Value
+				log.Tracef("Received ticket purchase %v, price %v",
+					tx.Hash(), hcutil.Amount(price).ToCoin())
+				// txHeight = tx.MsgTx().TxIn[0].BlockHeight // uh, no
 			case stake.TxTypeSSGen:
 				// Vote
 				voteHash := &tx.MsgTx().TxIn[1].PreviousOutPoint.Hash
 				log.Tracef("Received vote %v for ticket %v", tx.Hash(), voteHash)
 				// TODO: Show subsidy for this vote (Vout[2] - Vin[1] ?)
 				continue
+			case stake.TxTypeAiSSGen:
+				// Vote
+				voteHash := &tx.MsgTx().TxIn[1].PreviousOutPoint.Hash
+				log.Tracef("Received vote %v for ticket %v", tx.Hash(), voteHash)
+				// TODO: Show subsidy for this vote (Vout[2] - Vin[1] ?)
+				continue
 			case stake.TxTypeSSRtx:
+				// Revoke
+				log.Tracef("Received revoke transaction: %v", tx.Hash())
+				continue
+			case stake.TxTypeAiSSRtx:
 				// Revoke
 				log.Tracef("Received revoke transaction: %v", tx.Hash())
 				continue
@@ -301,17 +322,17 @@ func (m *MempoolData) GetNumTickets() uint32 {
 }
 
 type mempoolDataCollector struct {
-	mtx          sync.Mutex
+	mtx         sync.Mutex
 	hcdChainSvr *hcrpcclient.Client
-	activeChain  *chaincfg.Params
+	activeChain *chaincfg.Params
 }
 
 // NewMempoolDataCollector creates a new mempoolDataCollector.
 func NewMempoolDataCollector(hcdChainSvr *hcrpcclient.Client, params *chaincfg.Params) *mempoolDataCollector {
 	return &mempoolDataCollector{
-		mtx:          sync.Mutex{},
+		mtx:         sync.Mutex{},
 		hcdChainSvr: hcdChainSvr,
-		activeChain:  params,
+		activeChain: params,
 	}
 }
 

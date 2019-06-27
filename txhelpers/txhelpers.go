@@ -537,6 +537,58 @@ func FeeRateInfoBlock(block *hcutil.Block) *hcjson.FeeInfoBlock {
 	return feeInfo
 }
 
+// AiFeeRateInfoBlock computes ticket fee rate statistics for the tickets included
+// in the specified block.
+func AiFeeRateInfoBlock(block *hcutil.Block) *hcjson.AiFeeInfoBlock {
+	feeInfo := new(hcjson.AiFeeInfoBlock)
+	_, aisstxMsgTxns := AiTicketsInBlock(block)
+
+	feeInfo.Height = uint32(block.Height())
+	feeInfo.Number = uint32(len(aisstxMsgTxns))
+
+	var minFee, maxFee, meanFee float64
+	minFee = math.MaxFloat64
+	feesRates := make([]float64, feeInfo.Number)
+	for it, msgTx := range aisstxMsgTxns {
+		var amtIn, amtOut int64
+		for iv := range msgTx.TxIn {
+			amtIn += msgTx.TxIn[iv].ValueIn
+		}
+		for iv := range msgTx.TxOut {
+			amtOut += msgTx.TxOut[iv].Value
+		}
+		fee := hcutil.Amount(1000*(amtIn-amtOut)).ToCoin() / float64(msgTx.SerializeSize())
+		if fee < minFee {
+			minFee = fee
+		}
+		if fee > maxFee {
+			maxFee = fee
+		}
+		meanFee += fee
+		feesRates[it] = fee
+	}
+
+	if feeInfo.Number > 0 {
+		N := float64(feeInfo.Number)
+		feeInfo.Mean = meanFee / N
+		feeInfo.Median = MedianCoin(feesRates)
+		feeInfo.Min = minFee
+		feeInfo.Max = maxFee
+
+		if feeInfo.Number > 1 {
+			var variance float64
+			for _, f := range feesRates {
+				fDev := f - feeInfo.Mean
+				variance += fDev * fDev
+			}
+			variance /= (N - 1)
+			feeInfo.StdDev = math.Sqrt(variance)
+		}
+	}
+
+	return feeInfo
+}
+
 // MsgTxFromHex returns a wire.MsgTx struct built from the transaction hex string
 func MsgTxFromHex(txhex string) *wire.MsgTx {
 	txBytes, err := hex.DecodeString(txhex)
@@ -556,10 +608,16 @@ func DetermineTxTypeString(msgTx *wire.MsgTx) string {
 	switch stake.DetermineTxType(msgTx) {
 	case stake.TxTypeSSGen:
 		return "Vote"
+	case stake.TxTypeAiSSGen:
+		return "AiVote"
 	case stake.TxTypeSStx:
 		return "Ticket"
+	case stake.TxTypeAiSStx:
+		return "AiTicket"
 	case stake.TxTypeSSRtx:
 		return "Revocation"
+	case stake.TxTypeAiSSRtx:
+		return "AiRevocation"
 	default:
 		return "Regular"
 	}
@@ -570,9 +628,15 @@ func IsStakeTx(msgTx *wire.MsgTx) bool {
 	switch stake.DetermineTxType(msgTx) {
 	case stake.TxTypeSSGen:
 		fallthrough
+	case stake.TxTypeAiSSGen:
+		fallthrough
 	case stake.TxTypeSStx:
 		fallthrough
+	case stake.TxTypeAiSStx:
+		fallthrough
 	case stake.TxTypeSSRtx:
+		return true
+	case stake.TxTypeAiSSRtx:
 		return true
 	default:
 		return false

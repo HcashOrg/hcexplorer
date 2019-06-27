@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcexplorer/semver"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcexplorer/semver"
 	"github.com/HcashOrg/hcrpcclient"
 )
 

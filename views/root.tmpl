@@ -10,7 +10,7 @@
 
         <div class="row">
 
-            <div class="col-md-6">
+            <div class="col-md-5">
 
                 <h3 class="mb-3"><span>Chain State</span></h3>
 
@@ -101,7 +101,7 @@
 
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-7">
 
                 <h4 class="mb-2"><span>Latest Blocks</span></h4>
                 <div class="table-parent">
@@ -114,10 +114,18 @@
                                     <span class="d-lg-none">Txn</span>
                                 </th>
                                 <th>Vote<span class="d-none d-lg-inline">s</span></th>
+                                <th>AiVote<span class="d-none d-lg-inline">s</span></th>
                                 <th>Ticket<span class="d-none d-lg-inline">s</span></th>
+                                <th>AiTicket<span class="d-none d-lg-inline">s</span></th>
                                 <th>
                                     <span class="d-none d-lg-inline">Revocations</span>
                                     <span class="d-lg-none">Revoke</span>
+
+
+                                </th>
+                                <th>
+                                    <span class="d-none d-lg-inline">AiRevocations</span>
+                                    <span class="d-lg-none">AiRevoke</span>
                                 </th>
                                 <th>Size</th>
                                 <th>Age</th>
@@ -130,8 +138,11 @@
                                 <td><a href="/explorer/block/{{.Height}}" class="fs18">{{.Height}}</a></td>
                                 <td>{{len .Tx}}</td>
                                 <td>{{.Voters}}</td>
+                                <td>{{.AiVoters}}</td>
                                 <td>{{.FreshStake}}</td>
+                                <td>{{.AiFreshStake}}</td>
                                 <td>{{.Revocations}}</td>
+                                <td>{{.AiRevocations}}</td>
                                 <td>{{formatBytes .Size}}</td>
                                 <td data-age="{{.Time}}"></td>
                                 <td>{{getTime .Time}}</td>

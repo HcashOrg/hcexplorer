@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcutil"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
 )
 
 const (
@@ -241,6 +241,8 @@ func (db *wiredDB) resyncDBWithPoolValue(quit chan struct{}) (int64, error) {
 		}
 
 		numLive := db.sDB.BestNode.PoolSize()
+		aiNumLive := db.sDB.AiBestNode.PoolSize()
+
 		//liveTickets := db.sDB.BestNode.LiveTickets()
 		// TODO: winning tickets
 		//winningTickets := db.sDB.BestNode.Winners()
@@ -250,8 +252,8 @@ func (db *wiredDB) resyncDBWithPoolValue(quit chan struct{}) (int64, error) {
 			if endRangeBlock > height {
 				endRangeBlock = height
 			}
-			log.Infof("Scanning blocks %d to %d (%d live)...",
-				i, endRangeBlock, numLive)
+			log.Infof("Scanning blocks %d to %d (%d live and %d ailive)...",
+				i, endRangeBlock, numLive, aiNumLive)
 		}
 
 		var tpi *apitypes.TicketPoolInfo
@@ -270,13 +272,14 @@ func (db *wiredDB) resyncDBWithPoolValue(quit chan struct{}) (int64, error) {
 		diffRatio := txhelpers.GetDifficultyRatio(header.Bits, db.params)
 
 		blockSummary := apitypes.BlockDataBasic{
-			Height:     header.Height,
-			Size:       header.Size,
-			Hash:       blockhash.String(),
-			Difficulty: diffRatio,
-			StakeDiff:  hcutil.Amount(header.SBits).ToCoin(),
-			Time:       header.Timestamp.Unix(),
-			PoolInfo:   *tpi,
+			Height:      header.Height,
+			Size:        header.Size,
+			Hash:        blockhash.String(),
+			Difficulty:  diffRatio,
+			StakeDiff:   hcutil.Amount(header.SBits).ToCoin(),
+			AiStakeDiff: hcutil.Amount(header.AiSBits).ToCoin(),
+			Time:        header.Timestamp.Unix(),
+			PoolInfo:    *tpi,
 		}
 
 		if i > bestBlockHeight {
@@ -295,18 +298,25 @@ func (db *wiredDB) resyncDBWithPoolValue(quit chan struct{}) (int64, error) {
 
 		// Stake info
 		si := apitypes.StakeInfoExtended{}
-
 		// Ticket fee info
 		fib := txhelpers.FeeRateInfoBlock(block)
 		if fib == nil {
 			return i - 1, fmt.Errorf("FeeRateInfoBlock failed")
 		}
+		aifib := txhelpers.AiFeeRateInfoBlock(block)
+		if fib == nil {
+			return i - 1, fmt.Errorf("AiFeeRateInfoBlock failed")
+		}
 		si.Feeinfo = *fib
+		si.AiFeeinfo = *aifib
 
 		// Price window number and block index
 		winSize := uint32(db.params.StakeDiffWindowSize)
+		aiwinSize := uint32(db.params.StakeDiffWindows) // TODO this
 		si.PriceWindowNum = int(i) / int(winSize)
+		si.AiPriceWindowNum = int(i) / int(aiwinSize)
 		si.IdxBlockInWindow = int(i)%int(winSize) + 1
+		si.AiIdxBlockInWindow = int(i)%int(winSize) + 1
 
 		// Ticket pool info
 		si.PoolInfo = blockSummary.PoolInfo

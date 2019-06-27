@@ -8,14 +8,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcexplorer/db/hcsqlite"
 	"github.com/HcashOrg/hcexplorer/mempool"
 	"github.com/HcashOrg/hcexplorer/stakedb"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcwallet/wallet/udb"
 )
 
@@ -136,7 +136,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 	return &hcrpcclient.NotificationHandlers{
 		OnBlockConnected: func(blockHeaderSerialized []byte, transactions [][]byte) {
 			metuxOnBlock.Lock()
-			defer func(){
+			defer func() {
 				metuxOnBlock.Unlock()
 			}()
 			blockHeader := new(wire.BlockHeader)
@@ -155,8 +155,8 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 		},
 		OnReorganization: func(oldHash *chainhash.Hash, oldHeight int32,
 			newHash *chainhash.Hash, newHeight int32) {
-				metuxOnBlock.Lock()
-			defer func(){
+			metuxOnBlock.Lock()
+			defer func() {
 				metuxOnBlock.Unlock()
 			}()
 			// Send reorg data to hcsqlite's monitor
@@ -251,5 +251,41 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 		//txDetails.Hex
 		//log.Info("Transaction accepted to mempool: ", txDetails.Txid)
 		//},
+		OnInstantTxVote: func(instantTxVoteHash *chainhash.Hash, instantTxHash *chainhash.Hash, tickeHash *chainhash.Hash, vote bool, sig []byte) {
+
+		},
+		OnNewInstantTx: func(tx []byte, tickets []*chainhash.Hash, resend bool) {
+			// vote succeed
+			// TOOD my
+			itTx := wire.NewMsgInstantTx()
+			itTx.FromBytes(tx)
+
+			itTxh := itTx.MsgTx.TxHash()
+
+			if resend {
+				log.Infof("receive new successed voted instant tranaction %s ", itTx.TxHash())
+				select {
+				case ntfnChans.newItTxChan <- &mempool.NewItTx{
+					Hash:   &itTxh,
+					Resend: true,
+					T:      time.Now(),
+				}:
+				default:
+					log.Warn("newItTxChan buffer full!")
+				}
+			} else {
+				log.Infof("receive new instant tranaction %s", itTx.TxHash())
+				select {
+				case ntfnChans.newItTxChan <- &mempool.NewItTx{
+					Hash:   &itTxh,
+					Resend: true,
+					T:      time.Now(),
+				}:
+				default:
+					log.Warn("newItTxChan buffer full!")
+				}
+			}
+
+		},
 	}, blockQueue
 }

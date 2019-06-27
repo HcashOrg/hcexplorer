@@ -13,11 +13,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/btcsuite/btclog"
-	flags "github.com/btcsuite/go-flags"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcwallet/netparams"
+	"github.com/btcsuite/btclog"
+	flags "github.com/btcsuite/go-flags"
 )
 
 const (

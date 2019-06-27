@@ -152,6 +152,21 @@ func TicketsInBlock(bl *hcutil.Block) ([]chainhash.Hash, []*wire.MsgTx) {
 	return tickets, ticketsMsgTx
 }
 
+// AIticketInBlock finds all the new tickets in the block
+func AiTicketsInBlock(bl *hcutil.Block) ([]chainhash.Hash, []*wire.MsgTx) {
+	aiTickets := make([]chainhash.Hash, 0)
+	aiTicketsMsgTx := make([]*wire.MsgTx, 0)
+	for _, stx := range bl.STransactions() {
+		if stake.DetermineTxType(stx.MsgTx()) == stake.TxTypeAiSStx {
+			h := stx.Hash()
+			aiTickets = append(aiTickets, *h)
+			aiTicketsMsgTx = append(aiTicketsMsgTx, stx.MsgTx())
+		}
+	}
+
+	return aiTickets, aiTicketsMsgTx
+}
+
 // TicketTxnsInBlock finds all the new tickets in the block.
 func TicketTxnsInBlock(bl *hcutil.Block) ([]chainhash.Hash, []*hcutil.Tx) {
 	tickets := make([]chainhash.Hash, 0)
@@ -172,6 +187,19 @@ func TicketsSpentInBlock(bl *hcutil.Block) []chainhash.Hash {
 	tickets := make([]chainhash.Hash, 0)
 	for _, stx := range bl.STransactions() {
 		if stake.DetermineTxType(stx.MsgTx()) == stake.TxTypeSSGen {
+			// Hash of the original STtx
+			tickets = append(tickets, stx.MsgTx().TxIn[1].PreviousOutPoint.Hash)
+		}
+	}
+
+	return tickets
+}
+
+// TicketsSpentInBlock finds all the tickets spent in the block.
+func AiTicketsSpentInBlock(bl *hcutil.Block) []chainhash.Hash {
+	tickets := make([]chainhash.Hash, 0)
+	for _, stx := range bl.STransactions() {
+		if stake.DetermineTxType(stx.MsgTx()) == stake.TxTypeAiSSGen {
 			// Hash of the original STtx
 			tickets = append(tickets, stx.MsgTx().TxIn[1].PreviousOutPoint.Hash)
 		}

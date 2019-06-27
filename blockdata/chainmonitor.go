@@ -6,9 +6,9 @@ package blockdata
 import (
 	"sync"
 
-	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
 )
 
 // ReorgData contains the information from a reoranization notification

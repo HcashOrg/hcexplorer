@@ -72,7 +72,7 @@ func NewChainDB(dbi *DBInfo, params *chaincfg.Params) (*ChainDB, error) {
 	// empty or not yet created, it is not an error.
 	bestHeight, _, _, err := RetrieveBestBlockHeight(db)
 	if err != nil && !(err == sql.ErrNoRows ||
-		strings.HasSuffix(err.Error(), "does not exist") || strings.HasSuffix(err.Error(),`关系 "blocks" 不存在`)) {
+		strings.HasSuffix(err.Error(), "does not exist") || strings.HasSuffix(err.Error(), `关系 "blocks" 不存在`)) {
 		return nil, err
 	}
 	_, devSubsidyAddresses, _, err := txscript.ExtractPkScriptAddrs(

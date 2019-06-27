@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	flags "github.com/btcsuite/go-flags"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcwallet/netparams"
+	flags "github.com/btcsuite/go-flags"
 )
 
 const (
@@ -58,10 +58,10 @@ type config struct {
 	UpdateAddrSpendInfo bool   `short:"u" long:"updateaddrspends" description:"Update the spending transaction info in ALL rows of the addresses table."`
 
 	// RPC client options
-	HcdUser         string `long:"hcduser" description:"Daemon RPC user name"`
-	HcdPass         string `long:"hcdpass" description:"Daemon RPC password"`
-	HcdServ         string `long:"hcdserv" description:"Hostname/IP and port of hcd RPC server to connect to (default localhost:9109, testnet: localhost:19109, simnet: localhost:19556)"`
-	HcdCert         string `long:"hcdcert" description:"File containing the hcd certificate file"`
+	HcdUser          string `long:"hcduser" description:"Daemon RPC user name"`
+	HcdPass          string `long:"hcdpass" description:"Daemon RPC password"`
+	HcdServ          string `long:"hcdserv" description:"Hostname/IP and port of hcd RPC server to connect to (default localhost:9109, testnet: localhost:19109, simnet: localhost:19556)"`
+	HcdCert          string `long:"hcdcert" description:"File containing the hcd certificate file"`
 	DisableDaemonTLS bool   `long:"nodaemontls" description:"Disable TLS for the daemon RPC client -- NOTE: This is only allowed if the RPC client is connecting to localhost"`
 
 	ForceReindex bool `long:"reindex" short:"R" description:"Drop indexes prior to sync and recreate after sync, with insertion conflict checks disabled in absence of constraints."`
@@ -80,7 +80,7 @@ var (
 		DBUser:     defaultDBUser,
 		DBPass:     defaultDBPass,
 		DBName:     defaultDBName,
-		HcdCert:   defaultDaemonRPCCertFile,
+		HcdCert:    defaultDaemonRPCCertFile,
 	}
 )
 

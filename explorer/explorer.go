@@ -166,7 +166,7 @@ func (exp *explorerUI) richlist(w http.ResponseWriter, r *http.Request) {
 	addrList, errH := exp.explorerSource.GetTop100Addresses()
 
 	if errH != nil {
-		log.Errorf("Unable to get richlist %v",errH)
+		log.Errorf("Unable to get richlist %v", errH)
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -714,7 +714,7 @@ func (exp *explorerUI) txPage(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, str)
 }
 func (exp *explorerUI) balancejson(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query();
+	params := r.URL.Query()
 	addrPar, ok := params["addr"]
 	if !ok {
 		log.Trace("address not set")
@@ -1146,7 +1146,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
-	exp.templateFiles["hashrate"] = filepath.Join("views","hashrate.tmpl")
+	exp.templateFiles["hashrate"] = filepath.Join("views", "hashrate.tmpl")
 	exp.templateFiles["ticketprice"] = filepath.Join("views", "ticketprice.tmpl")
 	exp.templateFiles["blockver"] = filepath.Join("views", "blockver.tmpl")
 	exp.templateFiles["scripttype"] = filepath.Join("views", "scripttype.tmpl")

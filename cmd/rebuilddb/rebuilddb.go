@@ -7,10 +7,10 @@ import (
 	"runtime/pprof"
 	"sync"
 
-	"github.com/btcsuite/btclog"
 	"github.com/HcashOrg/hcexplorer/db/hcsqlite"
 	"github.com/HcashOrg/hcexplorer/rpcutils"
 	"github.com/HcashOrg/hcrpcclient"
+	"github.com/btcsuite/btclog"
 )
 
 var (

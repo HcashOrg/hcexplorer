@@ -6,6 +6,7 @@ package stakedb
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"os"
 	"strings"
 	"sync"
@@ -29,11 +30,21 @@ type PoolInfoCache struct {
 	poolInfo map[chainhash.Hash]*apitypes.TicketPoolInfo
 }
 
+type AiPoolInfoCache struct {
+	sync.RWMutex
+	aiPoolInfo map[chainhash.Hash]*apitypes.TicketPoolInfo
+}
+
 // NewPoolInfoCache constructs a new PoolInfoCache, and is needed to initialize
 // the internal map.
 func NewPoolInfoCache() *PoolInfoCache {
 	return &PoolInfoCache{
 		poolInfo: make(map[chainhash.Hash]*apitypes.TicketPoolInfo),
+	}
+}
+func NewAiPoolInfoCache() *AiPoolInfoCache {
+	return &AiPoolInfoCache{
+		aiPoolInfo: make(map[chainhash.Hash]*apitypes.TicketPoolInfo),
 	}
 }
 
@@ -56,16 +67,19 @@ func (c *PoolInfoCache) Set(hash chainhash.Hash, p *apitypes.TicketPoolInfo) {
 
 // StakeDatabase models data for the stake database
 type StakeDatabase struct {
-	params          *chaincfg.Params
-	NodeClient      *hcrpcclient.Client
-	nodeMtx         sync.RWMutex
-	StakeDB         database.DB
-	BestNode        *stake.Node
-	blkMtx          sync.RWMutex
-	blockCache      map[int64]*hcutil.Block
+	params     *chaincfg.Params
+	NodeClient *hcrpcclient.Client
+	nodeMtx    sync.RWMutex
+	StakeDB    database.DB
+	BestNode   *stake.Node
+	AiBestNode *aistake.Node
+	blkMtx     sync.RWMutex
+	blockCache map[int64]*hcutil.Block
+
 	liveTicketMtx   sync.Mutex
 	liveTicketCache map[chainhash.Hash]int64
 	poolInfo        *PoolInfoCache
+	aiPoolInfo      *AiPoolInfoCache
 
 	// added for ai
 	aiLiveTicketMtx   sync.Mutex
@@ -83,11 +97,14 @@ const (
 // ffldb-backed stake database, and loads all live tickets into a cache.
 func NewStakeDatabase(client *hcrpcclient.Client, params *chaincfg.Params) (*StakeDatabase, error) {
 	sDB := &StakeDatabase{
-		params:          params,
-		NodeClient:      client,
-		blockCache:      make(map[int64]*hcutil.Block),
-		liveTicketCache: make(map[chainhash.Hash]int64),
-		poolInfo:        NewPoolInfoCache(),
+		params:            params,
+		NodeClient:        client,
+		blockCache:        make(map[int64]*hcutil.Block),
+		liveTicketCache:   make(map[chainhash.Hash]int64),
+		aiLiveTicketCache: make(map[chainhash.Hash]int64),
+
+		poolInfo:   NewPoolInfoCache(),
+		aiPoolInfo: NewAiPoolInfoCache(),
 	}
 	if err := sDB.Open(); err != nil {
 		return nil, err
@@ -104,18 +121,30 @@ func NewStakeDatabase(client *hcrpcclient.Client, params *chaincfg.Params) (*Sta
 		if err != nil {
 			return sDB, err
 		}
-
+		aiLiveTickets, err := sDB.NodeClient.AiLiveTickets()
+		if err != nil {
+			return sDB, err
+		}
 		log.Info("Pre-populating live ticket cache...")
+		log.Info("Pre-populating  ai live ticket cache...")
 
 		type promiseGetRawTransaction struct {
 			result hcrpcclient.FutureGetRawTransactionResult
 			ticket *chainhash.Hash
 		}
 		promisesGetRawTransaction := make([]promiseGetRawTransaction, 0, len(liveTickets))
+		aiPromisesGetRawTransaction := make([]promiseGetRawTransaction, 0, len(aiLiveTickets))
 
 		// Send all the live ticket requests
 		for _, hash := range liveTickets {
 			promisesGetRawTransaction = append(promisesGetRawTransaction, promiseGetRawTransaction{
+				result: sDB.NodeClient.GetRawTransactionAsync(hash),
+				ticket: hash,
+			})
+		}
+		// Send all the ai live ticket requests
+		for _, hash := range aiLiveTickets {
+			aiPromisesGetRawTransaction = append(aiPromisesGetRawTransaction, promiseGetRawTransaction{
 				result: sDB.NodeClient.GetRawTransactionAsync(hash),
 				ticket: hash,
 			})
@@ -133,6 +162,23 @@ func NewStakeDatabase(client *hcrpcclient.Client, params *chaincfg.Params) (*Sta
 			}
 
 			sDB.liveTicketCache[*p.ticket] = ticketTx.MsgTx().TxOut[0].Value
+
+			// txHeight := ticketTx.BlockHeight
+			// unconfirmed := (txHeight == 0)
+			// immature := (tipHeight-int32(txHeight) < int32(w.ChainParams().TicketMaturity))
+		}
+		// Receive the live ticket tx results
+		for _, p := range aiPromisesGetRawTransaction {
+			aiticketTx, err := p.result.Receive()
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			if !aiticketTx.Hash().IsEqual(p.ticket) {
+				panic(fmt.Sprintf("Failed to receive Tx details for requested ticket hash: %v, %v", p.ticket, aiticketTx.Hash()))
+			}
+
+			sDB.liveTicketCache[*p.ticket] = aiticketTx.MsgTx().TxOut[0].Value
 
 			// txHeight := ticketTx.BlockHeight
 			// unconfirmed := (txHeight == 0)
@@ -215,12 +261,15 @@ func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 	maturingHeight := height - int64(db.params.TicketMaturity)
 
 	var maturingTickets []chainhash.Hash
+	var maturingAiTickets []chainhash.Hash
 	if maturingHeight >= 0 {
 		maturingBlock, wasCached := db.block(maturingHeight)
 		if wasCached {
 			db.ForgetBlock(maturingHeight)
 		}
 		maturingTickets, _ = txhelpers.TicketsInBlock(maturingBlock)
+		maturingAiTickets, _ = txhelpers.AiTicketsInBlock(maturingBlock)
+
 	}
 
 	db.blkMtx.Lock()
@@ -230,8 +279,8 @@ func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 	revokedTickets := txhelpers.RevokedTicketsInBlock(block)
 	spentTickets := txhelpers.TicketsSpentInBlock(block)
 
-	revotedAiTickets := txhelpers.RevokedTicketsInBlock(block)
-	spentAiTickets := txhelpers.TicketsSpentInBlock(block)
+	revotedAiTickets := txhelpers.RevokedAiTicketsInBlock(block)
+	spentAiTickets := txhelpers.AiTicketsSpentInBlock(block)
 
 	db.nodeMtx.Lock()
 	bestNodeHeight := int64(db.BestNode.Height())
@@ -240,11 +289,11 @@ func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 		return fmt.Errorf("cannot connect block height %d at height %d", height, bestNodeHeight)
 	}
 
-	return db.connectBlock(block, spentTickets, spentAiTickets, revokedTickets, revotedAiTickets, maturingTickets)
+	return db.connectBlock(block, spentTickets, spentAiTickets, revokedTickets, revotedAiTickets, maturingTickets, maturingAiTickets)
 }
 
 func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Hash, aiSpent []chainhash.Hash,
-	revoked []chainhash.Hash, aiRevoked []chainhash.Hash, maturing []chainhash.Hash) error {
+	revoked []chainhash.Hash, aiRevoked []chainhash.Hash, maturing []chainhash.Hash, aimaturing []chainhash.Hash) error {
 	db.nodeMtx.Lock()
 
 	cleanLiveTicketCache := func() {
@@ -258,17 +307,18 @@ func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Has
 		db.liveTicketMtx.Unlock()
 	}
 	defer cleanLiveTicketCache()
-	//cleanAiLiveTicketCache := func() {
-	//	db.aiLiveTicketMtx.Lock()
-	//	for i := range aiSpent{
-	//		delete(db.aiLiveTicketCache,aiSpent[i])
-	//	}
-	//	for i:= range aiRevoked{
-	//		delete(db.liveTicketCache,aiRevoked[i])
-	//	}
-	//	db.liveTicketMtx.Unlock()
-	//}
-	//defer cleanAiLiveTicketCache()
+
+	cleanAiLiveTicketCache := func() {
+		db.aiLiveTicketMtx.Lock()
+		for i := range aiSpent {
+			delete(db.aiLiveTicketCache, aiSpent[i])
+		}
+		for i := range aiRevoked {
+			delete(db.aiLiveTicketCache, aiRevoked[i])
+		}
+		db.aiLiveTicketMtx.Unlock()
+	}
+	defer cleanAiLiveTicketCache()
 
 	var err error
 	db.BestNode, err = db.BestNode.ConnectNode(block.MsgBlock().Header,
@@ -277,14 +327,22 @@ func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Has
 		return err
 	}
 
-	//db.AiBestNode, err = db.AiBestNode.ConnectNode(block.MsgBlock().Header,
-	//	spent, revoked, maturing)
-	//if err != nil {
-	//	return err
-	//}
+	db.AiBestNode, err = db.AiBestNode.ConnectNode(block.MsgBlock().Header,
+		aiSpent, aiRevoked, aimaturing)
+	if err != nil {
+		return err
+	}
 
 	if err = db.StakeDB.Update(func(dbTx database.Tx) error {
 		return stake.WriteConnectedBestNode(dbTx, db.BestNode, *block.Hash())
+
+	}); err != nil {
+		return err
+	}
+
+	if err = db.StakeDB.Update(func(dbTx database.Tx) error {
+		return aistake.WriteConnectedBestNode(dbTx, db.AiBestNode, *block.Hash())
+
 	}); err != nil {
 		return err
 	}
@@ -386,11 +444,22 @@ func (db *StakeDatabase) Open() error {
 		if v == nil {
 			return fmt.Errorf("missing key for chain state data")
 		}
-
 		var stakeDBHash chainhash.Hash
 		copy(stakeDBHash[:], v[:chainhash.HashSize])
 		offset := chainhash.HashSize
 		stakeDBHeight := binary.LittleEndian.Uint32(v[offset : offset+4])
+
+		aiv := dbTx.Metadata().Get([]byte("aistakechainstate"))
+		if aiv == nil {
+			return fmt.Errorf("missing key for chain state data")
+		}
+		var aistakeDBHash chainhash.Hash
+		copy(aistakeDBHash[:], aiv[:chainhash.HashSize])
+		aistakeDBHeight := binary.LittleEndian.Uint32(v[offset : offset+4])
+
+		if stakeDBHeight != aistakeDBHeight {
+			return fmt.Errorf("stakeDBHeight:%d is not equal to aistakeDBHeight:%d ", stakeDBHeight, aistakeDBHeight)
+		}
 
 		var errLocal error
 		msgBlock, errLocal := db.NodeClient.GetBlock(&stakeDBHash)
@@ -401,6 +470,12 @@ func (db *StakeDatabase) Open() error {
 
 		db.BestNode, errLocal = stake.LoadBestNode(dbTx, stakeDBHeight,
 			stakeDBHash, header, db.params)
+		if errLocal != nil {
+			return fmt.Errorf("LoadBestNode failed(%s):%v ", stakeDBHash, errLocal)
+		}
+
+		db.AiBestNode, errLocal = aistake.LoadBestNode(dbTx, aistakeDBHeight,
+			aistakeDBHash, header, db.params)
 		return errLocal
 	})
 	if err != nil {
@@ -408,6 +483,11 @@ func (db *StakeDatabase) Open() error {
 		err = db.StakeDB.Update(func(dbTx database.Tx) error {
 			var errLocal error
 			db.BestNode, errLocal = stake.InitDatabaseState(dbTx, db.params)
+			if errLocal != nil {
+				log.Errorf("initDatabaseState failed:%v", errLocal)
+				return errLocal
+			}
+			db.AiBestNode, errLocal = aistake.InitDatabaseState(dbTx, db.params)
 			return errLocal
 		})
 		log.Debug("Created new stake db.")
@@ -426,6 +506,9 @@ func (db *StakeDatabase) PoolInfoBest() (apitypes.TicketPoolInfo, uint32) {
 	poolSize := db.BestNode.PoolSize()
 	liveTickets := db.BestNode.LiveTickets()
 	height := db.BestNode.Height()
+
+	aiPoolSize := db.AiBestNode.PoolSize()
+	aiLiveTickets := db.AiBestNode.LiveTickets()
 	db.nodeMtx.RUnlock()
 
 	db.liveTicketMtx.Lock()
@@ -447,6 +530,25 @@ func (db *StakeDatabase) PoolInfoBest() (apitypes.TicketPoolInfo, uint32) {
 	}
 	db.liveTicketMtx.Unlock()
 
+	db.aiLiveTicketMtx.Lock()
+	var aiPoolValue int64
+	for _, hash := range aiLiveTickets {
+		val, ok := db.aiLiveTicketCache[hash]
+		if !ok {
+			tx, err := db.NodeClient.GetRawTransaction(&hash)
+			if err != nil {
+				log.Errorf("Unable to get transaction %v: %v\n", hash, err)
+				continue
+			}
+			// This isn't quite right for pool tickets where the small
+			// pool fees are included in vout[0], but it's close.
+			val = tx.MsgTx().TxOut[0].Value
+			db.aiLiveTicketCache[hash] = val
+		}
+		aiPoolValue += val
+	}
+	db.aiLiveTicketMtx.Unlock()
+
 	// header, _ := db.DBTipBlockHeader()
 	// if int(header.PoolSize) != len(liveTickets) {
 	// 	log.Infof("Header at %d, DB at %d.", header.Height, db.BestNode.Height())
@@ -454,15 +556,24 @@ func (db *StakeDatabase) PoolInfoBest() (apitypes.TicketPoolInfo, uint32) {
 	// }
 
 	poolCoin := hcutil.Amount(poolValue).ToCoin()
+	aiPoolCoin := hcutil.Amount(aiPoolValue).ToCoin()
 	valAvg := 0.0
+	aiValAvg := 0.0
 	if len(liveTickets) > 0 {
 		valAvg = poolCoin / float64(poolSize)
+	}
+	if len(aiLiveTickets) > 0 {
+		aiValAvg = aiPoolCoin / float64((aiPoolSize))
 	}
 
 	return apitypes.TicketPoolInfo{
 		Size:   uint32(poolSize),
 		Value:  poolCoin,
 		ValAvg: valAvg,
+
+		AiSize:   uint32(aiPoolSize),
+		AiValue:  aiPoolCoin,
+		AiValAvg: aiValAvg,
 	}, height
 }
 

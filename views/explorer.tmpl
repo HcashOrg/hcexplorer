@@ -28,10 +28,16 @@
                                     <span class="d-md-none">Txn</span>
                                 </th>
                                 <th>Vote<span class="d-none d-md-inline">s</span></th>
+                                <th>AiVote<span class="d-none d-md-inline">s</span></th>
                                 <th>Ticket<span class="d-none d-md-inline">s</span></th>
+                                <th>AiTicket<span class="d-none d-md-inline">s</span></th>
                                 <th>
                                     <span class="d-none d-md-inline">Revocations</span>
                                     <span class="d-md-none">Revoke</span>
+                                </th>
+                                <th>
+                                    <span class="d-none d-md-inline">AiRevocations</span>
+                                    <span class="d-md-none">AiRevoke</span>
                                 </th>
                                 <th>Size</th>
                                 <th>Age</th>
@@ -44,8 +50,12 @@
                                 <td><a href="/explorer/block/{{.Height}}" class="fs18 height">{{ .Height }}</a></td>
                                 <td>{{.Transactions}}</td>
                                 <td>{{.Voters}}</td>
+                                <td>{{.AiVoters}}</td>
+
                                 <td>{{.FreshStake}}</td>
+                                <td>{{.AiFreshStake}}</td>
                                 <td>{{.Revocations}}</td>
+                                <td>{{.AiRevocations}}</td>
                                 <td>{{.FormattedBytes}}</td>
                                 <td data-age="{{.BlockTime}}"></td>
                                 <td>{{.FormattedTime}}</td>

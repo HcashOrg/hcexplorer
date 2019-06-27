@@ -5,11 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
 )
 
 // ExtractBlockTransactions extracts transaction information from a

@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var (

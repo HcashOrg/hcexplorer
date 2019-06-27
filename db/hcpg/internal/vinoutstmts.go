@@ -29,10 +29,10 @@ const (
 
 	IndexVinTableOnVins = `CREATE INDEX uix_vin
 		ON vins(tx_hash, tx_index)
-		;` // STORING (prev_tx_hash, prev_tx_index)
+		;`  // STORING (prev_tx_hash, prev_tx_index)
 	IndexVinTableOnPrevOuts = `CREATE INDEX uix_vin_prevout
 		ON vins(prev_tx_hash, prev_tx_index)
-		;` // STORING (tx_hash, tx_index)
+		;`  // STORING (tx_hash, tx_index)
 	DeindexVinTableOnVins     = `DROP INDEX uix_vin;`
 	DeindexVinTableOnPrevOuts = `DROP INDEX uix_vin_prevout;`
 

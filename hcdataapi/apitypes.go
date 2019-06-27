@@ -249,6 +249,10 @@ type TicketPoolInfo struct {
 	Size   uint32  `json:"size"`
 	Value  float64 `json:"value"`
 	ValAvg float64 `json:"valavg"`
+
+	AiSize   uint32  `json:"size"`
+	AiValue  float64 `json:"value"`
+	AiValAvg float64 `json:"valavg"`
 }
 
 // TicketPoolValsAndSizes models two arrays, one each for ticket values and
@@ -262,12 +266,13 @@ type TicketPoolValsAndSizes struct {
 
 // BlockDataBasic models primary information about block at height Height
 type BlockDataBasic struct {
-	Height     uint32  `json:"height"`
-	Size       uint32  `json:"size"`
-	Hash       string  `json:"hash"`
-	Difficulty float64 `json:"diff"`
-	StakeDiff  float64 `json:"sdiff"`
-	Time       int64   `json:"time"`
+	Height      uint32  `json:"height"`
+	Size        uint32  `json:"size"`
+	Hash        string  `json:"hash"`
+	Difficulty  float64 `json:"diff"`
+	StakeDiff   float64 `json:"sdiff"`
+	AiStakeDiff float64 `json:"aistakediff"`
+	Time        int64   `json:"time"`
 	//TicketPoolInfo
 	PoolInfo TicketPoolInfo `json:"ticket_pool"`
 }
@@ -309,6 +314,11 @@ type StakeInfoExtended struct {
 	PriceWindowNum   int                 `json:"window_number"`
 	IdxBlockInWindow int                 `json:"window_block_index"`
 	PoolInfo         TicketPoolInfo      `json:"ticket_pool"`
+
+	AiFeeinfo          hcjson.AiFeeInfoBlock `json:"aifeeinfo"`
+	AiStakeDiff        float64               `json:"aistakediff"`
+	AiPriceWindowNum   int                   `json:"ai_window_number"`
+	AiIdxBlockInWindow int                   `json:"ai_window_block_index"`
 }
 
 // StakeInfoExtendedEstimates is similar to StakeInfoExtended but includes stake

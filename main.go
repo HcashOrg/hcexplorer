@@ -439,9 +439,9 @@ func mainCore() error {
 
 	if usePG {
 		// Timed task
-		go db.UpdateFeesStatAndMempoolHistory(hcdClient)
-		go db.SyncAddresses()
-		go db.UpdateScriptInfo()
+		//go db.UpdateFeesStatAndMempoolHistory(hcdClient)
+		//go db.SyncAddresses()
+		//go db.UpdateScriptInfo()
 	}
 
 	// Wait for notification handlers to quit

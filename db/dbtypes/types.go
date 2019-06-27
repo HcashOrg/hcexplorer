@@ -234,8 +234,8 @@ type Hashrate struct {
 }
 
 type HashRateJson struct {
-	HashRate []float64  `json:"hash_rate"`
-	Date     []string `json:"date"`
+	HashRate []float64 `json:"hash_rate"`
+	Date     []string  `json:"date"`
 }
 
 type TicketPrice struct {

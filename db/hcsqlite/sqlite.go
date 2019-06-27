@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/btcsuite/btclog"
+	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/btcsuite/btclog"
 	_ "github.com/mattn/go-sqlite3" // register sqlite driver with database/sql
 )
 
@@ -90,8 +90,8 @@ func NewDB(db *sql.DB) *DB {
 		TableNameSummaries)
 	d.insertBlockSQL = fmt.Sprintf(`
         INSERT OR REPLACE INTO %s(
-            height, size, hash, diff, sdiff, time, poolsize, poolval, poolavg
-        ) values(?, ?, ?, ?, ?, ?, ?, ?, ?)
+				height, size, hash, diff, sdiff, aisdiff, time, poolsize, aipoolsize,poolval,aipoolval,poolavg,aipoolavg
+        ) values(?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)
 		`, TableNameSummaries)
 
 	d.getBlockSizeRangeSQL = fmt.Sprintf(`select size from %s where height between ? and ?`,
@@ -111,8 +111,11 @@ func NewDB(db *sql.DB) *DB {
 	d.insertStakeInfoExtendedSQL = fmt.Sprintf(`
         INSERT OR REPLACE INTO %s(
             height, num_tickets, fee_min, fee_max, fee_mean, fee_med, fee_std,
-			sdiff, window_num, window_ind, pool_size, pool_val, pool_valavg
-        ) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            aiheight, ainum_tickets, aifee_min, aifee_max, aifee_mean, aifee_med, aifee_std,
+			
+			sdiff, window_num, window_ind, pool_size, pool_val, pool_valavg,
+			aisdiff, aiwindow_num, aiwindow_ind, aipool_size, aipool_val, aipool_valavg
+        ) values(?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, TableNameStakeInfo)
 
 	d.dbSummaryHeight = d.GetBlockSummaryHeight()
@@ -138,10 +141,14 @@ func InitDB(dbInfo *DBInfo) (*DB, error) {
             hash TEXT,
             diff FLOAT,
             sdiff FLOAT,
+			aisdiff FLOAT,
             time INTEGER,
             poolsize INTEGER,
             poolval FLOAT,
-            poolavg FLOAT
+            poolavg FLOAT,
+			aipoolsize INTEGER,
+            aipoolval FLOAT,
+            aipoolavg FLOAT
         );
         `, TableNameSummaries)
 
@@ -159,8 +166,17 @@ func InitDB(dbInfo *DBInfo) (*DB, error) {
             num_tickets INTEGER,
             fee_min FLOAT, fee_max FLOAT, fee_mean FLOAT,
 			fee_med FLOAT, fee_std FLOAT,
+
+			aiheight INTEGER,
+            ainum_tickets INTEGER,
+            aifee_min FLOAT, aifee_max FLOAT, aifee_mean FLOAT,
+			aifee_med FLOAT, aifee_std FLOAT,
+			
 			sdiff FLOAT, window_num INTEGER, window_ind INTEGER,
-            pool_size INTEGER, pool_val FLOAT, pool_valavg FLOAT
+            pool_size INTEGER, pool_val FLOAT, pool_valavg FLOAT,
+
+			aisdiff FLOAT, aiwindow_num INTEGER, aiwindow_ind INTEGER,
+            aipool_size INTEGER, aipool_val FLOAT, aipool_valavg FLOAT
         );
         `, TableNameStakeInfo)
 
@@ -207,8 +223,8 @@ func (db *DB) StoreBlockSummary(bd *apitypes.BlockDataBasic) error {
 	defer stmt.Close()
 
 	res, err := stmt.Exec(&bd.Height, &bd.Size, &bd.Hash,
-		&bd.Difficulty, &bd.StakeDiff, &bd.Time,
-		&bd.PoolInfo.Size, &bd.PoolInfo.Value, &bd.PoolInfo.ValAvg)
+		&bd.Difficulty, &bd.StakeDiff, &bd.AiStakeDiff, &bd.Time,
+		&bd.PoolInfo.Size, &bd.PoolInfo.AiSize, &bd.PoolInfo.Value, &bd.PoolInfo.AiValue, &bd.PoolInfo.ValAvg, &bd.PoolInfo.AiValAvg)
 	if err != nil {
 		return err
 	}
@@ -508,8 +524,9 @@ func (db *DB) RetrieveBlockSummary(ind int64) (*apitypes.BlockDataBasic, error) 
 
 	// 1. chained QueryRow/Scan only
 	err := db.QueryRow(db.getBlockSQL, ind).Scan(&bd.Height, &bd.Size, &bd.Hash,
-		&bd.Difficulty, &bd.StakeDiff, &bd.Time,
-		&bd.PoolInfo.Size, &bd.PoolInfo.Value, &bd.PoolInfo.ValAvg)
+		&bd.Difficulty, &bd.StakeDiff, &bd.AiStakeDiff, &bd.Time,
+		&bd.PoolInfo.Size, &bd.PoolInfo.Value, &bd.PoolInfo.ValAvg,
+		&bd.PoolInfo.AiSize, &bd.PoolInfo.AiValue, &bd.PoolInfo.AiValAvg)
 	if err != nil {
 		return nil, err
 	}
@@ -605,12 +622,21 @@ func (db *DB) StoreStakeInfoExtended(si *apitypes.StakeInfoExtended) error {
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(&si.Feeinfo.Height,
-		&si.Feeinfo.Number, &si.Feeinfo.Min, &si.Feeinfo.Max, &si.Feeinfo.Mean,
+	res, err := stmt.Exec(
+		&si.Feeinfo.Height, &si.Feeinfo.Number, &si.Feeinfo.Min, &si.Feeinfo.Max, &si.Feeinfo.Mean,
 		&si.Feeinfo.Median, &si.Feeinfo.StdDev,
+
+		&si.AiFeeinfo.Height, &si.AiFeeinfo.Number, &si.AiFeeinfo.Min, &si.AiFeeinfo.Max, &si.AiFeeinfo.Mean,
+		&si.AiFeeinfo.Median, &si.AiFeeinfo.StdDev,
+
 		&si.StakeDiff, // no next or estimates
 		&si.PriceWindowNum, &si.IdxBlockInWindow, &si.PoolInfo.Size,
-		&si.PoolInfo.Value, &si.PoolInfo.ValAvg)
+		&si.PoolInfo.Value, &si.PoolInfo.ValAvg,
+
+		&si.AiStakeDiff, // no next or estimates
+		&si.AiPriceWindowNum, &si.AiIdxBlockInWindow, &si.PoolInfo.AiSize,
+		&si.PoolInfo.AiValue, &si.PoolInfo.AiValAvg,
+	)
 	if err != nil {
 		return err
 	}
@@ -634,9 +660,18 @@ func (db *DB) RetrieveLatestStakeInfoExtended() (*apitypes.StakeInfoExtended, er
 		&si.Feeinfo.Height, &si.Feeinfo.Number, &si.Feeinfo.Min,
 		&si.Feeinfo.Max, &si.Feeinfo.Mean,
 		&si.Feeinfo.Median, &si.Feeinfo.StdDev,
+		// for ai
+		&si.AiFeeinfo.Height, &si.AiFeeinfo.Number, &si.AiFeeinfo.Min,
+		&si.AiFeeinfo.Max, &si.AiFeeinfo.Mean,
+		&si.AiFeeinfo.Median, &si.AiFeeinfo.StdDev,
+
 		&si.StakeDiff, // no next or estimates
 		&si.PriceWindowNum, &si.IdxBlockInWindow, &si.PoolInfo.Size,
-		&si.PoolInfo.Value, &si.PoolInfo.ValAvg)
+		&si.PoolInfo.Value, &si.PoolInfo.ValAvg,
+
+		&si.AiStakeDiff, // no next or estimates
+		&si.AiPriceWindowNum, &si.AiIdxBlockInWindow, &si.PoolInfo.AiSize,
+		&si.PoolInfo.AiValue, &si.PoolInfo.AiValAvg)
 	if err != nil {
 		return nil, err
 	}

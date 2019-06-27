@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/HcashOrg/hcexplorer/blockdata"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcexplorer/blockdata"
 )
 
 // ReorgData contains the information from a reoranization notification

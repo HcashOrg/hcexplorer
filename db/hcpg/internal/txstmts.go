@@ -69,12 +69,12 @@ const (
 
 	IndexTransactionTableOnBlockIn = `CREATE UNIQUE INDEX uix_tx_block_in
 		ON transactions(block_hash, block_index, tree)
-		;` // STORING (tx_hash, block_hash)
+		;`  // STORING (tx_hash, block_hash)
 	DeindexTransactionTableOnBlockIn = `DROP INDEX uix_tx_block_in;`
 
 	IndexTransactionTableOnHashes = `CREATE UNIQUE INDEX uix_tx_hashes
 		 ON transactions(tx_hash, block_hash)
-		 ;` // STORING (block_hash, block_index, tree)
+		 ;`  // STORING (block_hash, block_index, tree)
 	DeindexTransactionTableOnHashes = `DROP INDEX uix_tx_hashes;`
 
 	//SelectTxByPrevOut = `SELECT * FROM transactions WHERE vins @> json_build_array(json_build_object('prevtxhash',$1)::jsonb)::jsonb;`

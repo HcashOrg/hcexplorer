@@ -1,9 +1,9 @@
 package dbtypes
 
 import (
-	"github.com/HcashOrg/hcexplorer/txhelpers"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
 )
 
 // MsgBlockToDBBlock creates a dbtypes.Block from a wire.MsgBlock
