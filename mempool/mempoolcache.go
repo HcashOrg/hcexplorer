@@ -4,6 +4,7 @@
 package mempool
 
 import (
+	"github.com/HcashOrg/hcexplorer/explorer"
 	"sync"
 	"time"
 
@@ -22,6 +23,8 @@ type MempoolDataCache struct {
 	allFeeRates             []float64
 	lowestMineableByFeeRate float64
 	allTicketsDetails       TicketsDetails
+	ItTxInLPool             map[string]*hcjson.TxLockInfo
+	ItTxInMPool             []*explorer.TxInfo
 }
 
 // StoreMPData stores info from data in the mempool cache
@@ -38,6 +41,15 @@ func (c *MempoolDataCache) StoreMPData(data *MempoolData, timestamp time.Time) e
 	c.lowestMineableByFeeRate = data.MinableFees.lowestMineableFee
 	c.allTicketsDetails = data.AllTicketsDetails
 
+	return nil
+}
+func (c *MempoolDataCache) StoreItTxData(itTxInLPool map[string]*hcjson.TxLockInfo,
+	itTxInMPool []*explorer.TxInfo, timestamp time.Time) error {
+	c.Lock()
+	defer c.Unlock()
+	c.ItTxInLPool = itTxInLPool
+	c.ItTxInMPool = itTxInMPool
+	c.timestamp = timestamp
 	return nil
 }
 

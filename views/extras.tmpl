@@ -191,7 +191,11 @@
                 <div class="col-sm-auto nav3">
 					<a href="/" title="Explorer">Home</a>
 					<a href="/explorer" title="Explorer">Block</a>
+
+					<a href="/explorer/instant" title="Explorer">Instant</a>
+
                     <a href="/explorer/stats" title="Stats">Stats</a>
+
 					<!-- <a href="/explorer" title="Explorer">Network</a> -->
 					<!-- <a href="/explorer" title="Explorer">Movement</a> -->
 					<!-- <a href="/explorer" title="Explorer">Explore</a> -->
@@ -344,16 +348,23 @@
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
             if (expTableRows){
                 expTableRows.last().remove()
+                console.log("===============")
+                console.log(b)
                 var newRow = '<tr id="' + b.height + '">' +
                     '<td><a href="/explorer/block/' + b.height + '" class="fs18">' + b.height + '</a></td>' +
                     '<td>' + b.tx + '</td>' +
                     '<td>' + b.votes + '</td>' +
+                    '<td>' + b.aivotes + '</td>' +
                     '<td>' + b.tickets + '</td>' +
+                    '<td>' + b.aitickets + '</td>' +
                     '<td>' + b.revocations + '</td>' +
+                    '<td>' + b.airevocations + '</td>' +
                     '<td>' + humanize.bytes(b.size) + '</td>' +
                     '<td data-age=' + b.time + '>' + humanize.timeSince(b.time) + '</td>' +
                     '<td>' + b.formatted_time + '</td>' +
                 '</tr>'
+
+                console.log(newRow)
                 var newRowHtml = $.parseHTML(newRow)
                 $(newRowHtml).insertBefore(expTableRows.first())
                 setTimeElements()
@@ -370,6 +381,62 @@
             }
         };
         ws.registerEvtHandler("newblock", updateBlockData);
+
+
+        var updateInstantTxData = function (event) {
+            console.log("Received new instant tx message", event);
+            var instantTx = JSON.parse(event);
+            console.log(instantTx)
+            var confirms = $('[data-confirmation-block-height]');
+            $.each(confirms, function(i, v) {
+                if (isNaN($(v).text())) {
+                    $(v).text("0");
+                }
+                $(v).text(
+                    newBlock.block.height - $(v).data('confirmation-block-height')
+                )
+            })
+            // block summary data
+            var b = newBlock.block;
+            var expTableRows = $('#explorertable tbody tr');
+            //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
+            if (expTableRows){
+                expTableRows.last().remove()
+                console.log("============")
+                console.log(b)
+                var newRow = '<tr id="' + b.height + '">' +
+                    '<td><a href="/explorer/block/' + b.height + '" class="fs18">' + b.height + '</a></td>' +
+                    '<td>' + b.tx + '</td>' +
+                    '<td>' + b.aitx + '</td>' +
+                    '<td>' + b.votes + '</td>' +
+                    '<td>' + b.aivotes + '</td>' +
+                    '<td>' + b.tickets + '</td>' +
+                    '<td>' + b.aitickets + '</td>' +
+                    '<td>' + b.revocations + '</td>' +
+                    '<td>' + b.airevocations + '</td>' +
+                    '<td>' + humanize.bytes(b.size) + '</td>' +
+                    '<td data-age=' + b.time + '>' + humanize.timeSince(b.time) + '</td>' +
+                    '<td>' + b.formatted_time + '</td>' +
+                '</tr>'
+                console.log("=========================")
+                console.log(newRow)
+                var newRowHtml = $.parseHTML(newRow)
+                $(newRowHtml).insertBefore(expTableRows.first())
+                setTimeElements()
+            }
+            if ($("#bsubsidy_total").text() !== "") {
+                $("#bsubsidy_total").html(humanize.decimalParts(b.next_block_subsidy.total/100000000, false, 8))
+                $("#bsubsidy_pow").html(humanize.decimalParts(b.next_block_subsidy.pow/100000000, false, 8))
+                $("#bsubsidy_pos").html(humanize.decimalParts((b.next_block_subsidy.pos/500000000), false, 8))
+                $("#bsubsidy_dev").html(humanize.decimalParts(b.next_block_subsidy.developer/100000000, false, 8))
+                $("#coin_supply").html(humanize.decimalParts(b.coin_supply/100000000, true, 8))
+                $("#blocksdiff").html(humanize.decimalParts(b.sdiff, false, 8))
+                $("#window_block_index").text(newBlock.stake.window_block_index)
+                $("#pos-window-progess-bar").css({ width: (newBlock.stake.window_block_index/144)*100 + "%" })
+            }
+        };
+        ws.registerEvtHandler("newinstanttx", updateInstantTxData);
+
 
         var updateMempool = function (event) {
             console.log("Received mempoolsstxfeeinfo message", event);
@@ -406,7 +473,6 @@
 <footer class="navbar-fixed-bottom">
     <div class="container wrapper text-center">
         <a class="nav-item" href="https://github.com/HcashOrg/hcexplorer" title="hcexplorer on GitHub" target="_blank">GitHub</a>
-
         <a class="nav-item" href="/explorer/decodetx" title="Decode or send a raw transaction">Decode Tx</a>
         <a class="nav-item" href="/api/status" title="API Status" target="_blank" data-turbolinks="false">Status</a>
         <span data-turbolinks-permanent class="nav-item hidden" id="connection">Connecting to WebSocket...<div></div></span>
@@ -472,8 +538,6 @@ $(function(){
     $('.scriptDataStar').on('click',function(){
         $(this).next('.scriptData').slideToggle();
     });
-
-
 
 });
 </script>

@@ -807,6 +807,25 @@ func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx, params *cha
 			Choices: choices,
 		}
 	}
+
+	if ok, _ := aistake.IsAiSSGen(msgTx); ok {
+		validation, version, bits, choices, err := txhelpers.AiSSGenVoteChoices(msgTx, params)
+		if err != nil {
+			log.Debugf("Cannot get vote choices for %s", tx.TxID)
+			return tx
+		}
+		tx.VoteInfo = &explorer.VoteInfo{
+			Validation: explorer.BlockValidation{
+				Hash:     validation.Hash.String(),
+				Height:   validation.Height,
+				Validity: validation.Validity,
+			},
+			Version: version,
+			Bits:    bits,
+			Choices: choices,
+		}
+	}
+
 	return tx
 }
 
@@ -898,7 +917,6 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 			log.Errorf("Unknown transaction %s", tx.Txid)
 			return nil
 		}
-		fmt.Println(stake.DetermineTxType(msgTx))
 		switch stake.DetermineTxType(msgTx) {
 		case stake.TxTypeSSGen:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
@@ -947,6 +965,10 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 	}
 	block.Tx = txs
 	block.ItTx = itxs
+
+	block.Transactions = len(txs)
+	block.ItTransactions = len(itxs)
+
 	block.Votes = votes
 	block.Revs = revocations
 	block.Tickets = tickets
@@ -963,6 +985,7 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 
 	sortTx(block.Tx)
 	sortTx(block.ItTx)
+
 	sortTx(block.Votes)
 	sortTx(block.Revs)
 	sortTx(block.Tickets)

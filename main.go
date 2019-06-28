@@ -235,6 +235,7 @@ func mainCore() error {
 
 		// Check for errors and combine if necessary
 		if sqliteRes.Error != nil {
+			log.Errorf("sqlite sync error:%v", sqliteRes.Error)
 			if usePG && pgRes.Error != nil {
 				log.Error("hcsqlite.SyncDBAsync AND hcpg.SyncChainDBAsync "+
 					"failed at heights %d and %d, respectively.",
@@ -318,6 +319,7 @@ func mainCore() error {
 	// On reorg, only update web UI since hcsqlite's own reorg handler will
 	// deal with patching up the block info database.
 	reorgBlockDataSavers := []blockdata.BlockDataSaver{webUI, explore}
+
 	wsChainMonitor := blockdata.NewChainMonitor(collector, blockDataSavers,
 		reorgBlockDataSavers, quit, &wg, addrMap,
 		ntfnChans.connectChan, ntfnChans.recvTxBlockChan,
@@ -336,6 +338,7 @@ func mainCore() error {
 	wg.Add(2)
 	go sdbChainMonitor.BlockConnectedHandler()
 	go sdbChainMonitor.ReorgHandler()
+
 	// Blockchain monitor for the wired sqlite DB
 	wiredDBChainMonitor := sqliteDB.NewChainMonitor(collector, quit, &wg,
 		ntfnChans.connectChanWiredDB, ntfnChans.reorgChanWiredDB)
@@ -351,7 +354,6 @@ func mainCore() error {
 		wsChainMonitor.BlockConnectedSync,      // 2. blockdata for regular block data collection and storage
 		wiredDBChainMonitor.BlockConnectedSync, // 3. hcsqlite for sqlite DB reorg handling
 	})
-
 	if cfg.MonitorMempool {
 		mpoolCollector := mempool.NewMempoolDataCollector(hcdClient, activeChain)
 		if mpoolCollector == nil {
@@ -389,9 +391,45 @@ func mainCore() error {
 		maxi := time.Duration(cfg.MempoolMaxInterval) * time.Second
 
 		mpm := mempool.NewMempoolMonitor(mpoolCollector, mempoolSavers,
-			ntfnChans.newTxChan, quit, &wg, newTicketLimit, mini, maxi, mpi)
+			ntfnChans.newTxChan, ntfnChans.newItTxChan, quit, &wg, newTicketLimit, mini, maxi, mpi)
 		wg.Add(1)
 		go mpm.TxHandler(hcdClient)
+	}
+	// for instant transaction
+	if true {
+		mpoolCollector := mempool.NewMempoolDataCollector(hcdClient, activeChain)
+		if mpoolCollector == nil {
+			return fmt.Errorf("Failed to create mempool data collector")
+		}
+		itTxInLockPool, itTxInMemPool, err := mpoolCollector.FetchInstantTx()
+		if err != nil {
+			return fmt.Errorf("mpool fetchInstantTx failed: %v", err.Error())
+		}
+
+		// Store initial MP data
+		if err = sqliteDB.MPC.StoreItTxData(itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
+			return fmt.Errorf("Failed to store Instant transaction data (wiredDB): %v",
+				err.Error())
+		}
+
+		if err = webUI.StoreItTxData(itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
+			return fmt.Errorf("Failed to store instant transaction data (WebUI): %v",
+				err.Error())
+		}
+
+		// Setup monitor
+		mpi := &mempool.MempoolInfo{
+			LastCollectTime: time.Now(),
+		}
+
+		newTicketLimit := int32(cfg.MPTriggerTickets)
+		mini := time.Duration(cfg.MempoolMinInterval) * time.Second
+		maxi := time.Duration(cfg.MempoolMaxInterval) * time.Second
+
+		mpm := mempool.NewMempoolMonitor(mpoolCollector, mempoolSavers,
+			ntfnChans.newTxChan, ntfnChans.newItTxChan, quit, &wg, newTicketLimit, mini, maxi, mpi)
+		wg.Add(1)
+		go mpm.ItTxHandler(hcdClient)
 	}
 
 	select {

@@ -255,6 +255,13 @@ type TicketPoolInfo struct {
 	AiValAvg float64 `json:"valavg"`
 }
 
+// AiTicketPoolInfo models data about ai ticket pool
+type AiTicketPoolInfo struct {
+	AiSize   uint32  `json:"size"`
+	AiValue  float64 `json:"value"`
+	AiValAvg float64 `json:"valavg"`
+}
+
 // TicketPoolValsAndSizes models two arrays, one each for ticket values and
 // sizes for blocks StartHeight to EndHeight
 type TicketPoolValsAndSizes struct {
@@ -280,13 +287,16 @@ type BlockDataBasic struct {
 // BlockExplorerBasic models primary information about block at height Height
 // for the block explorer.
 type BlockExplorerBasic struct {
-	Height      uint32  `json:"height"`
-	Size        uint32  `json:"size"`
-	Voters      uint16  `json:"votes"`
-	FreshStake  uint8   `json:"tickets"`
-	Revocations uint8   `json:"revocations"`
-	StakeDiff   float64 `json:"sdiff"`
-	Time        int64   `json:"time"`
+	Height        uint32  `json:"height"`
+	Size          uint32  `json:"size"`
+	Voters        uint16  `json:"votes"`
+	AiVoters      uint16  `json:"aivotes"`
+	FreshStake    uint8   `json:"tickets"`
+	AiFreshStake  uint8   `json:"aitickets"`
+	Revocations   uint8   `json:"revocations"`
+	AiRevocations uint8   `json:"airevocations"`
+	StakeDiff     float64 `json:"sdiff"`
+	Time          int64   `json:"time"`
 	BlockExplorerExtraInfo
 }
 

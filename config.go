@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/HcashOrg/hcd/wire"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -309,6 +310,7 @@ func loadConfig() (*config, error) {
 		activeChain = &chaincfg.SimNetParams
 		numNets++
 	}
+	wire.AI_UPDATE_HEIGHT = activeNet.AIUpdateHeight
 	if numNets > 1 {
 		str := "%s: The testnet and simnet params can't be used " +
 			"together -- choose one"

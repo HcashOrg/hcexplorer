@@ -36,6 +36,7 @@ import (
 
 const (
 	rootTemplateIndex int = iota
+	instantTemplateIndex
 	blockTemplateIndex
 	txTemplateIndex
 	addressTemplateIndex
@@ -143,6 +144,22 @@ func (exp *explorerUI) root(w http.ResponseWriter, r *http.Request) {
 		idx,
 	})
 
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+func (exp *explorerUI) instant(w http.ResponseWriter, r *http.Request) {
+	data := "hello world"
+	str, err := templateExecToString(exp.templates[instantTemplateIndex], "instant", struct {
+		Data interface{}
+	}{
+		Data: data,
+	})
 	if err != nil {
 		log.Errorf("Template execute failure: %v", err)
 		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
@@ -612,6 +629,9 @@ func (exp *explorerUI) rootWebsocket(w http.ResponseWriter, r *http.Request) {
 				case sigPingAndUserCount:
 					// ping and send user count
 					webData.Message = strconv.Itoa(exp.wsHub.NumClients())
+				case sigNewInstantTx:
+					log.Debug("sigNewInstantTx")
+
 				}
 
 				ws.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
@@ -950,6 +970,14 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	instantTemplate, err := template.New("instant").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["instant"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	blockTemplate, err := template.New("block").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["block"],
 		exp.templateFiles["extras"],
@@ -1072,6 +1100,7 @@ func (exp *explorerUI) reloadTemplates() error {
 	}
 
 	exp.templates[rootTemplateIndex] = explorerTemplate
+	exp.templates[instantTemplateIndex] = instantTemplate
 	exp.templates[blockTemplateIndex] = blockTemplate
 	exp.templates[txTemplateIndex] = txTemplate
 	exp.templates[addressTemplateIndex] = addressTemplate
@@ -1137,6 +1166,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 
 	exp.templateFiles = make(map[string]string)
 	exp.templateFiles["explorer"] = filepath.Join("views", "explorer.tmpl")
+	exp.templateFiles["instant"] = filepath.Join("views", "instant.tmpl")
 	exp.templateFiles["block"] = filepath.Join("views", "block.tmpl")
 	exp.templateFiles["tx"] = filepath.Join("views", "tx.tmpl")
 	exp.templateFiles["extras"] = filepath.Join("views", "extras.tmpl")
@@ -1146,6 +1176,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
+
 	exp.templateFiles["hashrate"] = filepath.Join("views", "hashrate.tmpl")
 	exp.templateFiles["ticketprice"] = filepath.Join("views", "ticketprice.tmpl")
 	exp.templateFiles["blockver"] = filepath.Join("views", "blockver.tmpl")
@@ -1262,6 +1293,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 		log.Errorf("Unable to create new html template: %v", err)
 	}
 	exp.templates = append(exp.templates, explorerTemplate)
+
+	instantTemplate, err := template.New("instant").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["instant"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, instantTemplate)
 
 	blockTemplate, err := template.New("block").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["block"],
@@ -1440,6 +1480,11 @@ func (exp *explorerUI) addRoutes() {
 
 	exp.Mux.Get("/", exp.root)
 	exp.Mux.Get("/ws", exp.rootWebsocket)
+
+	exp.Mux.Route("/instant", func(r chi.Router) {
+		r.Get("/", exp.instant)
+		r.Get("/ws", exp.rootWebsocket)
+	})
 
 	exp.Mux.Route("/richlist", func(r chi.Router) {
 		r.Get("/", exp.richlist)

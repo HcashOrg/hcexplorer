@@ -21,6 +21,8 @@ const (
 	// ANY transactions are added into mempool.
 	newTxChanBuffer = 48
 
+	newItTxChanBuffer = 200
+
 	reorgBuffer = 2
 
 	// relevantMempoolTxChanBuffer is the size of the new transaction channel
@@ -41,7 +43,7 @@ var ntfnChans struct {
 	spendTxBlockChan, recvTxBlockChan chan *txhelpers.BlockWatchedTx
 	relevantTxMempoolChan             chan *hcutil.Tx
 	newTxChan                         chan *mempool.NewTx
-	newItTxChan                       chan *mempool.NewItTx
+	newItTxChan                       chan *mempool.NewItTx // ItTx :instantTx
 }
 
 func makeNtfnChans(cfg *config) {
@@ -78,6 +80,7 @@ func makeNtfnChans(cfg *config) {
 	if cfg.MonitorMempool {
 		ntfnChans.newTxChan = make(chan *mempool.NewTx, newTxChanBuffer)
 	}
+	ntfnChans.newItTxChan = make(chan *mempool.NewItTx, newItTxChanBuffer)
 }
 
 func closeNtfnChans() {
@@ -110,6 +113,9 @@ func closeNtfnChans() {
 
 	if ntfnChans.newTxChan != nil {
 		close(ntfnChans.newTxChan)
+	}
+	if ntfnChans.newItTxChan != nil {
+		close(ntfnChans.newItTxChan)
 	}
 	if ntfnChans.relevantTxMempoolChan != nil {
 		close(ntfnChans.relevantTxMempoolChan)

@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"math"
 	"math/big"
 	"sort"
@@ -313,6 +314,23 @@ func SSGenVoteBlockValid(msgTx *wire.MsgTx) (BlockValidation, uint16, error) {
 	}
 	return blockValid, ssGenVoteBits, nil
 }
+func AiSSGenVoteBlockValid(msgTx *wire.MsgTx) (BlockValidation, uint16, error) {
+	if isVote, _ := stake.IsAiSSGen(msgTx); !isVote {
+		return BlockValidation{}, 0, fmt.Errorf("not a vote transaction")
+	}
+	ssGenVoteBits := aistake.SSGenVoteBits(msgTx)
+
+	blockHash, blockHeight, err := aistake.SSGenBlockVotedOn(msgTx)
+	if err != nil {
+		return BlockValidation{}, 0, err
+	}
+	blockValid := BlockValidation{
+		Hash:     blockHash,
+		Height:   int64(blockHeight),
+		Validity: hcutil.IsFlagSet16(ssGenVoteBits, hcutil.BlockValid),
+	}
+	return blockValid, ssGenVoteBits, nil
+}
 
 // VoteBitsInBlock returns a list of vote bits for the votes in a block
 func VoteBitsInBlock(block *hcutil.Block) []blockchain.VoteVersionTuple {
@@ -430,6 +448,39 @@ func SSGenVoteChoices(tx *wire.MsgTx, params *chaincfg.Params) (BlockValidation,
 	}
 
 	return validBlock, voteVersion, voteBits, choices, nil
+}
+func AiSSGenVoteChoices(tx *wire.MsgTx, params *chaincfg.Params) (BlockValidation, uint32, uint16, []*VoteChoice, error) {
+	aivalidBlock, aivoteBits, err := AiSSGenVoteBlockValid(tx)
+	if err != nil {
+		return aivalidBlock, 0, 0, nil, err
+	}
+
+	// Determine the ssgen's vote version and get the relevant consensus
+	// deployments containing the vote items targeted.
+	aivoteVersion := aistake.SSGenVersion(tx)
+	deployments := params.Deployments[aivoteVersion]
+
+	// Allocate space for each choice
+	choices := make([]*VoteChoice, 0, len(deployments))
+
+	// For each vote item (consensus deployment), extract the choice from the
+	// vote bits and store the vote item's Id, Description and vote bits Mask.
+	for d := range deployments {
+		voteAgenda := &deployments[d].Vote
+		choiceIndex := voteAgenda.VoteIndex(aivoteBits)
+		voteChoice := VoteChoice{
+			ID:          voteAgenda.Id,
+			Description: voteAgenda.Description,
+			Mask:        voteAgenda.Mask,
+			VoteVersion: aivoteVersion,
+			VoteIndex:   d,
+			ChoiceIdx:   choiceIndex,
+			Choice:      &voteAgenda.Choices[choiceIndex],
+		}
+		choices = append(choices, &voteChoice)
+	}
+
+	return aivalidBlock, aivoteVersion, aivoteBits, choices, nil
 }
 
 // FeeInfoBlock computes ticket fee statistics for the tickets included in the

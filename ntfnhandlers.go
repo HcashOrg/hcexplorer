@@ -39,6 +39,12 @@ func registerNodeNtfnHandlers(hcdClient *hcrpcclient.Client) *ContextualError {
 			"notification registration failed", err)
 	}
 
+	// register for instant tx
+	if err = hcdClient.NotifyNewInstantTx(); err != nil {
+		return newContextualError("new instant transaction "+
+			"notification registration failed", err)
+	}
+
 	// For OnNewTickets
 	//  Commented since there is a bug in hcrpcclient/notify.go
 	// hcdClient.NotifyNewTickets()
@@ -142,7 +148,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 			blockHeader := new(wire.BlockHeader)
 			err := blockHeader.FromBytes(blockHeaderSerialized)
 			if err != nil {
-				log.Error("Failed to serialize blockHeader in new block notification.")
+				log.Errorf("Failed to serialize blockHeader in new block notification:%v", err)
 			}
 			height := int32(blockHeader.Height)
 			hash := blockHeader.BlockHash()
@@ -252,7 +258,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 		//log.Info("Transaction accepted to mempool: ", txDetails.Txid)
 		//},
 		OnInstantTxVote: func(instantTxVoteHash *chainhash.Hash, instantTxHash *chainhash.Hash, tickeHash *chainhash.Hash, vote bool, sig []byte) {
-
+			log.Infof("receive new instantTxVote:%s for instantTx:%s", instantTxHash.String(), instantTxHash.String())
 		},
 		OnNewInstantTx: func(tx []byte, tickets []*chainhash.Hash, resend bool) {
 			// vote succeed
@@ -261,7 +267,6 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 			itTx.FromBytes(tx)
 
 			itTxh := itTx.MsgTx.TxHash()
-
 			if resend {
 				log.Infof("receive new successed voted instant tranaction %s ", itTx.TxHash())
 				select {
@@ -278,7 +283,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 				select {
 				case ntfnChans.newItTxChan <- &mempool.NewItTx{
 					Hash:   &itTxh,
-					Resend: true,
+					Resend: false,
 					T:      time.Now(),
 				}:
 				default:

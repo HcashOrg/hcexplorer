@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/HcashOrg/hcexplorer/explorer"
 	"html/template"
 	"io"
 	"math"
@@ -254,6 +255,16 @@ func (td *WebUI) StoreMPData(data *mempool.MempoolData, timestamp time.Time) err
 	td.templateDataMtx.Unlock()
 
 	td.wsHub.HubRelay <- sigMempoolFeeInfoUpdate
+
+	return nil
+}
+
+func (td *WebUI) StoreItTxData(itTxInLPool map[string]*hcjson.TxLockInfo,
+	itTxInMPool []*explorer.TxInfo, timestamp time.Time) error {
+	td.MPC.StoreItTxData(itTxInLPool, itTxInMPool, timestamp)
+
+	td.MPC.RLock()
+	defer td.MPC.RUnlock()
 
 	return nil
 }

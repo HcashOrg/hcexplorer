@@ -32,7 +32,7 @@ type PoolInfoCache struct {
 
 type AiPoolInfoCache struct {
 	sync.RWMutex
-	aiPoolInfo map[chainhash.Hash]*apitypes.TicketPoolInfo
+	aiPoolInfo map[chainhash.Hash]*apitypes.AiTicketPoolInfo
 }
 
 // NewPoolInfoCache constructs a new PoolInfoCache, and is needed to initialize
@@ -44,7 +44,7 @@ func NewPoolInfoCache() *PoolInfoCache {
 }
 func NewAiPoolInfoCache() *AiPoolInfoCache {
 	return &AiPoolInfoCache{
-		aiPoolInfo: make(map[chainhash.Hash]*apitypes.TicketPoolInfo),
+		aiPoolInfo: make(map[chainhash.Hash]*apitypes.AiTicketPoolInfo),
 	}
 }
 
@@ -178,7 +178,7 @@ func NewStakeDatabase(client *hcrpcclient.Client, params *chaincfg.Params) (*Sta
 				panic(fmt.Sprintf("Failed to receive Tx details for requested ticket hash: %v, %v", p.ticket, aiticketTx.Hash()))
 			}
 
-			sDB.liveTicketCache[*p.ticket] = aiticketTx.MsgTx().TxOut[0].Value
+			sDB.aiLiveTicketCache[*p.ticket] = aiticketTx.MsgTx().TxOut[0].Value
 
 			// txHeight := ticketTx.BlockHeight
 			// unconfirmed := (txHeight == 0)
@@ -213,6 +213,22 @@ func (db *StakeDatabase) Height() uint32 {
 	db.nodeMtx.RLock()
 	defer db.nodeMtx.RUnlock()
 	return db.BestNode.Height()
+}
+
+func (db *StakeDatabase) HeightWithErr() (uint32, error) {
+	if db == nil || db.BestNode == nil {
+		log.Error("Stake database not yet opened")
+		return 0, nil
+	}
+	db.nodeMtx.RLock()
+	defer db.nodeMtx.RUnlock()
+	if db.BestNode.Height() != db.AiBestNode.Height() {
+		log.Warnf("bestnode height:%d is not equal to aibestNode height:%d",
+			db.BestNode.Height(), db.AiBestNode.Height())
+		return 0, fmt.Errorf("bestnode height:%d is not equal to aibestNode height:%d",
+			db.BestNode.Height(), db.AiBestNode.Height())
+	}
+	return db.BestNode.Height(), nil
 }
 
 // block first tries to find the block at the input height in cache, and if that
@@ -324,12 +340,14 @@ func (db *StakeDatabase) connectBlock(block *hcutil.Block, spent []chainhash.Has
 	db.BestNode, err = db.BestNode.ConnectNode(block.MsgBlock().Header,
 		spent, revoked, maturing)
 	if err != nil {
+		log.Errorf("bestnode connectNode failed:%v", err)
 		return err
 	}
 
 	db.AiBestNode, err = db.AiBestNode.ConnectNode(block.MsgBlock().Header,
 		aiSpent, aiRevoked, aimaturing)
 	if err != nil {
+		log.Errorf("bestnode connectNode failed:%v", err)
 		return err
 	}
 
@@ -442,7 +460,7 @@ func (db *StakeDatabase) Open() error {
 	err = db.StakeDB.View(func(dbTx database.Tx) error {
 		v := dbTx.Metadata().Get([]byte("stakechainstate"))
 		if v == nil {
-			return fmt.Errorf("missing key for chain state data")
+			return fmt.Errorf("missing stakechainstake key for chain state data")
 		}
 		var stakeDBHash chainhash.Hash
 		copy(stakeDBHash[:], v[:chainhash.HashSize])
@@ -451,7 +469,7 @@ func (db *StakeDatabase) Open() error {
 
 		aiv := dbTx.Metadata().Get([]byte("aistakechainstate"))
 		if aiv == nil {
-			return fmt.Errorf("missing key for chain state data")
+			return fmt.Errorf("missing aistakechainstate key for chain state data")
 		}
 		var aistakeDBHash chainhash.Hash
 		copy(aistakeDBHash[:], aiv[:chainhash.HashSize])
@@ -484,10 +502,13 @@ func (db *StakeDatabase) Open() error {
 			var errLocal error
 			db.BestNode, errLocal = stake.InitDatabaseState(dbTx, db.params)
 			if errLocal != nil {
-				log.Errorf("initDatabaseState failed:%v", errLocal)
+				log.Errorf("stake initDatabaseState failed:%v", errLocal)
 				return errLocal
 			}
 			db.AiBestNode, errLocal = aistake.InitDatabaseState(dbTx, db.params)
+			if errLocal != nil {
+				log.Errorf("aistake initDatabaseState failed:%v", errLocal)
+			}
 			return errLocal
 		})
 		log.Debug("Created new stake db.")

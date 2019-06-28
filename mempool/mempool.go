@@ -7,6 +7,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
+	"github.com/HcashOrg/hcd/txscript"
+	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcexplorer/explorer"
+	"github.com/HcashOrg/hcexplorer/txhelpers"
+	"github.com/dustin/go-humanize"
 	"io"
 	"os"
 	"path/filepath"
@@ -50,13 +56,14 @@ type mempoolMonitor struct {
 	collector      *mempoolDataCollector
 	dataSavers     []MempoolDataSaver
 	newTxHash      chan *NewTx
+	newItTxHash    chan *NewItTx
 	quit           chan struct{}
 	wg             *sync.WaitGroup
 }
 
 // NewMempoolMonitor creates a new mempoolMonitor
 func NewMempoolMonitor(collector *mempoolDataCollector,
-	savers []MempoolDataSaver, newTxChan chan *NewTx,
+	savers []MempoolDataSaver, newTxChan chan *NewTx, newItTxChan chan *NewItTx,
 	quit chan struct{}, wg *sync.WaitGroup, newTicketLimit int32,
 	mini time.Duration, maxi time.Duration, mpi *MempoolInfo) *mempoolMonitor {
 	return &mempoolMonitor{
@@ -67,6 +74,7 @@ func NewMempoolMonitor(collector *mempoolDataCollector,
 		collector:      collector,
 		dataSavers:     savers,
 		newTxHash:      newTxChan,
+		newItTxHash:    newItTxChan,
 		quit:           quit,
 		wg:             wg,
 	}
@@ -74,6 +82,7 @@ func NewMempoolMonitor(collector *mempoolDataCollector,
 
 // TicketsDetails localizes apitypes.TicketsDetails
 type TicketsDetails apitypes.TicketsDetails
+type ItTxDetails apitypes.Tx
 
 // Below is the implementation of sort.Interface
 // { Len(), Swap(i, j int), Less(i, j int) bool }. This implementation sorts
@@ -237,6 +246,47 @@ func (p *mempoolMonitor) TxHandler(client *hcrpcclient.Client) {
 					continue
 				}
 			}
+
+		case <-p.quit:
+			log.Debugf("Quitting OnTxAccepted (new tx in mempool) handler.")
+			return
+		}
+	}
+}
+func (p *mempoolMonitor) ItTxHandler(client *hcrpcclient.Client) {
+	defer p.wg.Done()
+	for {
+		select {
+		case s, ok := <-p.newItTxHash:
+			if !ok {
+				log.Infof("New Tx channel closed")
+				return
+			}
+			// A nil hash is our signal of a new block
+			if s.Hash == nil {
+				_ = p.CollectAndStore()
+				continue
+			}
+			// OnTxAccepted probably sent on newTxChan
+			tx, err := client.GetRawTransaction(s.Hash)
+			if err != nil {
+				log.Errorf("Failed to get transaction (do you have --txindex with hcd?) %v: %v",
+					s.Hash.String(), err)
+				continue
+			}
+			// Get best block height at time of transaction broadcast
+			bestBlock, err := client.GetBlockCount()
+			if err != nil {
+				log.Error("Unable to get block count")
+				continue
+			}
+			txHeight := uint32(bestBlock)
+
+			newBlock := txHeight > p.mpoolInfo.CurrentHeight
+			if newBlock {
+				p.mpoolInfo.CurrentHeight = txHeight
+			}
+			fmt.Println(tx)
 
 		case <-p.quit:
 			log.Debugf("Quitting OnTxAccepted (new tx in mempool) handler.")
@@ -451,7 +501,118 @@ func (t *mempoolDataCollector) Collect() (*MempoolData, error) {
 	return mpoolData, err
 }
 
-// SAVER
+// CollectInstant get node instant transaction
+// instant transaction in lock pool + instant transaction in mempool
+func (t *mempoolDataCollector) FetchInstantTx() (map[string]*hcjson.TxLockInfo, []*explorer.TxInfo, error) {
+	// In case of a very fast block, make sure previous call to collect is not
+	// still running, or hcd may be mad.
+	t.mtx.Lock()
+	defer t.mtx.Unlock()
+
+	// Time this function
+	defer func(start time.Time) {
+		log.Debugf("mempoolDataCollector.CollectItTx() completed in %v",
+			time.Since(start))
+	}(time.Now())
+
+	// client
+	c := t.hcdChainSvr
+
+	itTxInLockPool, err := c.GetItTxInLockPool()
+	if err != nil {
+		return nil, nil, err
+	}
+	// instant transction in mempool
+	RegularTxInMempool, err := c.GetRawMempoolVerbose(hcjson.GRMRegular)
+	if err != nil {
+		return nil, nil, err
+	}
+	// Make slice of TicketDetails
+	N := len(RegularTxInMempool)
+	itTxInMemPool := make([]*explorer.TxInfo, 0, N)
+	for hash, _ := range RegularTxInMempool {
+		txhash, err := chainhash.NewHashFromStr(hash)
+		if err != nil {
+			log.Errorf("NewHashFromStr failed:%v", err)
+			return nil, nil, err
+		}
+
+		txraw, err := c.GetRawTransactionVerbose(txhash)
+		if err != nil {
+			log.Errorf("GetRawTransactionVerbose failed for: %v", txhash)
+			return nil, nil, err
+		}
+		msgTx := txhelpers.MsgTxFromHex(txraw.Hex)
+		if msgTx == nil {
+			log.Errorf("Cannot create MsgTx for tx %v", txhash)
+			return nil, nil, err
+		}
+		if _, ok := txscript.IsInstantTx(msgTx); ok {
+			txBasic := makeExplorerTxBasic(*txraw, msgTx, t.activeChain)
+			tx := &explorer.TxInfo{
+				TxBasic: txBasic,
+			}
+			tx.Type = txhelpers.DetermineTxTypeString(msgTx)
+			tx.BlockHeight = txraw.BlockHeight
+			tx.BlockIndex = txraw.BlockIndex
+			tx.Confirmations = txraw.Confirmations
+			tx.Time = txraw.Time
+			tnow := time.Unix(tx.Time, 0)
+			tx.FormattedTime = tnow.Format("2006-01-02 15:04:05")
+			itTxInMemPool = append(itTxInMemPool, tx)
+		}
+	}
+	return itTxInLockPool, itTxInMemPool, nil
+}
+func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx, params *chaincfg.Params) *explorer.TxBasic {
+	tx := new(explorer.TxBasic)
+	tx.TxID = data.Txid
+	tx.FormattedSize = humanize.Bytes(uint64(len(data.Hex) / 2))
+	tx.Total = txhelpers.TotalVout(data.Vout).ToCoin()
+	tx.Fee, tx.FeeRate = txhelpers.TxFeeRate(msgTx)
+	for _, i := range data.Vin {
+		if i.IsCoinBase() {
+			tx.Coinbase = true
+		}
+	}
+	if ok, _ := stake.IsSSGen(msgTx); ok {
+		validation, version, bits, choices, err := txhelpers.SSGenVoteChoices(msgTx, params)
+		if err != nil {
+			log.Debugf("Cannot get vote choices for %s", tx.TxID)
+			return tx
+		}
+		tx.VoteInfo = &explorer.VoteInfo{
+			Validation: explorer.BlockValidation{
+				Hash:     validation.Hash.String(),
+				Height:   validation.Height,
+				Validity: validation.Validity,
+			},
+			Version: version,
+			Bits:    bits,
+			Choices: choices,
+		}
+	}
+
+	if ok, _ := aistake.IsAiSSGen(msgTx); ok {
+		validation, version, bits, choices, err := txhelpers.AiSSGenVoteChoices(msgTx, params)
+		if err != nil {
+			log.Debugf("Cannot get vote choices for %s", tx.TxID)
+			return tx
+		}
+		tx.VoteInfo = &explorer.VoteInfo{
+			Validation: explorer.BlockValidation{
+				Hash:     validation.Hash.String(),
+				Height:   validation.Height,
+				Validity: validation.Validity,
+			},
+			Version: version,
+			Bits:    bits,
+			Choices: choices,
+		}
+	}
+
+	return tx
+}
 
 // MempoolDataSaver is an interface for saving/storing MempoolData
 type MempoolDataSaver interface {

@@ -151,7 +151,12 @@ func (db *wiredDB) resyncDBWithPoolValue(quit chan struct{}) (int64, error) {
 	if db.sDB == nil || db.sDB.BestNode == nil {
 		return -1, fmt.Errorf("Cannot resync without the stake DB")
 	}
-	bestNodeHeight := int64(db.sDB.Height())
+	twoHeight, err := db.sDB.HeightWithErr()
+	if err != nil {
+		log.Error(err)
+		return -1, err
+	}
+	bestNodeHeight := int64(twoHeight)
 
 	log.Info("Current best block (chain server): ", height)
 	log.Info("Current best block (summary DB):   ", bestBlockHeight)

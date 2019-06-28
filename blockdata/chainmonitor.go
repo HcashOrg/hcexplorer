@@ -125,7 +125,10 @@ out:
 				// to update the web UI with the new best block.
 			}
 
-			msgBlock, _ := p.collector.hcdChainSvr.GetBlock(hash)
+			msgBlock, err := p.collector.hcdChainSvr.GetBlock(hash)
+			if err != nil {
+				log.Errorf("get block by hash:%v from node failed:%v", hash, err)
+			}
 			block := hcutil.NewBlock(msgBlock)
 			height := block.Height()
 			log.Infof("Block height %v connected. Collecting data...", height)

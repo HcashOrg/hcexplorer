@@ -18,7 +18,9 @@ type BlockBasic struct {
 	Voters   uint16 `json:"votes"`
 	AiVoters uint16 `json:"aivotes"`
 
-	Transactions   int    `json:"tx"`
+	Transactions   int `json:"tx"`
+	ItTransactions int `json:"ittx"`
+
 	FreshStake     uint8  `json:"tickets"`
 	AiFreshStake   uint8  `json:"aitickets"`
 	Revocations    uint32 `json:"revocations"`
@@ -45,6 +47,15 @@ type TxBasic struct {
 	Coinbase      bool
 }
 
+//type AiTxBasic struct {
+//	TxID          string
+//	FormattedSize string
+//	Total         float64
+//	Fee           hcutil.Amount
+//	FeeRate       hcutil.Amount
+//	VoteInfo      *AiVoteInfo
+//	Coinbase      bool
+//}
 //AddressTx models data for transactions on the address page
 type AddressTx struct {
 	TxID          string
@@ -82,6 +93,12 @@ type TxInID struct {
 
 // VoteInfo models data about a SSGen transaction (vote)
 type VoteInfo struct {
+	Validation BlockValidation         `json:"block_validation"`
+	Version    uint32                  `json:"vote_version"`
+	Bits       uint16                  `json:"vote_bits"`
+	Choices    []*txhelpers.VoteChoice `json:"vote_choices"`
+}
+type AiVoteInfo struct {
 	Validation BlockValidation         `json:"block_validation"`
 	Version    uint32                  `json:"vote_version"`
 	Bits       uint16                  `json:"vote_bits"`

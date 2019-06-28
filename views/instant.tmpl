@@ -1,0 +1,194 @@
+{{define "instant"}}
+<!DOCTYPE html>
+{{with .Data}}
+<html lang="en">
+{{template "html-head" printf "instant transaction"}}
+<body>
+    {{template "navbar"}}
+    <div class="container">
+
+        <div class="row justify-content-between">
+            <div class="col-md-7 col-sm-6">
+                <h4 class="mb-2">
+                    Block #{{.Height}} {{ if gt .Confirmations 1 }}
+                        <span class="op60 fs12">( <span data-confirmation-block-height="{{$.ConfirmHeight}}">{{.Confirmations}}</span> confirmations)</span>
+                    {{else}}
+                        <span class="op60 fs12">best block</span>
+                    {{end}}
+                    <a class="fs12" href="/api/block/{{.Height}}/verbose?indent=true" data-turbolinks="false">api</a>
+                </h4>
+            </div>
+            <div class="col-md-5 col-sm-6 d-flex">
+                <table>
+                    <tr class="h2rem">
+                        <td class="pr-2 lh1rem vam text-right xs-w117 w120">TOTAL SENT</td>
+                        <td class="fs28 mono fs16-decimal d-flex align-items-center">{{template "decimalParts" (float64AsDecimalParts .TotalSent false)}}<span class="pl-1 unit">HC</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="row justify-content-between">
+            <div class="col-md-7 col-sm-6 d-flex">
+                <table class="">
+                    <tr>
+                        <td class="text-right pr-2 lh1rem vam nowrap xs-w117">BLOCK HASH</td>
+                        <td>
+                            <span class="hash break-word  lh1rem">{{.Hash}}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem vam nowrap"><a href="/explorer/block/{{.PreviousHash}}">PREV BLOCK</a></td>
+                        <td>
+                            <span class="hash break-word lh1rem"  href="/explorer/block/{{.PreviousHash}}">{{.PreviousHash}}</span>
+                        </td>
+                    </tr>
+                    {{if .NextHash}}
+                    <tr>
+                        <td class="text-right pr-2 lh1rem vam nowrap"><a href="/explorer/block/{{.NextHash}}">NEXT BLOCK</a></td>
+                        <td>
+                            <span class="hash break-word lh1rem">{{.NextHash}}</span>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td class="text-right pr-2 lh1rem vam nowrap">NEXT BLOCK</td>
+                        <td>
+                            <span class="lh1rem">&mdash;</span>
+                        </td>
+                    </tr>
+                    {{end}}
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0">BLOCK VERSION</td>
+                        <td class="lh1rem">{{.Version}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0" >STAKE VERSION</td>
+                        <td class="lh1rem">{{.StakeVersion}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0">VOTE BITS</td>
+                        <td class="lh1rem">{{.VoteBits}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0">FINAL STATE</td>
+                        <td class="lh1rem">{{.FinalState}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0">NONCE</td>
+                        <td class="lh1rem">{{.Nonce}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0">MERKLE ROOT</td>
+                        <td><span class="lh1rem hash break-word">{{.MerkleRoot}}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0">STAKE ROOT</td>
+                        <td><span class="lh1rem hash break-word">{{.StakeRoot}}</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="col-md-5 col-sm-6 d-flex">
+                <table class="">
+                    <tr>
+                        <td class="text-right lh1rem pr-2 xs-w117">TIME</td>
+                        <td class="lh1rem" style="min-width: 178px;">
+                            ({{timezone}}) {{.FormattedTime}} <span class="op60 fs12 nowrap">(<span data-age="{{.BlockTime}}"></span> ago)</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem xs-w117">SIZE</td>
+                        <td class="mono" title="{{intComma .Size}} Bytes">{{.FormattedBytes}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right pr-2 lh1rem p03rem0 xs-w117"><a href="#votes">VOTES</a></td>
+                        <td class="lh1rem">
+                            {{.Voters}}
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+        </div>
+
+
+
+        <div class="row">
+            <span class="anchor" id="transactions"></span>
+            <div class="col-sm-12">
+                <h4><span>Instant Transactions:Wait For Mining</span></h4>
+                <div class="table-parent">
+                    <table class="table table-sm striped">
+                        <thead>
+                            <th>Transaction ID</th>
+                            <th class="text-right">Total HC</th>
+                            <th class="text-right">Fee</th>
+                            <th>Size</th>
+                        </thead>
+                        <tbody>
+                            {{range .Tx}}
+                            {{if eq .Coinbase false}}
+                            <tr>
+                                <td class="break-word">
+                                    <span>
+                                        <a class="hash" href="/explorer/tx/{{.TxID}}">{{.TxID}}</a>
+                                    </span>
+                                </td>
+                                <td class="mono fs15 text-right">{{template "decimalParts" (float64AsDecimalParts .Total false)}}</td>
+                                <td class="mono fs15 text-right">{{.Fee}}</td>
+                                <td class="mono fs15">{{.FormattedSize}}</td>
+                            </tr>
+                            {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <span class="anchor" id="transactions"></span>
+            <div class="col-sm-12">
+                <h4><span>Instant Transactions:Wait for Confirm</span></h4>
+                <div class="table-parent">
+                    <table class="table table-sm striped">
+                        <thead>
+                            <th>Transaction ID</th>
+                            <th class="text-right">Total HC</th>
+                            <th class="text-right">Fee</th>
+                            <th>Size</th>
+                        </thead>
+                        <tbody>
+                            {{range .Tx}}
+                            {{if eq .Coinbase false}}
+                            <tr>
+                                <td class="break-word">
+                                    <span>
+                                        <a class="hash" href="/explorer/tx/{{.TxID}}">{{.TxID}}</a>
+                                    </span>
+                                </td>
+                                <td class="mono fs15 text-right">{{template "decimalParts" (float64AsDecimalParts .Total false)}}</td>
+                                <td class="mono fs15 text-right">{{.Fee}}</td>
+                                <td class="mono fs15">{{.FormattedSize}}</td>
+                            </tr>
+                            {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+
+
+    </div>
+</div>
+
+{{template "footer"}}
+
+</body>
+{{end}}
+</html>
+{{ end }}

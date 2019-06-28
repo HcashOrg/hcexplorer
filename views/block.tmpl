@@ -108,6 +108,12 @@
                         </td>
                     </tr>
                     <tr>
+                        <td class="text-right pr-2 lh1rem p03rem0 xs-w117"><a href="#aivotes">AiVOTES</a></td>
+                        <td class="lh1rem">
+                            {{.AiVoters}}
+                        </td>
+                    </tr>
+                    <tr>
                         <td class="text-right pr-2 lh1rem p03rem0 xs-w117">
                             {{if gt .FreshStake  0 }}<a href="#tickets">TICKETS</a>{{else}}TICKETS{{end}}
                         </td>
@@ -115,16 +121,41 @@
                             {{.FreshStake}}
                         </td>
                     </tr>
+
+                    <tr>
+                        <td class="text-right pr-2 lh1rem p03rem0 xs-w117">
+                            {{if gt .AiFreshStake  0 }}<a href="#aitickets">AITICKETS</a>{{else}}AITICKETS{{end}}
+                        </td>
+                        <td class="lh1rem">
+                            {{.AiFreshStake}}
+                        </td>
+                    </tr>
+
                     <tr>
                         <td class="text-right pr-2 lh1rem p03rem0 xs-w117">{{if gt .Revocations  0 }}<a href="#revocations">REVOCATIONS</a>{{else}}REVOCATIONS{{end}}</td>
                         <td class="lh1rem">
                             {{.Revocations}}
                         </td>
                     </tr>
+
+                    <tr>
+                        <td class="text-right pr-2 lh1rem p03rem0 xs-w117">{{if gt .AiRevocations  0 }}<a href="#airevocations">AiREVOCATIONS</a>{{else}}AIREVOCATIONS{{end}}</td>
+                        <td class="lh1rem">
+                            {{.AiRevocations}}
+                        </td>
+                    </tr>
+
                     <tr>
                         <td class="text-right pr-2 lh1rem p03rem0 xs-w117">{{if gt .Transactions  0 }}<a href="#transactions">TRANSACTIONS</a>{{else}}TRANSACTIONS{{end}}</td>
                         <td class="lh1rem">
                             {{.Transactions}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-right pr-2 lh1rem p03rem0 xs-w117">{{if gt .ItTransactions  0 }}<a href="#ittransactions">INSTANT TRANSACTIONS</a>{{else}}Instant TRANSACTIONS{{end}}</td>
+                        <td class="lh1rem">
+                            {{.ItTransactions}}
                         </td>
                     </tr>
                     <tr>
@@ -236,7 +267,7 @@
         </div>
 
         <div class="row">
-            <span class="anchor" id="votes"></span>
+            <span class="anchor" id="aivotes"></span>
             <div class="col-md-12">
                 <h4><span>AiVotes</span></h4>
                 <div class="table-parent">
@@ -332,7 +363,7 @@
         </div>
 
         <div class="row">
-            <span class="anchor" id="tickets"></span>
+            <span class="anchor" id="aitickets"></span>
             <div class="col-md-12">
                 <h4><span>AiTickets</span></h4>
                 <div class="table-parent">
@@ -471,7 +502,7 @@
 
 
         <div class="row">
-            <span class="anchor" id="transactions"></span>
+            <span class="anchor" id="ittransactions"></span>
             <div class="col-sm-12">
                 <h4><span>Instant Transactions</span></h4>
                 <div class="table-parent">
