@@ -7,8 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/HcashOrg/hcd/blockchain/aistake"
-	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcexplorer/explorer"
 	"github.com/HcashOrg/hcexplorer/txhelpers"
@@ -46,6 +44,8 @@ type MempoolInfo struct {
 	NumTicketPurchasesInMempool uint32
 	NumTicketsSinceStatsReport  int32
 	LastCollectTime             time.Time
+	ItTxInLPool                 []*NewItTx // instant transaction in lock pool
+	ItTxInMPool                 []*NewItTx // instant transaction in mempool pool
 }
 
 type mempoolMonitor struct {
@@ -267,13 +267,16 @@ func (p *mempoolMonitor) ItTxHandler(client *hcrpcclient.Client) {
 				_ = p.CollectAndStore()
 				continue
 			}
-			// OnTxAccepted probably sent on newTxChan
-			tx, err := client.GetRawTransaction(s.Hash)
-			if err != nil {
-				log.Errorf("Failed to get transaction (do you have --txindex with hcd?) %v: %v",
-					s.Hash.String(), err)
-				continue
+
+			tx := &explorer.ItTxInfo{
+				TxBasic: &explorer.TxBasic{
+					TxID: s.Hash.String(),
+				},
 			}
+			tx.ReSend = s.Resend
+			tnow := time.Unix(tx.Time, 0)
+			tx.FormattedTime = tnow.Format("2006-01-02 15:04:05")
+
 			// Get best block height at time of transaction broadcast
 			bestBlock, err := client.GetBlockCount()
 			if err != nil {
@@ -286,7 +289,15 @@ func (p *mempoolMonitor) ItTxHandler(client *hcrpcclient.Client) {
 			if newBlock {
 				p.mpoolInfo.CurrentHeight = txHeight
 			}
-			fmt.Println(tx)
+
+			if newBlock {
+				if err = p.CollectAndStore(); err != nil {
+					continue
+				}
+			}
+			for _, s := range p.dataSavers {
+				s.StoreMPData(nil, tx, nil, nil, time.Now())
+			}
 
 		case <-p.quit:
 			log.Debugf("Quitting OnTxAccepted (new tx in mempool) handler.")
@@ -297,6 +308,7 @@ func (p *mempoolMonitor) ItTxHandler(client *hcrpcclient.Client) {
 
 // CollectAndStore collects mempool data, resets counters ticket counters and
 // the timer, and dispatches the storers.
+// add about instant transaction
 func (p *mempoolMonitor) CollectAndStore() error {
 	// reset counter for tickets since last report
 	newTickets := p.mpoolInfo.NumTicketsSinceStatsReport
@@ -319,11 +331,14 @@ func (p *mempoolMonitor) CollectAndStore() error {
 
 	// Store mempool data with each saver
 	timestamp := time.Now()
+
+	// flowered by instant transaction
+	itTxInLPool, itTxInMPool, err := p.collector.FetchInstantTx()
 	for _, s := range p.dataSavers {
 		if s != nil {
 			log.Trace("Saving MP data.")
 			// save data to wherever the saver wants to put it
-			go s.StoreMPData(data, timestamp)
+			go s.StoreMPData(data, nil, itTxInLPool, itTxInMPool, timestamp)
 		}
 	}
 
@@ -503,7 +518,7 @@ func (t *mempoolDataCollector) Collect() (*MempoolData, error) {
 
 // CollectInstant get node instant transaction
 // instant transaction in lock pool + instant transaction in mempool
-func (t *mempoolDataCollector) FetchInstantTx() (map[string]*hcjson.TxLockInfo, []*explorer.TxInfo, error) {
+func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explorer.ItTxInfo, error) {
 	// In case of a very fast block, make sure previous call to collect is not
 	// still running, or hcd may be mad.
 	t.mtx.Lock()
@@ -522,101 +537,89 @@ func (t *mempoolDataCollector) FetchInstantTx() (map[string]*hcjson.TxLockInfo, 
 	if err != nil {
 		return nil, nil, err
 	}
-	// instant transction in mempool
-	RegularTxInMempool, err := c.GetRawMempoolVerbose(hcjson.GRMRegular)
-	if err != nil {
-		return nil, nil, err
-	}
-	// Make slice of TicketDetails
-	N := len(RegularTxInMempool)
-	itTxInMemPool := make([]*explorer.TxInfo, 0, N)
-	for hash, _ := range RegularTxInMempool {
-		txhash, err := chainhash.NewHashFromStr(hash)
-		if err != nil {
-			log.Errorf("NewHashFromStr failed:%v", err)
-			return nil, nil, err
+	UnconfimedAiTx := make([]*explorer.ItTxInfo, 0, 50)
+	confirmedAiTx := make([]*explorer.ItTxInfo, 0, 50)
+	for k, v := range itTxInLockPool {
+		if v.MineHeight == 0 {
+			if v.Send {
+				confirmedAiTx = append(confirmedAiTx, &explorer.ItTxInfo{
+					TxBasic: &explorer.TxBasic{
+						TxID: k,
+					},
+					ReSend: v.Send,
+					Votes:  v.Votes,
+				})
+			} else {
+				UnconfimedAiTx = append(UnconfimedAiTx, &explorer.ItTxInfo{
+					TxBasic: &explorer.TxBasic{
+						TxID: k,
+					},
+					ReSend: v.Send,
+					Votes:  v.Votes,
+				})
+			}
 		}
 
-		txraw, err := c.GetRawTransactionVerbose(txhash)
-		if err != nil {
-			log.Errorf("GetRawTransactionVerbose failed for: %v", txhash)
-			return nil, nil, err
-		}
-		msgTx := txhelpers.MsgTxFromHex(txraw.Hex)
-		if msgTx == nil {
-			log.Errorf("Cannot create MsgTx for tx %v", txhash)
-			return nil, nil, err
-		}
-		if _, ok := txscript.IsInstantTx(msgTx); ok {
-			txBasic := makeExplorerTxBasic(*txraw, msgTx, t.activeChain)
-			tx := &explorer.TxInfo{
-				TxBasic: txBasic,
-			}
-			tx.Type = txhelpers.DetermineTxTypeString(msgTx)
-			tx.BlockHeight = txraw.BlockHeight
-			tx.BlockIndex = txraw.BlockIndex
-			tx.Confirmations = txraw.Confirmations
-			tx.Time = txraw.Time
-			tnow := time.Unix(tx.Time, 0)
-			tx.FormattedTime = tnow.Format("2006-01-02 15:04:05")
-			itTxInMemPool = append(itTxInMemPool, tx)
-		}
 	}
-	return itTxInLockPool, itTxInMemPool, nil
+
+	// instant transction in mempool
+	//RegularTxInMempool, err := c.GetRawMempoolVerbose(hcjson.GRMRegular)
+	//if err != nil {
+	//	return nil, nil, err
+	//}
+	//// Make slice of TicketDetails
+	//N := len(RegularTxInMempool)
+	//itTxInMemPool := make([]*explorer.ItTxInfo, 0, N)
+	//for hash, _ := range RegularTxInMempool {
+	//	txhash, err := chainhash.NewHashFromStr(hash)
+	//	if err != nil {
+	//		log.Errorf("NewHashFromStr failed:%v", err)
+	//		return nil, nil, err
+	//	}
+	//
+	//	txraw, err := c.GetRawTransactionVerbose(txhash)
+	//	if err != nil {
+	//		log.Errorf("GetRawTransactionVerbose failed for: %v", txhash)
+	//		return nil, nil, err
+	//	}
+	//	msgTx := txhelpers.MsgTxFromHex(txraw.Hex)
+	//	if msgTx == nil {
+	//		log.Errorf("Cannot create MsgTx for tx %v", txhash)
+	//		return nil, nil, err
+	//	}
+	//	if _, ok := txscript.IsInstantTx(msgTx); ok {
+	//		txBasic := makeExplorerTxBasic(*txraw, msgTx)
+	//		tx := &explorer.ItTxInfo{
+	//			TxBasic: txBasic,
+	//		}
+	//		tx.Type = txhelpers.DetermineTxTypeString(msgTx)
+	//		tx.BlockHeight = txraw.BlockHeight
+	//		tx.BlockIndex = txraw.BlockIndex
+	//		tx.Confirmations = txraw.Confirmations
+	//		tx.Time = txraw.Time
+	//		tnow := time.Unix(tx.Time, 0)
+	//		tx.FormattedTime = tnow.Format("2006-01-02 15:04:05")
+	//		itTxInMemPool = append(itTxInMemPool, tx)
+	//	}
+	//}
+	return UnconfimedAiTx, confirmedAiTx, nil
 }
-func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx, params *chaincfg.Params) *explorer.TxBasic {
+func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx) *explorer.TxBasic {
 	tx := new(explorer.TxBasic)
 	tx.TxID = data.Txid
 	tx.FormattedSize = humanize.Bytes(uint64(len(data.Hex) / 2))
 	tx.Total = txhelpers.TotalVout(data.Vout).ToCoin()
-	tx.Fee, tx.FeeRate = txhelpers.TxFeeRate(msgTx)
 	for _, i := range data.Vin {
 		if i.IsCoinBase() {
 			tx.Coinbase = true
 		}
 	}
-	if ok, _ := stake.IsSSGen(msgTx); ok {
-		validation, version, bits, choices, err := txhelpers.SSGenVoteChoices(msgTx, params)
-		if err != nil {
-			log.Debugf("Cannot get vote choices for %s", tx.TxID)
-			return tx
-		}
-		tx.VoteInfo = &explorer.VoteInfo{
-			Validation: explorer.BlockValidation{
-				Hash:     validation.Hash.String(),
-				Height:   validation.Height,
-				Validity: validation.Validity,
-			},
-			Version: version,
-			Bits:    bits,
-			Choices: choices,
-		}
-	}
-
-	if ok, _ := aistake.IsAiSSGen(msgTx); ok {
-		validation, version, bits, choices, err := txhelpers.AiSSGenVoteChoices(msgTx, params)
-		if err != nil {
-			log.Debugf("Cannot get vote choices for %s", tx.TxID)
-			return tx
-		}
-		tx.VoteInfo = &explorer.VoteInfo{
-			Validation: explorer.BlockValidation{
-				Hash:     validation.Hash.String(),
-				Height:   validation.Height,
-				Validity: validation.Validity,
-			},
-			Version: version,
-			Bits:    bits,
-			Choices: choices,
-		}
-	}
-
 	return tx
 }
 
 // MempoolDataSaver is an interface for saving/storing MempoolData
 type MempoolDataSaver interface {
-	StoreMPData(data *MempoolData, timestamp time.Time) error
+	StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, timestamp time.Time) error
 }
 
 // MempoolDataToJSONStdOut implements MempoolDataSaver interface for JSON output to
@@ -854,7 +857,7 @@ func (s *MempoolDataToJSONFiles) StoreMPData(data *MempoolData) error {
 
 // StoreMPData writes all the ticket fees to a file
 // The file name is nameBase+".json".
-func (s *MempoolFeeDumper) StoreMPData(data *MempoolData, timestamp time.Time) error {
+func (s *MempoolFeeDumper) StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, timestamp time.Time) error {
 	// Do not write JSON data if there are no new tickets since last report
 	// if data.newTickets == 0 {
 	// 	return nil

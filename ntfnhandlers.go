@@ -113,6 +113,16 @@ func (q *collectionQueue) ProcessBlocks() {
 		default:
 		}
 
+		// Signal to mempool monitor of instant transaction that a block was mined
+		select {
+		case ntfnChans.newItTxChan <- &mempool.NewItTx{
+			Hash: nil,
+			T:    time.Now(),
+		}:
+		default:
+
+		}
+
 		// API status update handler
 		select {
 		case ntfnChans.updateStatusNodeHeight <- uint32(height):
@@ -211,7 +221,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 			for _, t := range tickets {
 				txstr = append(txstr, t.String())
 			}
-			log.Debugf("Winning tickets: %v", strings.Join(txstr, ", "))
+			log.Tracef("Winning tickets: %v", strings.Join(txstr, ", "))
 		},
 		// maturing tickets. Thanks for fixing the tickets type bug, jolan!
 		OnNewTickets: func(hash *chainhash.Hash, height int64, stakeDiff int64,
@@ -268,7 +278,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 
 			itTxh := itTx.MsgTx.TxHash()
 			if resend {
-				log.Infof("receive new successed voted instant tranaction %s ", itTx.TxHash())
+				log.Infof("### receive new successed voted instant tranaction %s ", itTx.TxHash())
 				select {
 				case ntfnChans.newItTxChan <- &mempool.NewItTx{
 					Hash:   &itTxh,
@@ -279,7 +289,7 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 					log.Warn("newItTxChan buffer full!")
 				}
 			} else {
-				log.Infof("receive new instant tranaction %s", itTx.TxHash())
+				log.Infof("### receive new instant tranaction %s", itTx.TxHash())
 				select {
 				case ntfnChans.newItTxChan <- &mempool.NewItTx{
 					Hash:   &itTxh,

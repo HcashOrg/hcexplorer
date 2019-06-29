@@ -192,7 +192,7 @@
 					<a href="/" title="Explorer">Home</a>
 					<a href="/explorer" title="Explorer">Block</a>
 
-					<a href="/explorer/instant" title="Explorer">Instant</a>
+					<a href="/instant" title="Explorer">Instant</a>
 
                     <a href="/explorer/stats" title="Stats">Stats</a>
 
@@ -293,6 +293,11 @@
     function getSocketURI(loc) {
         var protocol = (loc.protocol === 'https:') ? 'wss' : 'ws'
         var route = (loc.pathname === "/") ? "/ws" : loc.pathname + '/ws'
+        console.log("++++++++++++")
+        console.log(route)
+        if (route == "/instant/ws"){
+            return protocol + "://" + loc.host + "/ws"
+        }
         return protocol + "://" + loc.host + route
     }
 
@@ -348,8 +353,6 @@
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
             if (expTableRows){
                 expTableRows.last().remove()
-                console.log("===============")
-                console.log(b)
                 var newRow = '<tr id="' + b.height + '">' +
                     '<td><a href="/explorer/block/' + b.height + '" class="fs18">' + b.height + '</a></td>' +
                     '<td>' + b.tx + '</td>' +
@@ -384,59 +387,58 @@
 
 
         var updateInstantTxData = function (event) {
-            console.log("Received new instant tx message", event);
+            console.log(event)
+            console.log("===========Received new instant tx message", event);
             var instantTx = JSON.parse(event);
             console.log(instantTx)
-            var confirms = $('[data-confirmation-block-height]');
-            $.each(confirms, function(i, v) {
-                if (isNaN($(v).text())) {
-                    $(v).text("0");
-                }
-                $(v).text(
-                    newBlock.block.height - $(v).data('confirmation-block-height')
-                )
-            })
-            // block summary data
-            var b = newBlock.block;
-            var expTableRows = $('#explorertable tbody tr');
+            var newRow = '<tr class="'+instantTx.txid+'">'+
+                                '<td class="break-word">'+
+                                '<span>'+
+                                '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
+                        '</span>'+
+                        '</td>'+
+                        '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
+                        '</tr>';
+
+            var expTableRows = $('#unconfirmedtx tbody tr');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
-            if (expTableRows){
-                expTableRows.last().remove()
-                console.log("============")
-                console.log(b)
-                var newRow = '<tr id="' + b.height + '">' +
-                    '<td><a href="/explorer/block/' + b.height + '" class="fs18">' + b.height + '</a></td>' +
-                    '<td>' + b.tx + '</td>' +
-                    '<td>' + b.aitx + '</td>' +
-                    '<td>' + b.votes + '</td>' +
-                    '<td>' + b.aivotes + '</td>' +
-                    '<td>' + b.tickets + '</td>' +
-                    '<td>' + b.aitickets + '</td>' +
-                    '<td>' + b.revocations + '</td>' +
-                    '<td>' + b.airevocations + '</td>' +
-                    '<td>' + humanize.bytes(b.size) + '</td>' +
-                    '<td data-age=' + b.time + '>' + humanize.timeSince(b.time) + '</td>' +
-                    '<td>' + b.formatted_time + '</td>' +
-                '</tr>'
-                console.log("=========================")
+            if (expTableRows) {
                 console.log(newRow)
                 var newRowHtml = $.parseHTML(newRow)
                 $(newRowHtml).insertBefore(expTableRows.first())
-                setTimeElements()
-            }
-            if ($("#bsubsidy_total").text() !== "") {
-                $("#bsubsidy_total").html(humanize.decimalParts(b.next_block_subsidy.total/100000000, false, 8))
-                $("#bsubsidy_pow").html(humanize.decimalParts(b.next_block_subsidy.pow/100000000, false, 8))
-                $("#bsubsidy_pos").html(humanize.decimalParts((b.next_block_subsidy.pos/500000000), false, 8))
-                $("#bsubsidy_dev").html(humanize.decimalParts(b.next_block_subsidy.developer/100000000, false, 8))
-                $("#coin_supply").html(humanize.decimalParts(b.coin_supply/100000000, true, 8))
-                $("#blocksdiff").html(humanize.decimalParts(b.sdiff, false, 8))
-                $("#window_block_index").text(newBlock.stake.window_block_index)
-                $("#pos-window-progess-bar").css({ width: (newBlock.stake.window_block_index/144)*100 + "%" })
+                setTimeElements();
             }
         };
-        ws.registerEvtHandler("newinstanttx", updateInstantTxData);
+        ws.registerEvtHandler("newittx", updateInstantTxData);
 
+
+        var updateInstantTxResendData = function (event) {
+            console.log("============= Received new instant tx resend message", event);
+            var instantTx = JSON.parse(event);
+            console.log(instantTx)
+
+            var lockTableRows = $('#unconfirmedtx tbody tr');
+            var memTableRows = $('#confirmedtx tbody');
+            //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
+            if (lockTableRows){
+                 $('.'+instantTx.txid).remove();
+
+                var newRow = '<tr class="'+instantTx.txid+'">'+
+                                 '<td class="break-word">'+
+                                     '<span>'+
+                                         '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
+                                     '</span>'+
+                                 '</td>'+
+                                 '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
+                             '</tr>';
+                console.log("=========================")
+                console.log(newRow)
+                var newRowHtml = $.parseHTML(newRow);
+                memTableRows.append(newRow)
+                setTimeElements();
+            }
+        };
+        ws.registerEvtHandler("newittxresend", updateInstantTxResendData);
 
         var updateMempool = function (event) {
             console.log("Received mempoolsstxfeeinfo message", event);

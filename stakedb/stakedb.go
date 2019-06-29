@@ -387,16 +387,17 @@ func (db *StakeDatabase) DisconnectBlock() error {
 // disconnectBlock is the non-thread-safe version of DisconnectBlock.
 func (db *StakeDatabase) disconnectBlock() error {
 	childHeight := db.BestNode.Height()
+	aiChildHeight := db.AiBestNode.Height()
 	parentBlock, err := db.dbPrevBlock()
 	if err != nil {
 		return err
 	}
-	if parentBlock.Height() != int64(childHeight)-1 {
-		panic("BestNode and stake DB are inconsistent")
+	if parentBlock.Height() != int64(childHeight)-1 || parentBlock.Height() != int64(aiChildHeight)-1 {
+		panic("BestNode and stake DB or aiStake DB are inconsistent")
 	}
 
 	childUndoData := append(stake.UndoTicketDataSlice(nil), db.BestNode.UndoData()...)
-
+	aiChildUndoData := append(aistake.UndoTicketDataSlice(nil), db.AiBestNode.UndoData()...)
 	log.Debugf("Disconnecting block %d.", childHeight)
 
 	// previous best node
@@ -407,14 +408,27 @@ func (db *StakeDatabase) disconnectBlock() error {
 			parentBlock.MsgBlock().Header, nil, nil, dbTx)
 		return errLocal
 	})
+	var aiParentStakeNode *aistake.Node
+	err = db.StakeDB.View(func(dbtx database.Tx) error {
+		var errLocal error
+		aiParentStakeNode, errLocal = db.AiBestNode.DisconnectNode(
+			parentBlock.MsgBlock().Header, nil, nil, dbtx)
+		return errLocal
+	})
+
 	if err != nil {
 		return err
 	}
 	db.BestNode = parentStakeNode
+	db.AiBestNode = aiParentStakeNode
 
 	return db.StakeDB.Update(func(dbTx database.Tx) error {
-		return stake.WriteDisconnectedBestNode(dbTx, parentStakeNode,
-			*parentBlock.Hash(), childUndoData)
+		if err := stake.WriteDisconnectedBestNode(dbTx, parentStakeNode,
+			*parentBlock.Hash(), childUndoData); err != nil {
+			return err
+		}
+		return aistake.WriteDisconnectedBestNode(dbTx, aiParentStakeNode,
+			*parentBlock.Hash(), aiChildUndoData)
 	})
 }
 
@@ -634,6 +648,23 @@ func (db *StakeDatabase) dbState() (uint32, *chainhash.Hash, error) {
 		return nil
 	})
 	return stakeDBHeight, &stakeDBHash, err
+}
+func (db *StakeDatabase) aiDbState() (uint32, *chainhash.Hash, error) {
+	var aistakeDBHeight uint32
+	var aistakeDBHash chainhash.Hash
+	err := db.StakeDB.View(func(dbTx database.Tx) error {
+		v := dbTx.Metadata().Get([]byte("aistakechainstate"))
+		if v == nil {
+			return fmt.Errorf("missing key for chain ai state data")
+		}
+
+		copy(aistakeDBHash[:], v[:chainhash.HashSize])
+		offset := chainhash.HashSize
+		aistakeDBHeight = binary.LittleEndian.Uint32(v[offset : offset+4])
+
+		return nil
+	})
+	return aistakeDBHeight, &aistakeDBHash, err
 }
 
 // DBTipBlockHeader gets the block header for the current best block in the

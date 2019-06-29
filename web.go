@@ -28,7 +28,7 @@ import (
 	"github.com/HcashOrg/hcexplorer/blockdata"
 	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcexplorer/mempool"
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 	"github.com/go-chi/chi"
 )
 
@@ -54,6 +54,8 @@ type WebTemplateData struct {
 	StakeSummary   apitypes.StakeInfoExtendedEstimates
 	MempoolFeeInfo apitypes.MempoolTicketFeeInfo
 	MempoolFees    apitypes.MempoolTicketFees
+	ItTxInLPool    *explorer.ItTxInfo // instant transaction in lock pool
+	ItTxInMPool    *explorer.ItTxInfo // instant transaction in mem pool
 }
 
 // WebUI models data for the web page and websocket
@@ -63,6 +65,7 @@ type WebUI struct {
 	TemplateData    WebTemplateData
 	templateDataMtx sync.RWMutex
 	templ           *template.Template
+	instantTempl    *template.Template
 	errorTempl      *template.Template
 	templFiles      []string
 	params          *chaincfg.Params
@@ -74,8 +77,29 @@ type WebUI struct {
 // then launching the WebSocket event handler
 func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI {
 	fp := filepath.Join("views", "root.tmpl")
+	instantfp := filepath.Join("views", "instant.tmpl")
 	efp := filepath.Join("views", "extras.tmpl")
 	errorfp := filepath.Join("views", "error.tmpl")
+	toInt64 := func(v interface{}) int64 {
+		switch vt := v.(type) {
+		case int64:
+			return vt
+		case int32:
+			return int64(vt)
+		case uint32:
+			return int64(vt)
+		case uint64:
+			return int64(vt)
+		case int:
+			return int64(vt)
+		case int16:
+			return int64(vt)
+		case uint16:
+			return int64(vt)
+		default:
+			return math.MinInt64
+		}
+	}
 	helpers := template.FuncMap{
 		"divide": func(n int64, d int64) int64 {
 			val := n / d
@@ -128,6 +152,9 @@ func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI 
 			}
 			return []string{integer, dec, trailingZeros}
 		},
+		"intComma": func(v interface{}) string {
+			return humanize.Comma(toInt64(v))
+		},
 		"amountAsDecimalParts": func(v int64, useCommas bool) []string {
 			amt := strconv.FormatInt(v, 10)
 			if len(amt) <= 8 {
@@ -157,6 +184,10 @@ func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI 
 	if err != nil {
 		return nil
 	}
+	instantTmpl, err := template.New("instant").Funcs(helpers).ParseFiles(instantfp, efp)
+	if err != nil {
+		return nil
+	}
 
 	errtmpl, err := template.New("error").ParseFiles(errorfp, efp)
 	if err != nil {
@@ -164,7 +195,7 @@ func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI 
 	}
 
 	//var templFiles []string
-	templFiles := []string{fp, efp, errorfp}
+	templFiles := []string{fp, instantfp, efp, errorfp}
 
 	wsh := NewWebsocketHub()
 	go wsh.run()
@@ -172,6 +203,7 @@ func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI 
 	return &WebUI{
 		wsHub:          wsh,
 		templ:          tmpl,
+		instantTempl:   instantTmpl,
 		errorTempl:     errtmpl,
 		templFiles:     templFiles,
 		params:         activeChain,
@@ -231,40 +263,44 @@ func (td *WebUI) Store(blockData *blockdata.BlockData, _ *wire.MsgBlock) error {
 }
 
 // StoreMPData stores mempool data in the mempool cache and update the webui via websocket
-func (td *WebUI) StoreMPData(data *mempool.MempoolData, timestamp time.Time) error {
-	td.MPC.StoreMPData(data, timestamp)
+func (td *WebUI) StoreMPData(data *mempool.MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMpool []*explorer.ItTxInfo, timestamp time.Time) error {
+	// for instant
+	if ittx != nil {
+		td.TemplateData.ItTxInLPool = ittx
+		td.TemplateData.ItTxInMPool = ittx
+		if ittx.ReSend {
+			td.MPC.ItTxInMPool = append(td.MPC.ItTxInMPool, ittx)
+			td.wsHub.HubRelay <- sigNewItTxResend
+		} else {
+			td.MPC.ItTxInLPool = append(td.MPC.ItTxInLPool, ittx)
+			td.wsHub.HubRelay <- sigNewItTx
+		}
 
-	td.MPC.RLock()
-	defer td.MPC.RUnlock()
+	} else {
+		td.MPC.StoreMPData(data, ittx, itTxInLPool, itTxInMpool, timestamp)
 
-	_, fie := td.MPC.GetFeeInfoExtra()
+		td.MPC.RLock()
+		defer td.MPC.RUnlock()
 
-	td.templateDataMtx.Lock()
-	td.TemplateData.MempoolFeeInfo = *fie
+		_, fie := td.MPC.GetFeeInfoExtra()
 
-	// LowestMineable is the lowest fee of those in the top 20 (mainnet), but
-	// for the web interface, we want to interpret "lowest mineable" as the
-	// lowest fee the user needs to get a new ticket purchase mined right away.
-	if td.TemplateData.MempoolFeeInfo.Number < uint32(td.params.MaxFreshStakePerBlock) {
-		td.TemplateData.MempoolFeeInfo.LowestMineable = 0.001
+		td.templateDataMtx.Lock()
+		td.TemplateData.MempoolFeeInfo = *fie
+
+		// LowestMineable is the lowest fee of those in the top 20 (mainnet), but
+		// for the web interface, we want to interpret "lowest mineable" as the
+		// lowest fee the user needs to get a new ticket purchase mined right away.
+		if td.TemplateData.MempoolFeeInfo.Number < uint32(td.params.MaxFreshStakePerBlock) {
+			td.TemplateData.MempoolFeeInfo.LowestMineable = 0.001
+		}
+
+		mpf := &td.TemplateData.MempoolFees
+		mpf.Height, mpf.Time, _, mpf.FeeRates = td.MPC.GetFeeRates(25)
+		mpf.Length = uint32(len(mpf.FeeRates))
+		td.templateDataMtx.Unlock()
+
+		td.wsHub.HubRelay <- sigMempoolFeeInfoUpdate
 	}
-
-	mpf := &td.TemplateData.MempoolFees
-	mpf.Height, mpf.Time, _, mpf.FeeRates = td.MPC.GetFeeRates(25)
-	mpf.Length = uint32(len(mpf.FeeRates))
-	td.templateDataMtx.Unlock()
-
-	td.wsHub.HubRelay <- sigMempoolFeeInfoUpdate
-
-	return nil
-}
-
-func (td *WebUI) StoreItTxData(itTxInLPool map[string]*hcjson.TxLockInfo,
-	itTxInMPool []*explorer.TxInfo, timestamp time.Time) error {
-	td.MPC.StoreItTxData(itTxInLPool, itTxInMPool, timestamp)
-
-	td.MPC.RLock()
-	defer td.MPC.RUnlock()
 
 	return nil
 }
@@ -336,6 +372,55 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 		td.TemplateData,
 		td.params.StakeDiffWindowSize,
 		hashrate_th_s,
+	})
+	td.templateDataMtx.RUnlock()
+	if err != nil {
+		log.Errorf("Failed to execute template: %v", err)
+		http.Error(w, "template execute failure", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+
+type InstantInfo struct {
+	TxId  string
+	Total float64
+}
+
+func (td *WebUI) InstantPage(w http.ResponseWriter, r *http.Request) {
+	td.templateDataMtx.RLock()
+	var lockedItTx []*InstantInfo
+	for _, lTx := range td.MPC.ItTxInLPool {
+		lockedItTx = append(lockedItTx, &InstantInfo{
+			TxId:  lTx.TxID,
+			Total: lTx.Total,
+		})
+	}
+	var mempoolItTx []*InstantInfo
+	for _, v := range td.MPC.ItTxInMPool {
+		mempoolItTx = append(mempoolItTx, &InstantInfo{
+			TxId:  v.TxID,
+			Total: v.Total,
+		})
+	}
+
+	data := struct {
+		CurrentHeight uint32
+		LPoolTxNum    int32
+		LPoolTx       []*InstantInfo
+		MPoolTxNum    int32
+		MPoolTx       []*InstantInfo
+	}{
+		CurrentHeight: td.TemplateData.BlockSummary.Height,
+		LPoolTx:       lockedItTx,
+		MPoolTx:       mempoolItTx,
+	}
+	str, err := TemplateExecToString(td.instantTempl, "instant", struct {
+		Data interface{}
+	}{
+		Data: data,
 	})
 	td.templateDataMtx.RUnlock()
 	if err != nil {
@@ -428,6 +513,7 @@ func (td *WebUI) WSBlockUpdater(w http.ResponseWriter, r *http.Request) {
 				webData := WebSocketMessage{
 					EventId: eventIDs[sig],
 				}
+
 				buff := new(bytes.Buffer)
 				enc := json.NewEncoder(buff)
 				switch sig {
@@ -435,6 +521,18 @@ func (td *WebUI) WSBlockUpdater(w http.ResponseWriter, r *http.Request) {
 					enc.Encode(WebBlockInfo{
 						BlockDataBasic: &td.TemplateData.BlockSummary,
 						StakeInfoExt:   &td.TemplateData.StakeSummary,
+					})
+					webData.Messsage = buff.String()
+				case sigNewItTx:
+					enc.Encode(WebItTxInfo{
+						TxId:  &td.TemplateData.ItTxInLPool.TxID,
+						Total: &td.TemplateData.ItTxInLPool.Total,
+					})
+					webData.Messsage = buff.String()
+				case sigNewItTxResend:
+					enc.Encode(WebItTxInfo{
+						TxId:  &td.TemplateData.ItTxInMPool.TxID,
+						Total: &td.TemplateData.ItTxInMPool.Total,
 					})
 					webData.Messsage = buff.String()
 				case sigMempoolFeeInfoUpdate:

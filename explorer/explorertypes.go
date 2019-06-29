@@ -84,6 +84,22 @@ type TxInfo struct {
 	VoteFundsLocked string
 	TicketMaturity  int64
 }
+type ItTxInfo struct {
+	*TxBasic
+	SpendingTxns  []TxInID
+	Type          string
+	Vin           []Vin
+	Vout          []Vout
+	BlockHeight   int64
+	BlockIndex    uint32
+	Confirmations int64
+	Time          int64
+	FormattedTime string
+	Mature        string
+	// instant tx
+	ReSend bool
+	Votes  []string
+}
 
 // TxInID models the identity of a spending transaction input
 type TxInID struct {

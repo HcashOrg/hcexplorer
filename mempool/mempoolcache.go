@@ -23,33 +23,29 @@ type MempoolDataCache struct {
 	allFeeRates             []float64
 	lowestMineableByFeeRate float64
 	allTicketsDetails       TicketsDetails
-	ItTxInLPool             map[string]*hcjson.TxLockInfo
-	ItTxInMPool             []*explorer.TxInfo
+	ItTxInLPool             []*explorer.ItTxInfo // instant transaction in lock pool
+	ItTxInMPool             []*explorer.ItTxInfo // instant transaction in mem pool
 }
 
 // StoreMPData stores info from data in the mempool cache
-func (c *MempoolDataCache) StoreMPData(data *MempoolData, timestamp time.Time) error {
-	c.Lock()
-	defer c.Unlock()
+func (c *MempoolDataCache) StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, timestamp time.Time) error {
+	if ittx == nil {
+		c.Lock()
+		defer c.Unlock()
 
-	c.height = data.Height
-	c.timestamp = timestamp
-	c.numTickets = data.NumTickets
-	c.ticketFeeInfo = data.Ticketfees.FeeInfoMempool
-	c.allFees = data.MinableFees.allFees
-	c.allFeeRates = data.MinableFees.allFeeRates
-	c.lowestMineableByFeeRate = data.MinableFees.lowestMineableFee
-	c.allTicketsDetails = data.AllTicketsDetails
+		c.height = data.Height
+		c.timestamp = timestamp
+		c.numTickets = data.NumTickets
+		c.ticketFeeInfo = data.Ticketfees.FeeInfoMempool
+		c.allFees = data.MinableFees.allFees
+		c.allFeeRates = data.MinableFees.allFeeRates
+		c.lowestMineableByFeeRate = data.MinableFees.lowestMineableFee
+		c.allTicketsDetails = data.AllTicketsDetails
 
-	return nil
-}
-func (c *MempoolDataCache) StoreItTxData(itTxInLPool map[string]*hcjson.TxLockInfo,
-	itTxInMPool []*explorer.TxInfo, timestamp time.Time) error {
-	c.Lock()
-	defer c.Unlock()
-	c.ItTxInLPool = itTxInLPool
-	c.ItTxInMPool = itTxInMPool
-	c.timestamp = timestamp
+		c.ItTxInLPool = itTxInLPool
+		c.ItTxInMPool = itTxInMPool
+	}
+
 	return nil
 }
 

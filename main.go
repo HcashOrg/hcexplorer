@@ -365,15 +365,17 @@ func mainCore() error {
 			return fmt.Errorf("Mempool info collection failed while gathering"+
 				" initial data: %v", err.Error())
 		}
+		// instant transaction
+		itTxInLockPool, itTxInMemPool, err := mpoolCollector.FetchInstantTx()
 
 		// Store initial MP data
-		if err = sqliteDB.MPC.StoreMPData(mpData, time.Now()); err != nil {
+		if err = sqliteDB.MPC.StoreMPData(mpData, nil, itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
 			return fmt.Errorf("Failed to store initial mempool data (wiredDB): %v",
 				err.Error())
 		}
 
 		// Store initial MP data to webUI
-		if err = webUI.StoreMPData(mpData, time.Now()); err != nil {
+		if err = webUI.StoreMPData(mpData, nil, itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
 			return fmt.Errorf("Failed to store initial mempool data (WebUI): %v",
 				err.Error())
 		}
@@ -392,43 +394,8 @@ func mainCore() error {
 
 		mpm := mempool.NewMempoolMonitor(mpoolCollector, mempoolSavers,
 			ntfnChans.newTxChan, ntfnChans.newItTxChan, quit, &wg, newTicketLimit, mini, maxi, mpi)
-		wg.Add(1)
+		wg.Add(2)
 		go mpm.TxHandler(hcdClient)
-	}
-	// for instant transaction
-	if true {
-		mpoolCollector := mempool.NewMempoolDataCollector(hcdClient, activeChain)
-		if mpoolCollector == nil {
-			return fmt.Errorf("Failed to create mempool data collector")
-		}
-		itTxInLockPool, itTxInMemPool, err := mpoolCollector.FetchInstantTx()
-		if err != nil {
-			return fmt.Errorf("mpool fetchInstantTx failed: %v", err.Error())
-		}
-
-		// Store initial MP data
-		if err = sqliteDB.MPC.StoreItTxData(itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
-			return fmt.Errorf("Failed to store Instant transaction data (wiredDB): %v",
-				err.Error())
-		}
-
-		if err = webUI.StoreItTxData(itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
-			return fmt.Errorf("Failed to store instant transaction data (WebUI): %v",
-				err.Error())
-		}
-
-		// Setup monitor
-		mpi := &mempool.MempoolInfo{
-			LastCollectTime: time.Now(),
-		}
-
-		newTicketLimit := int32(cfg.MPTriggerTickets)
-		mini := time.Duration(cfg.MempoolMinInterval) * time.Second
-		maxi := time.Duration(cfg.MempoolMaxInterval) * time.Second
-
-		mpm := mempool.NewMempoolMonitor(mpoolCollector, mempoolSavers,
-			ntfnChans.newTxChan, ntfnChans.newItTxChan, quit, &wg, newTicketLimit, mini, maxi, mpi)
-		wg.Add(1)
 		go mpm.ItTxHandler(hcdClient)
 	}
 
@@ -456,6 +423,7 @@ func mainCore() error {
 
 	webMux := chi.NewRouter()
 	webMux.Get("/", webUI.RootPage)
+	webMux.Get("/instant", webUI.InstantPage)
 	webMux.Get("/supply", webUI.Supply)
 	webMux.Get("/ws", webUI.WSBlockUpdater)
 	webMux.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {

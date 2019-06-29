@@ -21,6 +21,8 @@ var eventIDs = map[hubSignal]string{
 	sigNewBlock:             "newblock",
 	sigMempoolFeeInfoUpdate: "mempoolsstxfeeinfo",
 	sigPingAndUserCount:     "ping",
+	sigNewItTx:              "newittx",
+	sigNewItTxResend:        "newittxresend",
 }
 
 // WebBlockInfo represents the JSON object used to send block data and stake
@@ -28,6 +30,11 @@ var eventIDs = map[hubSignal]string{
 type WebBlockInfo struct {
 	BlockDataBasic *apitypes.BlockExplorerBasic         `json:"block"`
 	StakeInfoExt   *apitypes.StakeInfoExtendedEstimates `json:"stake"`
+}
+
+type WebItTxInfo struct {
+	TxId  *string  `json:"txid"`
+	Total *float64 `json:"total"`
 }
 
 // WebsocketHub and its event loop manage all websocket client connections.
@@ -50,6 +57,8 @@ type hubSpoke chan hubSignal
 
 const (
 	sigNewBlock hubSignal = iota
+	sigNewItTx
+	sigNewItTxResend
 	sigMempoolFeeInfoUpdate
 	sigPingAndUserCount
 )
@@ -132,6 +141,10 @@ func (wsh *WebsocketHub) run() {
 			switch hubSignal {
 			case sigNewBlock:
 				log.Infof("Signaling new block to %d clients.", len(wsh.clients))
+			case sigNewItTx:
+				log.Infof("Signaling new instant transaction to %d clients", len(wsh.clients))
+			case sigNewItTxResend:
+				log.Infof("Signaling new confirmed instant transaction to %d clients", len(wsh.clients))
 			case sigMempoolFeeInfoUpdate:
 				log.Infof("Signaling mempool info update to %d clients.", len(wsh.clients))
 			case sigPingAndUserCount:
