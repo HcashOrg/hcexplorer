@@ -412,13 +412,14 @@ func (td *WebUI) InstantPage(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		CurrentHeight  uint32
-		LPoolTxNum     int32
+		LPoolTxNum     int
 		LPoolTx        []*InstantInfo
 		MPoolTxNum     int32
 		MPoolTx        []*InstantInfo
 		AiTxInLockPool []*explorer.ItTxInfo
 	}{
 		CurrentHeight:  td.TemplateData.BlockSummary.Height,
+		LPoolTxNum:     len(lockedItTx),
 		LPoolTx:        lockedItTx,
 		MPoolTx:        mempoolItTx,
 		AiTxInLockPool: td.MPC.AiTxInLockPool,
