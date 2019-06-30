@@ -531,15 +531,19 @@ func (td *WebUI) WSBlockUpdater(w http.ResponseWriter, r *http.Request) {
 					})
 					webData.Messsage = buff.String()
 				case sigNewItTx:
-					enc.Encode(WebItTxInfo{
-						TxId:  &td.TemplateData.ItTxInLPool.TxID,
-						Total: &td.TemplateData.ItTxInLPool.Total,
+					enc.Encode(WebAiTxInfo{
+						TxId:       &td.TemplateData.ItTxInLPool.TxID,
+						Total:      &td.TemplateData.ItTxInLPool.Total,
+						AddHeight:  &td.TemplateData.ItTxInLPool.AddHeight,
+						MineHeight: &td.TemplateData.ItTxInLPool.MineHeight,
 					})
 					webData.Messsage = buff.String()
 				case sigNewItTxResend:
-					enc.Encode(WebItTxInfo{
-						TxId:  &td.TemplateData.ItTxInMPool.TxID,
-						Total: &td.TemplateData.ItTxInMPool.Total,
+					enc.Encode(WebAiTxInfo{
+						TxId:       &td.TemplateData.ItTxInMPool.TxID,
+						Total:      &td.TemplateData.ItTxInMPool.Total,
+						AddHeight:  &td.TemplateData.ItTxInMPool.AddHeight,
+						MineHeight: &td.TemplateData.ItTxInMPool.MineHeight,
 					})
 					webData.Messsage = buff.String()
 				case sigMempoolFeeInfoUpdate:

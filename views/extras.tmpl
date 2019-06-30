@@ -408,6 +408,11 @@
                 $(newRowHtml).insertBefore(expTableRows.first())
                 setTimeElements();
             }
+            // add for bottom's ai transaction locked pool
+            var nodeLockpool = $('#nodeLockPool tbody');
+
+            memTableRows.append(newRow)
+
         };
         ws.registerEvtHandler("newittx", updateInstantTxData);
 
