@@ -400,18 +400,23 @@
                         '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
                         '</tr>';
 
-            var expTableRows = $('#unconfirmedtx tbody tr');
+            var unconfirmRows = $('#unconfirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
-            if (expTableRows) {
-                console.log(newRow)
-                var newRowHtml = $.parseHTML(newRow)
-                $(newRowHtml).insertBefore(expTableRows.first())
+            if (unconfirmRows) {
+                console.log(newRow);
+                let moveTarget = 'confirmedtx .'+instantTx.txid;
+                if ($(moveTarget)){
+                    $(moveTarget).remove();
+                }
+                // var newRowHtml = $.parseHTML(newRow);
+                // $(newRowHtml).insertBefore(expTableRows.first());
+                unconfirmRows.append(newRow)
                 setTimeElements();
             }
             // add for bottom's ai transaction locked pool
-            var nodeLockpool = $('#nodeLockPool tbody');
+            // var nodeLockpool = $('#nodeLockPool tbody');
 
-            memTableRows.append(newRow)
+            // memTableRows.append(newRow)
 
         };
         ws.registerEvtHandler("newittx", updateInstantTxData);
@@ -426,7 +431,10 @@
             var memTableRows = $('#confirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
             if (lockTableRows){
-                 $('.'+instantTx.txid).remove();
+                let moveTarget = 'unconfirmedtx .'+instantTx.txid;
+                if ($(moveTarget)){
+                    $(moveTarget).remove();
+                }
 
                 var newRow = '<tr class="'+instantTx.txid+'">'+
                                  '<td class="break-word">'+

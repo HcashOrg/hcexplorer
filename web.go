@@ -78,7 +78,7 @@ type WebUI struct {
 func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI {
 	fp := filepath.Join("views", "root.tmpl")
 	instantfp := filepath.Join("views", "instant.html")
-	efp := filepath.Join("views", "extras.tmpl")
+	efp := filepath.Join("views", "extras.html")
 	errorfp := filepath.Join("views", "error.tmpl")
 	toInt64 := func(v interface{}) int64 {
 		switch vt := v.(type) {

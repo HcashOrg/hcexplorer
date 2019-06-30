@@ -1169,7 +1169,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["instant"] = filepath.Join("views", "instant.tmpl")
 	exp.templateFiles["block"] = filepath.Join("views", "block.tmpl")
 	exp.templateFiles["tx"] = filepath.Join("views", "tx.tmpl")
-	exp.templateFiles["extras"] = filepath.Join("views", "extras.tmpl")
+	exp.templateFiles["extras"] = filepath.Join("views", "extras.html")
 	exp.templateFiles["address"] = filepath.Join("views", "address.tmpl")
 	exp.templateFiles["rawtx"] = filepath.Join("views", "rawtx.tmpl")
 	exp.templateFiles["richlist"] = filepath.Join("views", "richlist.tmpl")
