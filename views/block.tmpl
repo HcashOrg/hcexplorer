@@ -165,9 +165,22 @@
                         </td>
                     </tr>
                     <tr>
+                        <td class="text-right pr-2 lh1rem p03rem0 xs-w117">AI TICKET PRICE</td>
+                        <td class="lh1rem">
+                            {{template "decimalParts" (float64AsDecimalParts .AiSBits false)}}
+                        </td>
+                    </tr>
+
+                    <tr>
                         <td class="text-right pr-2 lh1rem nowrap p03rem0 p03rem0 xs-w91">POOL SIZE</td>
                         <td class="lh1rem">{{.PoolSize}}</td>
                     </tr>
+
+                    <tr>
+                        <td class="text-right pr-2 lh1rem nowrap p03rem0 p03rem0 xs-w91">AI POOL SIZE</td>
+                        <td class="lh1rem">{{.AiPoolSize}}</td>
+                    </tr>
+
                     <tr>
                         <td class="text-right pr-2 lh1rem nowrap p03rem0 xs-w91">POW DIFFICULTY</td>
                         <td class="lh1rem">
