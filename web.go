@@ -263,21 +263,22 @@ func (td *WebUI) Store(blockData *blockdata.BlockData, _ *wire.MsgBlock) error {
 }
 
 // StoreMPData stores mempool data in the mempool cache and update the webui via websocket
-func (td *WebUI) StoreMPData(data *mempool.MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMpool []*explorer.ItTxInfo, timestamp time.Time) error {
+func (td *WebUI) StoreMPData(data *mempool.MempoolData, ittx *explorer.ItTxInfo,
+	aiTxUnconfirm []*explorer.ItTxInfo, aiTxConfirmed []*explorer.ItTxInfo, aiTxInLockPool []*explorer.ItTxInfo, timestamp time.Time) error {
 	// for instant
 	if ittx != nil {
 		td.TemplateData.ItTxInLPool = ittx
 		td.TemplateData.ItTxInMPool = ittx
 		if ittx.ReSend {
-			td.MPC.ItTxInMPool = append(td.MPC.ItTxInMPool, ittx)
+			td.MPC.AiTxconfirmed = append(td.MPC.AiTxconfirmed, ittx)
 			td.wsHub.HubRelay <- sigNewItTxResend
 		} else {
-			td.MPC.ItTxInLPool = append(td.MPC.ItTxInLPool, ittx)
+			td.MPC.AiTxUnconfirm = append(td.MPC.AiTxUnconfirm, ittx)
 			td.wsHub.HubRelay <- sigNewItTx
 		}
 
 	} else {
-		td.MPC.StoreMPData(data, ittx, itTxInLPool, itTxInMpool, timestamp)
+		td.MPC.StoreMPData(data, ittx, aiTxUnconfirm, aiTxConfirmed, aiTxInLockPool, timestamp)
 
 		td.MPC.RLock()
 		defer td.MPC.RUnlock()
@@ -385,21 +386,24 @@ func (td *WebUI) RootPage(w http.ResponseWriter, r *http.Request) {
 }
 
 type InstantInfo struct {
-	TxId  string
-	Total float64
+	TxId       string
+	Total      float64
+	MineHeight int64
+	AddHeight  int64
+	Votes      []string
 }
 
 func (td *WebUI) InstantPage(w http.ResponseWriter, r *http.Request) {
 	td.templateDataMtx.RLock()
 	var lockedItTx []*InstantInfo
-	for _, lTx := range td.MPC.ItTxInLPool {
+	for _, lTx := range td.MPC.AiTxUnconfirm {
 		lockedItTx = append(lockedItTx, &InstantInfo{
 			TxId:  lTx.TxID,
 			Total: lTx.Total,
 		})
 	}
 	var mempoolItTx []*InstantInfo
-	for _, v := range td.MPC.ItTxInMPool {
+	for _, v := range td.MPC.AiTxconfirmed {
 		mempoolItTx = append(mempoolItTx, &InstantInfo{
 			TxId:  v.TxID,
 			Total: v.Total,
@@ -407,15 +411,17 @@ func (td *WebUI) InstantPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		CurrentHeight uint32
-		LPoolTxNum    int32
-		LPoolTx       []*InstantInfo
-		MPoolTxNum    int32
-		MPoolTx       []*InstantInfo
+		CurrentHeight  uint32
+		LPoolTxNum     int32
+		LPoolTx        []*InstantInfo
+		MPoolTxNum     int32
+		MPoolTx        []*InstantInfo
+		AiTxInLockPool []*explorer.ItTxInfo
 	}{
-		CurrentHeight: td.TemplateData.BlockSummary.Height,
-		LPoolTx:       lockedItTx,
-		MPoolTx:       mempoolItTx,
+		CurrentHeight:  td.TemplateData.BlockSummary.Height,
+		LPoolTx:        lockedItTx,
+		MPoolTx:        mempoolItTx,
+		AiTxInLockPool: td.MPC.AiTxInLockPool,
 	}
 	str, err := TemplateExecToString(td.instantTempl, "instant", struct {
 		Data interface{}

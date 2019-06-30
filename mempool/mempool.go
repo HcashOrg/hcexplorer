@@ -296,7 +296,7 @@ func (p *mempoolMonitor) ItTxHandler(client *hcrpcclient.Client) {
 				}
 			}
 			for _, s := range p.dataSavers {
-				s.StoreMPData(nil, tx, nil, nil, time.Now())
+				s.StoreMPData(nil, tx, nil, nil, nil, time.Now())
 			}
 
 		case <-p.quit:
@@ -333,12 +333,12 @@ func (p *mempoolMonitor) CollectAndStore() error {
 	timestamp := time.Now()
 
 	// flowered by instant transaction
-	itTxInLPool, itTxInMPool, err := p.collector.FetchInstantTx()
+	aiTxUnconfirm, aiTxConfirmed, lockedAiTx, err := p.collector.FetchInstantTx()
 	for _, s := range p.dataSavers {
 		if s != nil {
 			log.Trace("Saving MP data.")
 			// save data to wherever the saver wants to put it
-			go s.StoreMPData(data, nil, itTxInLPool, itTxInMPool, timestamp)
+			go s.StoreMPData(data, nil, aiTxUnconfirm, aiTxConfirmed, lockedAiTx, timestamp)
 		}
 	}
 
@@ -518,7 +518,7 @@ func (t *mempoolDataCollector) Collect() (*MempoolData, error) {
 
 // CollectInstant get node instant transaction
 // instant transaction in lock pool + instant transaction in mempool
-func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explorer.ItTxInfo, error) {
+func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explorer.ItTxInfo, []*explorer.ItTxInfo, error) {
 	// In case of a very fast block, make sure previous call to collect is not
 	// still running, or hcd may be mad.
 	t.mtx.Lock()
@@ -535,10 +535,11 @@ func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explor
 
 	itTxInLockPool, err := c.GetItTxInLockPool()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	UnconfimedAiTx := make([]*explorer.ItTxInfo, 0, 50)
 	confirmedAiTx := make([]*explorer.ItTxInfo, 0, 50)
+	LockedAiTx := make([]*explorer.ItTxInfo, 0, 50)
 	for k, v := range itTxInLockPool {
 		if v.MineHeight == 0 {
 			if v.Send {
@@ -546,18 +547,31 @@ func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explor
 					TxBasic: &explorer.TxBasic{
 						TxID: k,
 					},
-					ReSend: v.Send,
-					Votes:  v.Votes,
+					ReSend:     v.Send,
+					Votes:      v.Votes,
+					AddHeight:  v.AddHeight,
+					MineHeight: v.MineHeight,
 				})
 			} else {
 				UnconfimedAiTx = append(UnconfimedAiTx, &explorer.ItTxInfo{
 					TxBasic: &explorer.TxBasic{
 						TxID: k,
 					},
-					ReSend: v.Send,
-					Votes:  v.Votes,
+					ReSend:     v.Send,
+					Votes:      v.Votes,
+					AddHeight:  v.AddHeight,
+					MineHeight: v.MineHeight,
 				})
 			}
+		} else {
+			LockedAiTx = append(LockedAiTx, &explorer.ItTxInfo{
+				TxBasic: &explorer.TxBasic{
+					TxID: k,
+				},
+				AddHeight:  v.AddHeight,
+				MineHeight: v.MineHeight,
+				Votes:      v.Votes,
+			})
 		}
 
 	}
@@ -602,7 +616,7 @@ func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explor
 	//		itTxInMemPool = append(itTxInMemPool, tx)
 	//	}
 	//}
-	return UnconfimedAiTx, confirmedAiTx, nil
+	return UnconfimedAiTx, confirmedAiTx, LockedAiTx, nil
 }
 func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx) *explorer.TxBasic {
 	tx := new(explorer.TxBasic)
@@ -619,7 +633,7 @@ func makeExplorerTxBasic(data hcjson.TxRawResult, msgTx *wire.MsgTx) *explorer.T
 
 // MempoolDataSaver is an interface for saving/storing MempoolData
 type MempoolDataSaver interface {
-	StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, timestamp time.Time) error
+	StoreMPData(data *MempoolData, aiTx *explorer.ItTxInfo, aiTxUnConfirm []*explorer.ItTxInfo, aiTxConfirmed []*explorer.ItTxInfo, aiTxInLockPool []*explorer.ItTxInfo, timestamp time.Time) error
 }
 
 // MempoolDataToJSONStdOut implements MempoolDataSaver interface for JSON output to
@@ -857,7 +871,8 @@ func (s *MempoolDataToJSONFiles) StoreMPData(data *MempoolData) error {
 
 // StoreMPData writes all the ticket fees to a file
 // The file name is nameBase+".json".
-func (s *MempoolFeeDumper) StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, timestamp time.Time) error {
+func (s *MempoolFeeDumper) StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo,
+	itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, aiTxInLockPool []*explorer.ItTxInfo, timestamp time.Time) error {
 	// Do not write JSON data if there are no new tickets since last report
 	// if data.newTickets == 0 {
 	// 	return nil

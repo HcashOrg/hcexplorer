@@ -86,6 +86,8 @@ type TxInfo struct {
 }
 type ItTxInfo struct {
 	*TxBasic
+	AddHeight     int64
+	MineHeight    int64
 	SpendingTxns  []TxInID
 	Type          string
 	Vin           []Vin

@@ -23,12 +23,14 @@ type MempoolDataCache struct {
 	allFeeRates             []float64
 	lowestMineableByFeeRate float64
 	allTicketsDetails       TicketsDetails
-	ItTxInLPool             []*explorer.ItTxInfo // instant transaction in lock pool
-	ItTxInMPool             []*explorer.ItTxInfo // instant transaction in mem pool
+	AiTxUnconfirm           []*explorer.ItTxInfo // instant transaction wait for confirm
+	AiTxconfirmed           []*explorer.ItTxInfo // instant transaction have cofirm
+	AiTxInLockPool          []*explorer.ItTxInfo
 }
 
 // StoreMPData stores info from data in the mempool cache
-func (c *MempoolDataCache) StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo, itTxInLPool []*explorer.ItTxInfo, itTxInMPool []*explorer.ItTxInfo, timestamp time.Time) error {
+func (c *MempoolDataCache) StoreMPData(data *MempoolData, ittx *explorer.ItTxInfo,
+	aiTxUnconfirm []*explorer.ItTxInfo, aiTxConfirmed []*explorer.ItTxInfo, aiTxInLockPool []*explorer.ItTxInfo, timestamp time.Time) error {
 	if ittx == nil {
 		c.Lock()
 		defer c.Unlock()
@@ -42,8 +44,9 @@ func (c *MempoolDataCache) StoreMPData(data *MempoolData, ittx *explorer.ItTxInf
 		c.lowestMineableByFeeRate = data.MinableFees.lowestMineableFee
 		c.allTicketsDetails = data.AllTicketsDetails
 
-		c.ItTxInLPool = itTxInLPool
-		c.ItTxInMPool = itTxInMPool
+		c.AiTxUnconfirm = aiTxUnconfirm
+		c.AiTxconfirmed = aiTxConfirmed
+		c.AiTxInLockPool = aiTxInLockPool
 	}
 
 	return nil

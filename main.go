@@ -366,16 +366,16 @@ func mainCore() error {
 				" initial data: %v", err.Error())
 		}
 		// instant transaction
-		itTxInLockPool, itTxInMemPool, err := mpoolCollector.FetchInstantTx()
+		unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, err := mpoolCollector.FetchInstantTx()
 
 		// Store initial MP data
-		if err = sqliteDB.MPC.StoreMPData(mpData, nil, itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
+		if err = sqliteDB.MPC.StoreMPData(mpData, nil, unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, time.Now()); err != nil {
 			return fmt.Errorf("Failed to store initial mempool data (wiredDB): %v",
 				err.Error())
 		}
 
 		// Store initial MP data to webUI
-		if err = webUI.StoreMPData(mpData, nil, itTxInLockPool, itTxInMemPool, time.Now()); err != nil {
+		if err = webUI.StoreMPData(mpData, nil, unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, time.Now()); err != nil {
 			return fmt.Errorf("Failed to store initial mempool data (WebUI): %v",
 				err.Error())
 		}
