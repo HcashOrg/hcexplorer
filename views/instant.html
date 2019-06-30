@@ -56,7 +56,7 @@
             </div>
 
             <div class="col-sm-6" id="confirmedtx">
-                <h4><span>AI Transactions:Wait For Mining</span></h4>
+                <h4><span>AI Transactions:Already Confirmed</span></h4>
                 <div class="table-parent">
                     <table class="table table-sm striped">
                         <thead>
@@ -77,37 +77,37 @@
                 </div>
             </div>
         </div>
-{{/*        <div class="row">*/}}
-{{/*            <span class="anchor" id="transactions"></span>*/}}
-{{/*            <div class="col-sm-12" id="nodeLockPool">*/}}
-{{/*                <h4><span>AI Transactions Lock Pool</span></h4>*/}}
-{{/*                <div class="table-parent">*/}}
-{{/*                    <table class="table table-sm striped">*/}}
-{{/*                        <thead>*/}}
-{{/*                            <th>Transaction ID</th>*/}}
-{{/*                            <th class="text-right">Add Height</th>*/}}
-{{/*                            <th class="text-right">Mine  Height</th>*/}}
-{{/*                            <th class="text-right">Vote Number</th>*/}}
+        <div class="row">
+            <span class="anchor" id="transactions"></span>
+            <div class="col-sm-12" id="nodeLockPool">
+                <h4><span>LockPool AI Transactions In Chain Block</span></h4>
+                <div class="table-parent">
+                    <table class="table table-sm striped">
+                        <thead>
+                            <th>Transaction ID</th>
+                            <th class="text-right">Add Height</th>
+                            <th class="text-right">Mine  Height</th>
+                            <th class="text-right">Vote Number</th>
 
-{{/*                        </thead>*/}}
-{{/*                        <tbody>*/}}
-{{/*                            {{range .AiTxInLockPool}}*/}}
-{{/*                            <tr class="{{.TxID}}">*/}}
-{{/*                                <td class="break-word">*/}}
-{{/*                                    <span>*/}}
-{{/*                                        <a class="hash" href="/explorer/tx/{{.TxID}}">{{.TxID}}</a>*/}}
-{{/*                                    </span>*/}}
-{{/*                                </td>*/}}
-{{/*                                <td class="mono fs15 text-right">{{.AddHeight}}</td>*/}}
-{{/*                                <td class="mono fs15 text-right">{{.AddHeight}}</td>*/}}
-{{/*                                <td class="mono fs15 text-right">{{.MineHeight}}</td>*/}}
-{{/*                            </tr>*/}}
-{{/*                            {{end}}*/}}
-{{/*                        </tbody>*/}}
-{{/*                    </table>*/}}
-{{/*                </div>*/}}
-{{/*            </div>*/}}
-{{/*        </div>*/}}
+                        </thead>
+                        <tbody>
+                            {{range .AiTxInLockPool}}
+                            <tr class="{{.TxID}}">
+                                <td class="break-word">
+                                    <span>
+                                        <a class="hash" href="/explorer/tx/{{.TxID}}">{{.TxID}}</a>
+                                    </span>
+                                </td>
+                                <td class="mono fs15 text-right">{{.AddHeight}}</td>
+                                <td class="mono fs15 text-right">{{.AddHeight}}</td>
+                                <td class="mono fs15 text-right">{{.VotesNum}}</td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
 
 

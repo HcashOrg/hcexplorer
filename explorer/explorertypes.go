@@ -99,8 +99,9 @@ type ItTxInfo struct {
 	FormattedTime string
 	Mature        string
 	// instant tx
-	ReSend bool
-	Votes  []string
+	ReSend   bool
+	Votes    []string
+	VotesNum int
 }
 
 // TxInID models the identity of a spending transaction input

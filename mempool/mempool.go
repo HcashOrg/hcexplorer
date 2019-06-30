@@ -564,6 +564,7 @@ func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explor
 				})
 			}
 		} else {
+			// 已经上块，任然在锁定池
 			LockedAiTx = append(LockedAiTx, &explorer.ItTxInfo{
 				TxBasic: &explorer.TxBasic{
 					TxID: k,
@@ -571,6 +572,7 @@ func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explor
 				AddHeight:  v.AddHeight,
 				MineHeight: v.MineHeight,
 				Votes:      v.Votes,
+				VotesNum:   len(v.Votes),
 			})
 		}
 

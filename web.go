@@ -77,7 +77,7 @@ type WebUI struct {
 // then launching the WebSocket event handler
 func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI {
 	fp := filepath.Join("views", "root.tmpl")
-	instantfp := filepath.Join("views", "instant.tmpl")
+	instantfp := filepath.Join("views", "instant.html")
 	efp := filepath.Join("views", "extras.tmpl")
 	errorfp := filepath.Join("views", "error.tmpl")
 	toInt64 := func(v interface{}) int64 {
