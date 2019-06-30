@@ -32,9 +32,11 @@ type WebBlockInfo struct {
 	StakeInfoExt   *apitypes.StakeInfoExtendedEstimates `json:"stake"`
 }
 
-type WebItTxInfo struct {
-	TxId  *string  `json:"txid"`
-	Total *float64 `json:"total"`
+type WebAiTxInfo struct {
+	TxId       *string  `json:"txid"`
+	Total      *float64 `json:"total"`
+	AddHeight  *int64   `json:"addheight"`
+	MineHeight *int64   `json:"mineheight"`
 }
 
 // WebsocketHub and its event loop manage all websocket client connections.
