@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 {{with .Data}}
 <html lang="en">
-{{template "html-head" printf "instant transaction"}}
+{{template "html-head" printf "AI transaction"}}
 <body>
     {{template "navbar"}}
-    <div class="container instant">
+    <div class="container AI">
 
         <div class="row justify-content-between">
             <div class="col-md-7 col-sm-6">
@@ -20,7 +20,7 @@
             <div class="col-md-7 col-sm-6 d-flex">
                 <table class="">
                     <tr>
-                        <td class="text-right pr-2 lh1rem vam nowrap xs-w117">Total Unconfirm Instant Transaction</td>
+                        <td class="text-right pr-2 lh1rem vam nowrap xs-w117">Total Unconfirm AI Transaction</td>
                         <td>
                             <span class="hash break-word  lh1rem">{{.LPoolTxNum}}</span>
                         </td>
@@ -31,7 +31,7 @@
             <div class="col-md-5 col-sm-6 d-flex">
                 <table class="">
                     <tr>
-                        <td class="text-right pr-2 lh1rem vam nowrap xs-w117">Total confirmed Instant Transaction</td>
+                        <td class="text-right pr-2 lh1rem vam nowrap xs-w117">Total confirmed AI Transaction</td>
                         <td>
                             <span class="hash break-word  lh1rem">{{.MPoolTxNum}}</span>
                         </td>
@@ -45,7 +45,7 @@
         <div class="row">
             <span class="anchor" id="transactions"></span>
             <div class="col-sm-6" id="unconfirmedtx">
-                <h4><span>Instant Transactions:Wait for Confirm</span></h4>
+                <h4><span>AI Transactions:Wait for Confirm</span></h4>
                 <div class="table-parent">
                     <table class="table table-sm striped">
                         <thead>
@@ -69,7 +69,7 @@
             </div>
 
             <div class="col-sm-6" id="confirmedtx">
-                <h4><span>Instant Transactions:Wait For Mining</span></h4>
+                <h4><span>AI Transactions:Wait For Mining</span></h4>
                 <div class="table-parent">
                     <table class="table table-sm striped">
                         <thead>
@@ -96,7 +96,7 @@
         <div class="row">
             <span class="anchor" id="transactions"></span>
             <div class="col-sm-12" id="nodeLockPool">
-                <h4><span>Instant Transactions Lock Pool</span></h4>
+                <h4><span>AI Transactions Lock Pool</span></h4>
                 <div class="table-parent">
                     <table class="table table-sm striped">
                         <thead>
