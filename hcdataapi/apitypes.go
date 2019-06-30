@@ -296,6 +296,7 @@ type BlockExplorerBasic struct {
 	Revocations   uint8   `json:"revocations"`
 	AiRevocations uint8   `json:"airevocations"`
 	StakeDiff     float64 `json:"sdiff"`
+	AiStakeDiff   float64 `json:"aisdiff"`
 	Time          int64   `json:"time"`
 	BlockExplorerExtraInfo
 }
@@ -347,6 +348,12 @@ type MempoolTicketFeeInfo struct {
 	Height uint32 `json:"height"`
 	Time   int64  `json:"time"`
 	hcjson.FeeInfoMempool
+	LowestMineable float64 `json:"lowest_mineable"`
+}
+type AiMempoolTicketFeeInfo struct {
+	Height uint32 `json:"height"`
+	Time   int64  `json:"time"`
+	hcjson.AiFeeInfoMempool
 	LowestMineable float64 `json:"lowest_mineable"`
 }
 
