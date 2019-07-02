@@ -362,6 +362,8 @@ func mainCore() error {
 
 		mpData, err := mpoolCollector.Collect()
 		if err != nil {
+			log.Errorf("Mempool info collection failed while gathering"+
+				" initial data: %v", err.Error())
 			return fmt.Errorf("Mempool info collection failed while gathering"+
 				" initial data: %v", err.Error())
 		}
@@ -370,12 +372,16 @@ func mainCore() error {
 
 		// Store initial MP data
 		if err = sqliteDB.MPC.StoreMPData(mpData, nil, unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, time.Now()); err != nil {
+			log.Errorf("Failed to store initial mempool data (wiredDB): %v",
+				err.Error())
 			return fmt.Errorf("Failed to store initial mempool data (wiredDB): %v",
 				err.Error())
 		}
 
 		// Store initial MP data to webUI
 		if err = webUI.StoreMPData(mpData, nil, unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, time.Now()); err != nil {
+			log.Errorf("Failed to store initial mempool data (WebUI): %v",
+				err.Error())
 			return fmt.Errorf("Failed to store initial mempool data (WebUI): %v",
 				err.Error())
 		}
@@ -408,6 +414,7 @@ func mainCore() error {
 	// Register for notifications now that the monitors are listening
 	cerr := registerNodeNtfnHandlers(hcdClient)
 	if cerr != nil {
+		log.Errorf("RPC client error: %v (%v)", cerr.Error(), cerr.Cause())
 		return fmt.Errorf("RPC client error: %v (%v)", cerr.Error(), cerr.Cause())
 	}
 
@@ -488,6 +495,8 @@ func listenAndServeProto(listen, proto string, mux http.Handler) error {
 	t := time.NewTimer(3 * time.Second)
 	select {
 	case err := <-errChan:
+		log.Errorf("Failed to bind web server: %v", err)
+
 		return fmt.Errorf("Failed to bind web server: %v", err)
 	case <-t.C:
 		apiLog.Infof("Now serving on %s://%v/", proto, listen)

@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi"
 )
@@ -90,6 +91,7 @@ func getTxIDCtx(r *http.Request) string {
 func transactionHashCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		txid := chi.URLParam(r, "txid")
+		txid = strings.TrimSpace(txid)
 		ctx := context.WithValue(r.Context(), ctxTxHash, txid)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
