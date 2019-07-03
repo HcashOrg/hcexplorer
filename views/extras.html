@@ -391,7 +391,7 @@
             console.log(event)
             console.log("===========Received new instant tx message", event);
             var instantTx = JSON.parse(event);
-            console.log(instantTx)
+            console.log(instantTx);
             var newRow = '<tr class="'+instantTx.txid+'">'+
                                 '<td class="break-word">'+
                                 '<span>'+
@@ -400,21 +400,30 @@
                         '</td>'+
                         '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
                         '</tr>';
-
+            confirmSelector ="#confirmedtx tbody #"+instantTx.txid;
+            unconfirmSelector = "#unconfirmedtx tbody #"+instantTx.txid;
+            console.log("confirmSelector:"+confirmSelector)
             var unconfirmRows = $('#unconfirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
-            if (unconfirmRows) {
-                console.log(newRow);
-                let moveTarget = '#confirmedtx .'+instantTx.txid;
-                console.log(moveTarget)
-                if ($(moveTarget)){
-                    $(moveTarget).remove();
+            if (!$(confirmSelector)){
+                if (!$(unconfirmSelector)){
+                    unconfirmRows.append(newRow)
                 }
-                // var newRowHtml = $.parseHTML(newRow);
-                // $(newRowHtml).insertBefore(expTableRows.first());
-                unconfirmRows.append(newRow)
-                setTimeElements();
+
             }
+            // if (unconfirmRows) {
+            //     console.log(newRow);
+            //     let moveTarget = '#confirmedtx .'+instantTx.txid;
+            //     console.log(moveTarget)
+            //     if ($(moveTarget)){
+            //         $(moveTarget).remove();
+            //     }
+            //     // var newRowHtml = $.parseHTML(newRow);
+            //     // $(newRowHtml).insertBefore(expTableRows.first());
+            //     unconfirmRows.append(newRow)
+            //     setTimeElements();
+            // }
+
             // add for bottom's ai transaction locked pool
             // var nodeLockpool = $('#nodeLockPool tbody');
 
@@ -429,30 +438,39 @@
             var instantTx = JSON.parse(event);
             console.log(instantTx)
 
+            confirmSelector ="#confirmedtx tbody #"+instantTx.txid;
+            unconfirmSelector = "#unconfirmedtx tbody #"+instantTx.txid;
             var lockTableRows = $('#unconfirmedtx tbody tr');
             var memTableRows = $('#confirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
-            if (lockTableRows){
-                let moveTarget = '#unconfirmedtx .'+instantTx.txid;
-                if ($(moveTarget)){
-                    $(moveTarget).remove();
+            var newRow = '<tr class="'+instantTx.txid+'">'+
+                '<td class="break-word">'+
+                '<span>'+
+                '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
+                '</span>'+
+                '</td>'+
+                '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
+                '</tr>';
+            if (memTableRows){
+                if ($(unconfirmSelector)){
+                    $(unconfirmSelector).remove()
                 }
-
-                var newRow = '<tr class="'+instantTx.txid+'">'+
-                                 '<td class="break-word">'+
-                                     '<span>'+
-                                         '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
-                                     '</span>'+
-                                 '</td>'+
-                                 '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
-                             '</tr>';
-                console.log("=========================");
-                console.log(newRow);
-                var newRowHtml = $.parseHTML(newRow);
-
-                if (!$('#confirmedtx tbody .'+instantTx.txid)){
+                if (!$(confirmSelector)){
                     memTableRows.append(newRow);
                 }
+                // let moveTarget = '#unconfirmedtx .'+instantTx.txid;
+                // if ($(moveTarget)){
+                //     $(moveTarget).remove();
+                // }
+
+
+                // console.log("=========================");
+                // console.log(newRow);
+                // var newRowHtml = $.parseHTML(newRow);
+                //
+                // if (!$('#confirmedtx tbody .'+instantTx.txid)){
+                //     memTableRows.append(newRow);
+                // }
                 setTimeElements();
             }
         };
