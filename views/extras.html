@@ -405,7 +405,8 @@
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
             if (unconfirmRows) {
                 console.log(newRow);
-                let moveTarget = 'confirmedtx .'+instantTx.txid;
+                let moveTarget = '#confirmedtx .'+instantTx.txid;
+                console.log(moveTarget)
                 if ($(moveTarget)){
                     $(moveTarget).remove();
                 }
@@ -432,7 +433,7 @@
             var memTableRows = $('#confirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
             if (lockTableRows){
-                let moveTarget = 'unconfirmedtx .'+instantTx.txid;
+                let moveTarget = '#unconfirmedtx .'+instantTx.txid;
                 if ($(moveTarget)){
                     $(moveTarget).remove();
                 }
@@ -445,10 +446,13 @@
                                  '</td>'+
                                  '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
                              '</tr>';
-                console.log("=========================")
-                console.log(newRow)
+                console.log("=========================");
+                console.log(newRow);
                 var newRowHtml = $.parseHTML(newRow);
-                memTableRows.append(newRow)
+
+                if (!$('#confirmedtx tbody .'+instantTx.txid)){
+                    memTableRows.append(newRow);
+                }
                 setTimeElements();
             }
         };
