@@ -400,8 +400,8 @@
                         '</td>'+
                         '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
                         '</tr>';
-            confirmSelector ="#confirmedtx tbody #"+instantTx.txid;
-            unconfirmSelector = "#unconfirmedtx tbody #"+instantTx.txid;
+            confirmSelector ="#confirmedtx tbody ."+instantTx.txid;
+            unconfirmSelector = "#unconfirmedtx tbody ."+instantTx.txid;
             console.log("confirmSelector:"+confirmSelector)
             var unconfirmRows = $('#unconfirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
@@ -438,8 +438,8 @@
             var instantTx = JSON.parse(event);
             console.log(instantTx)
 
-            confirmSelector ="#confirmedtx tbody #"+instantTx.txid;
-            unconfirmSelector = "#unconfirmedtx tbody #"+instantTx.txid;
+            confirmSelector ="#confirmedtx tbody ."+instantTx.txid;
+            unconfirmSelector = "#unconfirmedtx tbody ."+instantTx.txid;
             var lockTableRows = $('#unconfirmedtx tbody tr');
             var memTableRows = $('#confirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());

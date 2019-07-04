@@ -64,7 +64,7 @@
                         </thead>
                         <tbody>
                             {{range .MPoolTx}}
-                            <tr>
+                            <tr class="{{.TxId}}">
                                 <td class="break-word">
                                     <span>
                                         <a class="hash" href="/explorer/tx/{{.TxId}}">{{.TxId}}</a>
