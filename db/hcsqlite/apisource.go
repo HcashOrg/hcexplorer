@@ -179,8 +179,8 @@ func (db *wiredDB) GetCoinSupply() hcutil.Amount {
 	return coinSupply
 }
 
-func (db *wiredDB) GetBlockSubsidy(height int64, voters uint16) *hcjson.GetBlockSubsidyResult {
-	blockSubsidy, err := db.client.GetBlockSubsidy(height, voters)
+func (db *wiredDB) GetBlockSubsidy(height int64, voters uint16,aiVoters uint16) *hcjson.GetBlockSubsidyResult {
+	blockSubsidy, err := db.client.GetBlockSubsidy(height, voters,aiVoters)
 	if err != nil {
 		return nil
 	}
