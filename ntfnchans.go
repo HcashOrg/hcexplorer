@@ -27,7 +27,7 @@ const (
 
 	// relevantMempoolTxChanBuffer is the size of the new transaction channel
 	// buffer, for relevant transactions that are added into mempool.
-	//relevantMempoolTxChanBuffer = 2048
+	// relevantMempoolTxChanBuffer = 2048
 )
 
 // Channels are package-level variables for simplicity

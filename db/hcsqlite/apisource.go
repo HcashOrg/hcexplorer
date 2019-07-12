@@ -179,8 +179,8 @@ func (db *wiredDB) GetCoinSupply() hcutil.Amount {
 	return coinSupply
 }
 
-func (db *wiredDB) GetBlockSubsidy(height int64, voters uint16,aiVoters uint16) *hcjson.GetBlockSubsidyResult {
-	blockSubsidy, err := db.client.GetBlockSubsidy(height, voters,aiVoters)
+func (db *wiredDB) GetBlockSubsidy(height int64, voters uint16, aiVoters uint16) *hcjson.GetBlockSubsidyResult {
+	blockSubsidy, err := db.client.GetBlockSubsidy(height, voters, aiVoters)
 	if err != nil {
 		return nil
 	}
@@ -942,7 +942,7 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 	}
 
 	txs := make([]*explorer.TxBasic, 0, block.Transactions)
-	itxs := make([]*explorer.TxBasic, 0, block.Transactions)
+	aitxs := make([]*explorer.TxBasic, 0, block.Transactions)
 	for _, tx := range data.RawTx {
 		if _, ok := txscript.IsInstantTx(txhelpers.MsgTxFromHex(tx.Hex)); ok {
 			aiexptx := makeExplorerTxBasic(tx, txhelpers.MsgTxFromHex(tx.Hex), db.params)
@@ -951,7 +951,7 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 					aiexptx.Fee, aiexptx.FeeRate = 0.0, 0.0
 				}
 			}
-			txs = append(txs, aiexptx)
+			aitxs = append(aitxs, aiexptx)
 		} else {
 			exptx := makeExplorerTxBasic(tx, txhelpers.MsgTxFromHex(tx.Hex), db.params)
 			for _, vin := range tx.Vin {
@@ -964,10 +964,10 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 
 	}
 	block.Tx = txs
-	block.ItTx = itxs
+	block.ItTx = aitxs
 
 	block.Transactions = len(txs)
-	block.ItTransactions = len(itxs)
+	block.ItTransactions = len(aitxs)
 
 	block.Votes = votes
 	block.Revs = revocations

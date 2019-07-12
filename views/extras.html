@@ -393,20 +393,19 @@
             var instantTx = JSON.parse(event);
             console.log(instantTx);
             var newRow = '<tr class="'+instantTx.txid+'">'+
-                                '<td class="break-word">'+
+                            '<td class="break-word">'+
                                 '<span>'+
-                                '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
-                        '</span>'+
-                        '</td>'+
-                        '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
+                                    '<a href ="javascript:volid(0);" class="hash">'+instantTx.txid+'</a>'+
+                                '</span>'+
+                            '</td>'+
                         '</tr>';
-            confirmSelector ="#confirmedtx tbody ."+instantTx.txid;
-            unconfirmSelector = "#unconfirmedtx tbody ."+instantTx.txid;
-            console.log("confirmSelector:"+confirmSelector)
+            confirmSelector =$('#confirmedtx tbody .'+instantTx.txid);
+            unconfirmSelector = $('#unconfirmedtx tbody .'+instantTx.txid);
+            console.log("confirmSelector:"+confirmSelector);
             var unconfirmRows = $('#unconfirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
-            if (!$(confirmSelector)){
-                if (!$(unconfirmSelector)){
+            if (!confirmSelector){
+                if (!unconfirmSelector){
                     unconfirmRows.append(newRow)
                 }
 
@@ -438,24 +437,23 @@
             var instantTx = JSON.parse(event);
             console.log(instantTx)
 
-            confirmSelector ="#confirmedtx tbody ."+instantTx.txid;
-            unconfirmSelector = "#unconfirmedtx tbody ."+instantTx.txid;
-            var lockTableRows = $('#unconfirmedtx tbody tr');
+            confirmSelector =$('#confirmedtx tbody .'+instantTx.txid);
+            unconfirmSelector = $('#unconfirmedtx tbody .'+instantTx.txid);
+            // var lockTableRows = $('#unconfirmedtx tbody tr');
             var memTableRows = $('#confirmedtx tbody');
             //var CurrentHeight = parseInt($('#explorertable tbody tr td').first().text());
             var newRow = '<tr class="'+instantTx.txid+'">'+
                 '<td class="break-word">'+
-                '<span>'+
-                '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
-                '</span>'+
+                    '<span>'+
+                        '<a class="hash" href="/explorer/tx/'+instantTx.txid+'">'+instantTx.txid+'</a>'+
+                    '</span>'+
                 '</td>'+
-                '<td class="mono fs15 text-right">'+instantTx.total +'</td>'+
                 '</tr>';
             if (memTableRows){
-                if ($(unconfirmSelector)){
-                    $(unconfirmSelector).remove()
+                if (unconfirmSelector){
+                    unconfirmSelector.remove()
                 }
-                if (!$(confirmSelector)){
+                if (confirmSelector){
                     memTableRows.append(newRow);
                 }
                 // let moveTarget = '#unconfirmedtx .'+instantTx.txid;

@@ -76,7 +76,7 @@ type WebUI struct {
 // NewWebUI constructs a new WebUI by loading and parsing the html templates
 // then launching the WebSocket event handler
 func NewWebUI(expSource APIDataSource, activeNetParams *chaincfg.Params) *WebUI {
-	fp := filepath.Join("views", "root.tmpl")
+	fp := filepath.Join("views", "root.html")
 	instantfp := filepath.Join("views", "instant.html")
 	efp := filepath.Join("views", "extras.html")
 	errorfp := filepath.Join("views", "error.tmpl")
@@ -263,22 +263,54 @@ func (td *WebUI) Store(blockData *blockdata.BlockData, _ *wire.MsgBlock) error {
 }
 
 // StoreMPData stores mempool data in the mempool cache and update the webui via websocket
-func (td *WebUI) StoreMPData(data *mempool.MempoolData, ittx *explorer.ItTxInfo,
+func (td *WebUI) StoreMPData(data *mempool.MempoolData, aitx *explorer.ItTxInfo,
 	aiTxUnconfirm []*explorer.ItTxInfo, aiTxConfirmed []*explorer.ItTxInfo, aiTxInLockPool []*explorer.ItTxInfo, timestamp time.Time) error {
 	// for instant
-	if ittx != nil {
-		td.TemplateData.ItTxInLPool = ittx
-		td.TemplateData.ItTxInMPool = ittx
-		if ittx.ReSend {
-			td.MPC.AiTxconfirmed = append(td.MPC.AiTxconfirmed, ittx)
-			td.wsHub.HubRelay <- sigNewItTxResend
+	if aitx != nil {
+		if aitx.ReSend {
+			// remove is cached AiTxUnconfirm
+			removeIndex := -1
+			for i, _ := range td.MPC.AiTxUnconfirm {
+				if td.MPC.AiTxUnconfirm[i].TxID == aitx.TxID {
+					removeIndex = i
+				}
+			}
+			if removeIndex >= 0 {
+				data := td.MPC.AiTxUnconfirm
+				td.MPC.AiTxUnconfirm = append(data[:removeIndex], data[removeIndex+1:]...)
+			}
+			// judge if aitx already exists
+			exist := false
+
+			for _, v := range td.MPC.AiTxconfirmed {
+				if v.TxID == aitx.TxID {
+					exist = true
+				}
+			}
+
+			if !exist {
+				td.TemplateData.ItTxInMPool = aitx
+				td.MPC.AiTxconfirmed = append(td.MPC.AiTxconfirmed, aitx)
+				td.wsHub.HubRelay <- sigNewItTxResend
+			}
 		} else {
-			td.MPC.AiTxUnconfirm = append(td.MPC.AiTxUnconfirm, ittx)
-			td.wsHub.HubRelay <- sigNewItTx
+			exist := false
+
+			for _, v := range td.MPC.AiTxUnconfirm {
+				if v.TxID == aitx.TxID {
+					exist = true
+				}
+			}
+
+			if !exist {
+				td.TemplateData.ItTxInLPool = aitx
+				td.MPC.AiTxUnconfirm = append(td.MPC.AiTxUnconfirm, aitx)
+				td.wsHub.HubRelay <- sigNewItTx
+			}
 		}
 
 	} else {
-		td.MPC.StoreMPData(data, ittx, aiTxUnconfirm, aiTxConfirmed, aiTxInLockPool, timestamp)
+		td.MPC.StoreMPData(data, aitx, aiTxUnconfirm, aiTxConfirmed, aiTxInLockPool, timestamp)
 
 		td.MPC.RLock()
 		defer td.MPC.RUnlock()
@@ -329,7 +361,7 @@ func (td *WebUI) Supply(w http.ResponseWriter, r *http.Request) {
 		PROOFOFWORKDIFFICULTY:  data.Difficulty,
 		BLOCKREWARD:            float64(td.TemplateData.BlockSummary.NextBlockSubsidy.Total) / 100000000,
 		POWREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.PoW) / 100000000,
-		POSREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.PoS) / 500000000,
+		POSREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.PoS) / 1000000000,
 		DEVREWARD:              float64(td.TemplateData.BlockSummary.NextBlockSubsidy.Developer) / 100000000,
 	}
 

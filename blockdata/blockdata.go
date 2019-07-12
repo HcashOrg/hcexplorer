@@ -154,7 +154,7 @@ func (t *Collector) CollectBlockInfo(hash *chainhash.Hash) (*apitypes.BlockDataB
 	if err != nil {
 		log.Error("GetCoinSupply failed: ", err)
 	}
-	nbSubsidy, err := t.hcdChainSvr.GetBlockSubsidy(int64(msgBlock.Header.Height)+1, 5,5)
+	nbSubsidy, err := t.hcdChainSvr.GetBlockSubsidy(int64(msgBlock.Header.Height)+1, msgBlock.Header.Voters, msgBlock.Header.AiVoters) //
 	if err != nil {
 		log.Errorf("GetBlockSubsidy for %d failed: %v", msgBlock.Header.Height, err)
 	}
