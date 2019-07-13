@@ -7,6 +7,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
+	"github.com/HcashOrg/hcd/blockchain/stake"
 	"os"
 	"path/filepath"
 
@@ -59,6 +61,8 @@ var (
 	expLog        = backendLog.Logger("EXPR")
 	apiLog        = backendLog.Logger("JAPI")
 	log           = backendLog.Logger("DATD")
+	stakeLog    = backendLog.Logger("STAKE")
+	aistakeLog    = backendLog.Logger("AISTAKE")
 )
 
 // Initialize package-global logger variables.
@@ -71,9 +75,12 @@ func init() {
 	rpcutils.UseLogger(clientLog)
 	mempool.UseLogger(mempoolLog)
 	explorer.UseLogger(expLog)
+	stake.UseLogger(aistakeLog)
+	aistake.UseLogger(aistakeLog)
 }
 
-// subsystemLoggers maps each subsystem identifier to its associated logger.
+// subsystemLoggers maps each subs
+// ystem identifier to its associated logger.
 var subsystemLoggers = map[string]btclog.Logger{
 	"SQLT": sqliteLog,
 	"PSQL": postgresqlLog,

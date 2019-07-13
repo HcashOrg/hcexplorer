@@ -275,7 +275,7 @@ func (db *StakeDatabase) ConnectBlockHash(hash *chainhash.Hash) (*hcutil.Block, 
 func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 	height := block.Height()
 	maturingHeight := height - int64(db.params.TicketMaturity)
-
+	aiMaturingHeight := height - int64(db.params.AiTicketMaturity)
 	var maturingTickets []chainhash.Hash
 	var maturingAiTickets []chainhash.Hash
 	if maturingHeight >= 0 {
@@ -284,7 +284,13 @@ func (db *StakeDatabase) ConnectBlock(block *hcutil.Block) error {
 			db.ForgetBlock(maturingHeight)
 		}
 		maturingTickets, _ = txhelpers.TicketsInBlock(maturingBlock)
-		maturingAiTickets, _ = txhelpers.AiTicketsInBlock(maturingBlock)
+
+		aiMaturingBlock, wasAiCached := db.block(aiMaturingHeight)
+		if wasAiCached {
+			db.ForgetBlock(aiMaturingHeight)
+		}
+
+		maturingAiTickets, _ = txhelpers.AiTicketsInBlock(aiMaturingBlock)
 
 	}
 
