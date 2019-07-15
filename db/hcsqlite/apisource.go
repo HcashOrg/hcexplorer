@@ -944,7 +944,7 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 	txs := make([]*explorer.TxBasic, 0, block.Transactions)
 	aitxs := make([]*explorer.TxBasic, 0, block.Transactions)
 	for _, tx := range data.RawTx {
-		if _, ok := txscript.IsInstantTx(txhelpers.MsgTxFromHex(tx.Hex)); ok {
+		if _, ok := txscript.IsAiTx(txhelpers.MsgTxFromHex(tx.Hex)); ok {
 			aiexptx := makeExplorerTxBasic(tx, txhelpers.MsgTxFromHex(tx.Hex), db.params)
 			for _, vin := range tx.Vin {
 				if vin.IsCoinBase() {

@@ -40,7 +40,7 @@ func registerNodeNtfnHandlers(hcdClient *hcrpcclient.Client) *ContextualError {
 	}
 
 	// register for instant tx
-	if err = hcdClient.NotifyNewInstantTx(); err != nil {
+	if err = hcdClient.NotifyNewAiTx(); err != nil {
 		return newContextualError("new instant transaction "+
 			"notification registration failed", err)
 	}
@@ -267,13 +267,13 @@ func makeNodeNtfnHandlers(cfg *config) (*hcrpcclient.NotificationHandlers, *coll
 		//txDetails.Hex
 		//log.Info("Transaction accepted to mempool: ", txDetails.Txid)
 		//},
-		OnInstantTxVote: func(instantTxVoteHash *chainhash.Hash, instantTxHash *chainhash.Hash, tickeHash *chainhash.Hash, vote bool, sig []byte) {
+		OnAiTxVote: func(instantTxVoteHash *chainhash.Hash, instantTxHash *chainhash.Hash, tickeHash *chainhash.Hash, vote bool, sig []byte) {
 			log.Infof("receive new instantTxVote:%s for instantTx:%s", instantTxHash.String(), instantTxHash.String())
 		},
-		OnNewInstantTx: func(tx []byte, tickets []*chainhash.Hash, resend bool) {
+		OnNewAiTx: func(tx []byte, tickets []*chainhash.Hash, resend bool) {
 			// vote succeed
 			// TOOD my
-			itTx := wire.NewMsgInstantTx()
+			itTx := wire.NewMsgAiTx()
 			itTx.FromBytes(tx)
 
 			itTxh := itTx.MsgTx.TxHash()

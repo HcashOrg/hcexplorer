@@ -333,7 +333,7 @@ func (p *mempoolMonitor) CollectAndStore() error {
 	timestamp := time.Now()
 
 	// flowered by instant transaction
-	aiTxUnconfirm, aiTxConfirmed, lockedAiTx, err := p.collector.FetchInstantTx()
+	aiTxUnconfirm, aiTxConfirmed, lockedAiTx, err := p.collector.FetchAiTx()
 	for _, s := range p.dataSavers {
 		if s != nil {
 			log.Trace("Saving MP data.")
@@ -518,7 +518,7 @@ func (t *mempoolDataCollector) Collect() (*MempoolData, error) {
 
 // CollectInstant get node instant transaction
 // instant transaction in lock pool + instant transaction in mempool
-func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explorer.ItTxInfo, []*explorer.ItTxInfo, error) {
+func (t *mempoolDataCollector) FetchAiTx() ([]*explorer.ItTxInfo, []*explorer.ItTxInfo, []*explorer.ItTxInfo, error) {
 	// In case of a very fast block, make sure previous call to collect is not
 	// still running, or hcd may be mad.
 	t.mtx.Lock()
@@ -603,7 +603,7 @@ func (t *mempoolDataCollector) FetchInstantTx() ([]*explorer.ItTxInfo, []*explor
 	//		log.Errorf("Cannot create MsgTx for tx %v", txhash)
 	//		return nil, nil, err
 	//	}
-	//	if _, ok := txscript.IsInstantTx(msgTx); ok {
+	//	if _, ok := txscript.IsAiTx(msgTx); ok {
 	//		txBasic := makeExplorerTxBasic(*txraw, msgTx)
 	//		tx := &explorer.ItTxInfo{
 	//			TxBasic: txBasic,

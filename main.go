@@ -368,7 +368,7 @@ func mainCore() error {
 				" initial data: %v", err.Error())
 		}
 		// instant transaction
-		unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, err := mpoolCollector.FetchInstantTx()
+		unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, err := mpoolCollector.FetchAiTx()
 
 		// Store initial MP data
 		if err = sqliteDB.MPC.StoreMPData(mpData, nil, unconfirmAiTx, confirmedAiTx, aiTxInLoclPool, time.Now()); err != nil {
@@ -430,7 +430,7 @@ func mainCore() error {
 
 	webMux := chi.NewRouter()
 	webMux.Get("/", webUI.RootPage)
-	webMux.Get("/instant", webUI.InstantPage)
+	webMux.Get("/instant", webUI.AiPage)
 	webMux.Get("/supply", webUI.Supply)
 	webMux.Get("/ws", webUI.WSBlockUpdater)
 	webMux.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
