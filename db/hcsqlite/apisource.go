@@ -967,7 +967,7 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 	block.ItTx = aitxs
 
 	block.Transactions = len(txs)
-	block.ItTransactions = len(aitxs)
+	block.AiTransactions = len(aitxs)
 
 	block.Votes = votes
 	block.Revs = revocations
