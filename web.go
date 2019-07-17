@@ -425,7 +425,7 @@ type InstantInfo struct {
 	Votes      []string
 }
 
-func (td *WebUI) InstantPage(w http.ResponseWriter, r *http.Request) {
+func (td *WebUI) AiPage(w http.ResponseWriter, r *http.Request) {
 	td.templateDataMtx.RLock()
 	var lockedItTx []*InstantInfo
 	for _, lTx := range td.MPC.AiTxUnconfirm {

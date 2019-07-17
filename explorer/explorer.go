@@ -629,8 +629,8 @@ func (exp *explorerUI) rootWebsocket(w http.ResponseWriter, r *http.Request) {
 				case sigPingAndUserCount:
 					// ping and send user count
 					webData.Message = strconv.Itoa(exp.wsHub.NumClients())
-				case sigNewInstantTx:
-					log.Debug("sigNewInstantTx")
+				case sigNewAiTx:
+					log.Debug("sigNewAiTx")
 
 				}
 

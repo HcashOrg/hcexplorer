@@ -16,7 +16,7 @@ type WebSocketMessage struct {
 var eventIDs = map[hubSignal]string{
 	sigNewBlock:         "newblock",
 	sigPingAndUserCount: "ping",
-	sigNewInstantTx:     "newinstanttx",
+	sigNewAiTx:     "newinstanttx",
 }
 
 // WebsocketHub and its event loop manage all websocket client connections.
@@ -40,7 +40,7 @@ const (
 	wsReadTimeout            = 12 * time.Second
 	pingInterval             = 12 * time.Second
 	sigNewBlock    hubSignal = iota
-	sigNewInstantTx
+	sigNewAiTx
 	sigPingAndUserCount
 )
 
@@ -121,7 +121,7 @@ func (wsh *WebsocketHub) run() {
 			switch hubSignal {
 			case sigNewBlock:
 				log.Infof("Signaling new block to %d clients.", len(wsh.clients))
-			case sigNewInstantTx:
+			case sigNewAiTx:
 				log.Infof("Signaling new instant tx to %d clients.", len(wsh.clients))
 			case sigPingAndUserCount:
 				log.Tracef("Signaling ping/user count to %d clients.", len(wsh.clients))

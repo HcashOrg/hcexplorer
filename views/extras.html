@@ -387,7 +387,7 @@
         ws.registerEvtHandler("newblock", updateBlockData);
 
 
-        var updateInstantTxData = function (event) {
+        var updateAiTxData = function (event) {
             console.log(event)
             console.log("===========Received new instant tx message", event);
             var instantTx = JSON.parse(event);
@@ -429,10 +429,10 @@
             // memTableRows.append(newRow)
 
         };
-        ws.registerEvtHandler("newittx", updateInstantTxData);
+        ws.registerEvtHandler("newittx", updateAiTxData);
 
 
-        var updateInstantTxResendData = function (event) {
+        var updateAiTxResendData = function (event) {
             console.log("============= Received new instant tx resend message", event);
             var instantTx = JSON.parse(event);
             console.log(instantTx)
@@ -472,7 +472,7 @@
                 setTimeElements();
             }
         };
-        ws.registerEvtHandler("newittxresend", updateInstantTxResendData);
+        ws.registerEvtHandler("newittxresend", updateAiTxResendData);
 
         var updateMempool = function (event) {
             console.log("Received mempoolsstxfeeinfo message", event);
