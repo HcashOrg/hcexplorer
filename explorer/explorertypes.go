@@ -19,7 +19,7 @@ type BlockBasic struct {
 	AiVoters uint16 `json:"aivotes"`
 
 	Transactions   int `json:"tx"`
-	ItTransactions int `json:"ittx"`
+	AiTransactions int `json:"ittx"`
 
 	FreshStake     uint8  `json:"tickets"`
 	AiFreshStake   uint8  `json:"aitickets"`

@@ -1454,13 +1454,16 @@ func (exp *explorerUI) Store(blockData *blockdata.BlockData, _ *wire.MsgBlock) e
 	newBlockData := BlockBasic{
 		Height:         int64(bData.Height),
 		Voters:         bData.Voters,
+		AiVoters:       bData.AiVoters,
 		FreshStake:     bData.FreshStake,
+		AiFreshStake:   bData.AiFreshStake,
 		Size:           int32(bData.Size),
 		Transactions:   bData.TxLen,
 		BlockTime:      bData.Time,
 		FormattedTime:  bData.FormattedTime,
 		FormattedBytes: humanize.Bytes(uint64(bData.Size)),
 		Revocations:    uint32(bData.Revocations),
+		AiRevocations:  uint32(bData.AiRevocations),
 	}
 	exp.NewBlockData = newBlockData
 	exp.NewBlockDataMtx.Unlock()
@@ -1481,10 +1484,10 @@ func (exp *explorerUI) addRoutes() {
 	exp.Mux.Get("/", exp.root)
 	exp.Mux.Get("/ws", exp.rootWebsocket)
 
-	exp.Mux.Route("/instant", func(r chi.Router) {
-		r.Get("/", exp.instant)
-		r.Get("/ws", exp.rootWebsocket)
-	})
+	//exp.Mux.Route("/instant", func(r chi.Router) {
+	//	r.Get("/", exp.instant)
+	//	r.Get("/ws", exp.rootWebsocket)
+	//})
 
 	exp.Mux.Route("/richlist", func(r chi.Router) {
 		r.Get("/", exp.richlist)
