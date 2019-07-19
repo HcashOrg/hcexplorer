@@ -121,7 +121,7 @@ func NewStakeDatabase(client *hcrpcclient.Client, params *chaincfg.Params) (*Sta
 		if err != nil {
 			return sDB, err
 		}
-		aiLiveTickets, err := sDB.NodeClient.AiLiveTickets()
+		aiLiveTickets, err := sDB.NodeClient.LiveAiTickets()
 		if err != nil {
 			return sDB, err
 		}
