@@ -891,10 +891,20 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			stx.Fee, stx.FeeRate = 0.0, 0.0
 			votes = append(votes, stx)
+		case stake.TxTypeAiSSGen:
+			stx := makeExplorerTxBasic(tx, msgTx, db.params)
+			stx.Fee, stx.FeeRate = 0.0, 0.0
+			votes = append(votes, stx)
 		case stake.TxTypeSStx:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			tickets = append(tickets, stx)
+		case stake.TxTypeAiSStx:
+			stx := makeExplorerTxBasic(tx, msgTx, db.params)
+			tickets = append(tickets, stx)
 		case stake.TxTypeSSRtx:
+			stx := makeExplorerTxBasic(tx, msgTx, db.params)
+			revocations = append(revocations, stx)
+		case stake.TxTypeAiSSRtx:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			revocations = append(revocations, stx)
 		}
