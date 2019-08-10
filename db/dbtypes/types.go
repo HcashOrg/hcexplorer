@@ -176,6 +176,7 @@ type TopAddressRow struct {
 	DStartTime string
 	DEndTime   string
 	StringVal  string
+	Belong     string
 }
 type ChartValue struct {
 	BalanceDist  []string  `json:"balance_dist"`
@@ -234,8 +235,8 @@ type Hashrate struct {
 }
 
 type HashRateJson struct {
-	HashRate []float64  `json:"hash_rate"`
-	Date     []string `json:"date"`
+	HashRate []float64 `json:"hash_rate"`
+	Date     []string  `json:"date"`
 }
 
 type TicketPrice struct {

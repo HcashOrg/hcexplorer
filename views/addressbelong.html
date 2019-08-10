@@ -1,0 +1,58 @@
+{{define "hashrate"}}
+    <!DOCTYPE html>
+    <html lang="en">
+
+    {{template "html-head" "block size"}}
+    <body>
+    {{template "navbar"}}
+
+    <div class="container">
+        <form>
+            <div class="form-group">
+                <label for="exampleInputEmail1">Address</label>
+                <input type="email" class="form-control" id="address" placeholder="address">
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">Belong To</label>
+                <input type="password" class="form-control" id="belong" placeholder="belong to">
+            </div>
+
+            <a class="btn btn-success" id="submit" href="#" role="button">Submit</a>
+        </form>
+
+    </div>
+
+    <script>
+        $("#submit").click(function(){
+            var address = $("#address").val();
+            var belong = $("#belong").val();
+            if (address && belong){
+                $.ajax({
+                    url: "/explorer/addressbelong/upadte?address="+address+"&belong="+belong+"",
+                    type:"GET",
+                    dataType: 'JSON',
+                    success:function (data) {
+                        if(data=="ok"){
+                            alert("update success")
+                        }else{
+                            alert("update failed,please try again")
+                        }
+                    },
+                    error:function (err) {
+                        window.alert(err)
+                    }
+                })
+            }else{
+                window.alert("输入内容不能为空");
+            }
+
+        });
+
+    </script>
+
+    {{template "footer"}}
+
+    </body>
+
+    </html>
+{{ end }}

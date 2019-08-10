@@ -319,7 +319,18 @@ func (pgb *ChainDB) SyncAddresses() error {
 func (pgb *ChainDB) GetTop100Addresses() ([]*dbtypes.TopAddressRow, error) {
 	var addressRows []*dbtypes.TopAddressRow
 
-	_, addressRows, err := RetrieveTop100Address(pgb.db, 0, 100)
+	_, addressRows, err := RetrieveTop100Address(pgb.db, 0, 100
+
+	// add belong to addressRows
+	for i, addrdata := range addressRows {
+		row := pgb.db.QueryRow("select belong from addressbelong where address=$1", addrdata.Address)
+		var belong string
+		if err := row.Scan(&belong); err != nil {
+			log.Errorf("query address belong failed:%v", err)
+		} else {
+			addressRows[i].Belong = belong
+		}
+	}
 
 	if err != nil {
 		return nil, err

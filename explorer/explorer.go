@@ -46,6 +46,7 @@ const (
 	diffTemplateIndex
 	blocksizeTemplateIndex
 	hashrateTemplateIndex
+	addressBelongIndex
 	ticketpriceTemplateIndex
 	blockverTemplateIndex
 	scripttypeTemplateIndex
@@ -91,6 +92,7 @@ type explorerDataSource interface {
 	GetDiffChartData() ([]*dbtypes.DiffData, error)
 	GetBloksizejson() (*dbtypes.BlocksizeJson, error)
 	GetHashrateJson() (*dbtypes.HashRateJson, error)
+	UpdateAddressBelong(address string, belong string) error
 	GetTicketPricejson() (*dbtypes.TicketPrice, error)
 	GetScriptTypejson() (*dbtypes.ScriptTypejson, error)
 	GetBlockverjson() (*dbtypes.BlockVerJson, error)
@@ -166,7 +168,7 @@ func (exp *explorerUI) richlist(w http.ResponseWriter, r *http.Request) {
 	addrList, errH := exp.explorerSource.GetTop100Addresses()
 
 	if errH != nil {
-		log.Errorf("Unable to get richlist %v",errH)
+		log.Errorf("Unable to get richlist %v", errH)
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -259,6 +261,31 @@ func (exp *explorerUI) hashrate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, str)
+}
+
+func (exp *explorerUI) addressbelong(w http.ResponseWriter, r *http.Request) {
+	str, err := templateExecToString(exp.templates[addressBelongIndex], "addressbelong", struct {
+		Data interface{}
+	}{})
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+
+func (exp *explorerUI) addressbelongupdate(w http.ResponseWriter, r *http.Request) {
+	address := r.FormValue("address")
+	belong := r.FormValue("belong")
+	err := exp.explorerSource.UpdateAddressBelong(address, belong)
+	if err != nil {
+		log.Errorf("Unable to get hashratejson")
+		writeJSON(w, "update failed,please try again")
+	}
+	writeJSON(w, "ok")
 }
 func (exp *explorerUI) ticketpricejson(w http.ResponseWriter, r *http.Request) {
 	ticketpriceJson, errH := exp.explorerSource.GetTicketPricejson()
@@ -714,7 +741,7 @@ func (exp *explorerUI) txPage(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, str)
 }
 func (exp *explorerUI) balancejson(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query();
+	params := r.URL.Query()
 	addrPar, ok := params["addr"]
 	if !ok {
 		log.Trace("address not set")
@@ -1013,6 +1040,14 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	addressbelongTemplate, err := template.New("addressbelong").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["addressbelong"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	ticketpriceTemplate, err := template.New("ticketprice").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["ticketprice"],
 		exp.templateFiles["extras"],
@@ -1081,6 +1116,7 @@ func (exp *explorerUI) reloadTemplates() error {
 	exp.templates[diffTemplateIndex] = diffTemplate
 	exp.templates[blocksizeTemplateIndex] = blocksizeTemplate
 	exp.templates[hashrateTemplateIndex] = hashrateTemplate
+	exp.templates[addressBelongIndex] = addressbelongTemplate
 	exp.templates[ticketpriceTemplateIndex] = ticketpriceTemplate
 	exp.templates[blockverTemplateIndex] = blockverTemplate
 	exp.templates[scripttypeTemplateIndex] = scripttypeTemplate
@@ -1146,7 +1182,8 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
-	exp.templateFiles["hashrate"] = filepath.Join("views","hashrate.tmpl")
+	exp.templateFiles["hashrate"] = filepath.Join("views", "hashrate.tmpl")
+	exp.templateFiles["addressbelong"] = filepath.Join("views", "addressbelong.html")
 	exp.templateFiles["ticketprice"] = filepath.Join("views", "ticketprice.tmpl")
 	exp.templateFiles["blockver"] = filepath.Join("views", "blockver.tmpl")
 	exp.templateFiles["scripttype"] = filepath.Join("views", "scripttype.tmpl")
@@ -1470,6 +1507,12 @@ func (exp *explorerUI) addRoutes() {
 	exp.Mux.Get("/hashratejson", exp.hashratejson)
 	exp.Mux.Route("/hashrate", func(r chi.Router) {
 		r.Get("/", exp.hashrate)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+
+	exp.Mux.Route("/addressbelong", func(r chi.Router) {
+		r.Get("/", exp.addressbelong)
+		r.Get("/update", exp.addressbelongupdate)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 
