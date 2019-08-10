@@ -1,4 +1,4 @@
-{{define "hashrate"}}
+{{define "addressbelong"}}
     <!DOCTYPE html>
     <html lang="en">
 
@@ -10,11 +10,11 @@
         <form>
             <div class="form-group">
                 <label for="exampleInputEmail1">Address</label>
-                <input type="email" class="form-control" id="address" placeholder="address">
+                <input type="text" class="form-control" id="address" placeholder="address">
             </div>
             <div class="form-group">
                 <label for="exampleInputPassword1">Belong To</label>
-                <input type="password" class="form-control" id="belong" placeholder="belong to">
+                <input type="text" class="form-control" id="belong" placeholder="belong to">
             </div>
 
             <a class="btn btn-success" id="submit" href="#" role="button">Submit</a>
@@ -28,18 +28,19 @@
             var belong = $("#belong").val();
             if (address && belong){
                 $.ajax({
-                    url: "/explorer/addressbelong/upadte?address="+address+"&belong="+belong+"",
+                    url: "/explorer/belongupdate?address="+address+"&belong="+belong+"",
                     type:"GET",
                     dataType: 'JSON',
                     success:function (data) {
                         if(data=="ok"){
+                            console.log(data);
                             alert("update success")
                         }else{
                             alert("update failed,please try again")
                         }
                     },
                     error:function (err) {
-                        window.alert(err)
+                       alert("update failed,please try again")
                     }
                 })
             }else{

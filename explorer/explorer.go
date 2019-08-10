@@ -278,11 +278,12 @@ func (exp *explorerUI) addressbelong(w http.ResponseWriter, r *http.Request) {
 }
 
 func (exp *explorerUI) addressbelongupdate(w http.ResponseWriter, r *http.Request) {
-	address := r.FormValue("address")
-	belong := r.FormValue("belong")
+	address := strings.TrimSpace(r.FormValue("address"))
+	belong := strings.TrimSpace(r.FormValue("belong"))
+
 	err := exp.explorerSource.UpdateAddressBelong(address, belong)
 	if err != nil {
-		log.Errorf("Unable to get hashratejson")
+		log.Errorf("Unable to update address belong,%v", err)
 		writeJSON(w, "update failed,please try again")
 	}
 	writeJSON(w, "ok")
@@ -1382,6 +1383,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	}
 	exp.templates = append(exp.templates, hashrateTemplate)
 
+	addressbelongTemplate, err := template.New("addressbelong").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["addressbelong"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, addressbelongTemplate)
+
 	ticketpriceTemplate, err := template.New("ticketprice").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["ticketprice"],
 		exp.templateFiles["extras"],
@@ -1509,10 +1519,9 @@ func (exp *explorerUI) addRoutes() {
 		r.Get("/", exp.hashrate)
 		r.Get("/ws", exp.rootWebsocket)
 	})
-
+	exp.Mux.Get("/belongupdate", exp.addressbelongupdate)
 	exp.Mux.Route("/addressbelong", func(r chi.Router) {
 		r.Get("/", exp.addressbelong)
-		r.Get("/update", exp.addressbelongupdate)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 
