@@ -338,6 +338,17 @@ func (pgb *ChainDB) GetTop100Addresses() ([]*dbtypes.TopAddressRow, error) {
 	return addressRows, err
 }
 
+func (pgb *ChainDB) UpdateAddressBelong(address string, belong string) error {
+	//UPDATE 表名称 SET 列名称 = 新值 WHERE 列名称 = 某值
+	// insert into person (id,first_name,last_name,gender,email) values (234,'hello','world','male','fjaslkdjg@gmail.com') on conflict (id) DO
+	//update set email = EXCLUDED.email;
+	_, err := pgb.db.Exec("insert into addressbelong(address,belong) values ($1,$2) on conflict(address) DO update set belong=EXCLUDED.belong ", address, belong)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (pgb *ChainDB) GetOPReturnChartData() (*dbtypes.OPReturnChartData, int, error) {
 	addressRows, count, err := RetrieveOpReturnChartData(pgb.db)
 	if err != nil {
