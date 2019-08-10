@@ -176,7 +176,7 @@ func (exp *explorerUI) richlist(w http.ResponseWriter, r *http.Request) {
 	chartData, errH := exp.explorerSource.GetChartValue()
 
 	if errH != nil {
-		log.Errorf("Unable to get richlist")
+		log.Errorf("Unable to get richlist %v", errH)
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
 	}
