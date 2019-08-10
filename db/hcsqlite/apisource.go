@@ -736,10 +736,10 @@ func (db *wiredDB) GetAddressTransactionsRaw(addr string, count int) []*apitypes
 	return txarray
 }
 
-func (db *wiredDB)GetNetWorkHashRate()float64{
-	hashRate,err := db.client.GetNetworkHashPS()
-	if err != nil{
-		log.Errorf("get networkhashrate error:%v",err)
+func (db *wiredDB) GetNetWorkHashRate() float64 {
+	hashRate, err := db.client.GetNetworkHashPS()
+	if err != nil {
+		log.Errorf("get networkhashrate error:%v", err)
 		return 0
 	}
 	return float64(hashRate)
@@ -899,6 +899,7 @@ func (db *wiredDB) GetExplorerBlock(hash string) *explorer.BlockInfo {
 		case stake.TxTypeSSRtx:
 			stx := makeExplorerTxBasic(tx, msgTx, db.params)
 			revocations = append(revocations, stx)
+		}
 	}
 
 	txs := make([]*explorer.TxBasic, 0, block.Transactions)
