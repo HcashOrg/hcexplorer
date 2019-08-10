@@ -1183,7 +1183,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
 	exp.templateFiles["hashrate"] = filepath.Join("views", "hashrate.tmpl")
-	exp.templateFiles["addressbelong"] = filepath.Join("views", "addressbelong.html")
+	exp.templateFiles["addressbelong"] = filepath.Join("views", "addressbelong.tmpl")
 	exp.templateFiles["ticketprice"] = filepath.Join("views", "ticketprice.tmpl")
 	exp.templateFiles["blockver"] = filepath.Join("views", "blockver.tmpl")
 	exp.templateFiles["scripttype"] = filepath.Join("views", "scripttype.tmpl")
