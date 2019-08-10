@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
+	apitypes "github.com/HcashOrg/hcexplorer/hcdataapi"
 	"github.com/HcashOrg/hcrpcclient"
 )
 
@@ -164,17 +164,7 @@ func (p *mempoolMonitor) TxHandler(client *hcrpcclient.Client) {
 				log.Tracef("Received vote %v for ticket %v", tx.Hash(), voteHash)
 				// TODO: Show subsidy for this vote (Vout[2] - Vin[1] ?)
 				continue
-			case stake.TxTypeAiSSGen:
-				// Vote
-				voteHash := &tx.MsgTx().TxIn[1].PreviousOutPoint.Hash
-				log.Tracef("Received vote %v for ticket %v", tx.Hash(), voteHash)
-				// TODO: Show subsidy for this vote (Vout[2] - Vin[1] ?)
-				continue
 			case stake.TxTypeSSRtx:
-				// Revoke
-				log.Tracef("Received revoke transaction: %v", tx.Hash())
-				continue
-			case stake.TxTypeAiSSRtx:
 				// Revoke
 				log.Tracef("Received revoke transaction: %v", tx.Hash())
 				continue
@@ -317,17 +307,17 @@ func (m *MempoolData) GetNumTickets() uint32 {
 }
 
 type mempoolDataCollector struct {
-	mtx          sync.Mutex
+	mtx         sync.Mutex
 	hcdChainSvr *hcrpcclient.Client
-	activeChain  *chaincfg.Params
+	activeChain *chaincfg.Params
 }
 
 // NewMempoolDataCollector creates a new mempoolDataCollector.
 func NewMempoolDataCollector(hcdChainSvr *hcrpcclient.Client, params *chaincfg.Params) *mempoolDataCollector {
 	return &mempoolDataCollector{
-		mtx:          sync.Mutex{},
+		mtx:         sync.Mutex{},
 		hcdChainSvr: hcdChainSvr,
-		activeChain:  params,
+		activeChain: params,
 	}
 }
 
