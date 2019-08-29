@@ -165,12 +165,21 @@ func writeJSON(w http.ResponseWriter, thing interface{}) {
 
 func (exp *explorerUI) richlist(w http.ResponseWriter, r *http.Request) {
 
-	addrList, errH := exp.explorerSource.GetTop100Addresses()
-
+	origin_addrList, errH := exp.explorerSource.GetTop100Addresses()
 	if errH != nil {
 		log.Errorf("Unable to get richlist %v", errH)
 		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
 		return
+	}
+
+	addrList := make([]*dbtypes.TopAddressRow, 0, 120)
+	addrmap := make(map[string]bool)
+	for i, _ := range origin_addrList {
+		if _, exist := addrmap[origin_addrList[i].Address]; exist {
+			continue
+		}
+		addrmap[origin_addrList[i].Address] = true
+		addrList = append(addrList, origin_addrList[i])
 	}
 
 	chartData, errH := exp.explorerSource.GetChartValue()
