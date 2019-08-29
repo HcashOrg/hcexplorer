@@ -59,7 +59,7 @@ type APIDataSource interface {
 	GetMempoolSSTxDetails(N int) *apitypes.MempoolTicketDetails
 	GetAddressTransactions(addr string, count int) *apitypes.Address
 	GetAddressTransactionsRaw(addr string, count int) []*apitypes.AddressTxRaw
-	GetNetWorkHashRate()float64
+	GetNetWorkHashRate() float64
 }
 
 // hcexplorer application context used by all route handlers
@@ -363,6 +363,14 @@ func (c *appContext) getBlockHash(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.WriteString(w, hash); err != nil {
 		apiLog.Infof("failed to write height response: %v", err)
 	}
+}
+
+func (c *appContext) getCoinSupply(w http.ResponseWriter, r *http.Request) {
+	res, err := c.nodeClient.GetCoinSupply()
+	if err != nil {
+		log.Errorf("get coin supply failed:%v", err)
+	}
+	w.Write([]byte(res.String()))
 }
 
 func (c *appContext) getBlockSummary(w http.ResponseWriter, r *http.Request) {
