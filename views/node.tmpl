@@ -1,0 +1,39 @@
+{{define "node"}}
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "html-head" "Address Rich List"}}
+
+<body>
+    {{template "navbar"}}
+    <div class="container">
+        <style>
+            #main_chart {
+                width: 100%;
+                height: 600px;
+                margin-bottom:10px;
+
+            }
+            #nodestable th{
+                 width:50%
+            }
+        </style>
+        <div class="container" >
+            <div id="main_chart"></div>
+            <div>
+                <table class="table striped table-responsive" id="nodestable">
+                    <thead>
+                        <tr>
+                            <th>国家</th>
+                            <th>节点数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+     </div>
+     <script src="/js/node.js"></script>
+</body>
+{{end}}

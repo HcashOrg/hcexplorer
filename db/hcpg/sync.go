@@ -88,7 +88,7 @@ func (db *ChainDB) SyncChainDB(client *hcrpcclient.Client, quit chan struct{},
 	if reindexing {
 		log.Info("Large bulk load: Removing indexes and disabling duplicate checks.")
 		err = db.DeindexAll()
-		if err != nil && !strings.Contains(err.Error(), "does not exist") {
+		if err != nil && !strings.Contains(err.Error(), "does not exist") && !strings.Contains(err.Error(), "不存在") {
 			return lastBlock, err
 		}
 		db.EnableDuplicateCheckOnInsert(false)

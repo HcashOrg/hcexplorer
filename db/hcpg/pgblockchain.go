@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,8 @@ import (
 	"github.com/HcashOrg/hcexplorer/explorer"
 	"github.com/HcashOrg/hcexplorer/rpcutils"
 	"github.com/HcashOrg/hcrpcclient"
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
+	"github.com/oschwald/geoip2-golang"
 )
 
 var (
@@ -336,6 +338,15 @@ func (pgb *ChainDB) GetTop100Addresses() ([]*dbtypes.TopAddressRow, error) {
 		return nil, err
 	}
 	return addressRows, err
+}
+func (pgb *ChainDB) GetNodeInfo() ([]*dbtypes.NodeInfo, error) {
+	var nodeinfos []*dbtypes.NodeInfo
+
+	nodeinfos, err := retrieveNodeInfo(pgb.db)
+	if err != nil {
+		return nil, err
+	}
+	return nodeinfos, nil
 }
 
 func (pgb *ChainDB) UpdateAddressBelong(address string, belong string) error {
@@ -998,5 +1009,46 @@ func (pgb *ChainDB) UpdateScriptInfo() error {
 	for range t {
 		updateScriptInfo(pgb.db, false)
 	}
+	return nil
+}
+
+func (pgb *ChainDB) UpdateNodeInfo(nodeClient *hcrpcclient.Client) error {
+	// 国家数据相关的信息
+	geodb, err := geoip2.Open("./db/GeoLite2-City.mmdb")
+	if err != nil {
+		log.Errorf("geoip2.Open failed:%v", err)
+	}
+	defer geodb.Close()
+	ticker := time.NewTicker(time.Hour)
+	for {
+
+		peers, err := nodeClient.GetPeerInfo()
+		if err != nil {
+			log.Errorf("get peerinfo failed:%v", err)
+			continue
+		}
+		for _, peer := range peers {
+			ipstr := peer.Addr
+			split := strings.TrimSpace(strings.Split(ipstr, ":")[0])
+			if split == "" {
+				continue
+			}
+			ip := net.ParseIP(split)
+
+			record, err := geodb.City(ip)
+			if err != nil {
+				log.Errorf("get ip record info faile:%v", err)
+				continue
+			}
+			err = addNode(pgb.db, peer.Addr, record.Country.Names["en"])
+			if err != nil {
+				log.Errorf("add node info failed:%v", err)
+				continue
+			}
+		}
+
+		<-ticker.C
+	}
+
 	return nil
 }

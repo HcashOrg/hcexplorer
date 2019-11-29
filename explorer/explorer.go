@@ -42,6 +42,8 @@ const (
 	decodeTxTemplateIndex
 
 	richlistTemplateIndex
+	nodeTemplateIndex
+
 	statsTemplateIndex
 	diffTemplateIndex
 	blocksizeTemplateIndex
@@ -86,6 +88,7 @@ type explorerDataSource interface {
 	AddressHistory(address string, N, offset int64) ([]*dbtypes.AddressRow, *AddressBalance, error)
 	FillAddressTransactions(addrInfo *AddressInfo) error
 	GetTop100Addresses() ([]*dbtypes.TopAddressRow, error)
+	GetNodeInfo() ([]*dbtypes.NodeInfo, error)
 	GetChartValue() (*dbtypes.ChartValue, error)
 	SyncAddresses() error
 	GetDiff() ([]*dbtypes.DiffData, error)
@@ -208,6 +211,55 @@ func (exp *explorerUI) richlist(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, str)
+}
+
+type country struct {
+	Name  string `json:"name"`
+	Value int    `json:"value"`
+}
+
+func (exp *explorerUI) nodes(w http.ResponseWriter, r *http.Request) {
+
+	//AddressInfo
+	str, err := templateExecToString(exp.templates[nodeTemplateIndex], "node", struct {
+		Data []country
+	}{
+		nil})
+
+	if err != nil {
+		log.Errorf("Template execute failure: %v", err)
+		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, str)
+}
+func (exp *explorerUI) nodesApi(w http.ResponseWriter, r *http.Request) {
+	nodeDatas := make([]*dbtypes.NodeInfo, 0, 0)
+	for i := 0; i < 100; i++ {
+		c := &dbtypes.NodeInfo{"Angola", i}
+		nodeDatas = append(nodeDatas, c)
+	}
+
+	//nodeDatas,err := exp.explorerSource.GetNodeInfo()
+	//length := len(nodeDatas)
+	//if err != nil{
+	//	log.Errorf("get node info failed:%v",err)
+	//	w.WriteHeader(403)
+	//	w.Write([]byte("no node data"))
+	//	return
+	//}
+	//if  length == 0{
+	//	log.Errorf("get node info failed:%v",err)
+	//	w.WriteHeader(200)
+	//	w.Write([]byte("no node data"))
+	//	return
+	//}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	writeJSON(w, nodeDatas)
 }
 
 func (exp *explorerUI) stats(w http.ResponseWriter, r *http.Request) {
@@ -1027,6 +1079,14 @@ func (exp *explorerUI) reloadTemplates() error {
 		return err
 	}
 
+	nodeTemplate, err := template.New("node").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["node"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		return err
+	}
+
 	statsTemplate, err := template.New("stats").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["ricstatshlist"],
 		exp.templateFiles["extras"],
@@ -1122,6 +1182,7 @@ func (exp *explorerUI) reloadTemplates() error {
 	exp.templates[addressTemplateIndex] = addressTemplate
 	exp.templates[decodeTxTemplateIndex] = decodeTxTemplate
 	exp.templates[richlistTemplateIndex] = richlistTemplate
+	exp.templates[nodeTemplateIndex] = nodeTemplate
 	exp.templates[statsTemplateIndex] = statsTemplate
 	exp.templates[diffTemplateIndex] = diffTemplate
 	exp.templates[blocksizeTemplateIndex] = blocksizeTemplate
@@ -1189,6 +1250,7 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	exp.templateFiles["address"] = filepath.Join("views", "address.tmpl")
 	exp.templateFiles["rawtx"] = filepath.Join("views", "rawtx.tmpl")
 	exp.templateFiles["richlist"] = filepath.Join("views", "richlist.tmpl")
+	exp.templateFiles["node"] = filepath.Join("views", "node.tmpl")
 	exp.templateFiles["stats"] = filepath.Join("views", "stats.tmpl")
 	exp.templateFiles["diff"] = filepath.Join("views", "diff.tmpl")
 	exp.templateFiles["blocksize"] = filepath.Join("views", "blocksize.tmpl")
@@ -1355,6 +1417,15 @@ func New(dataSource explorerDataSourceLite, primaryDataSource explorerDataSource
 	}
 	exp.templates = append(exp.templates, richlistTemplate)
 
+	nodeTemplate, err := template.New("node").Funcs(exp.templateHelpers).ParseFiles(
+		exp.templateFiles["node"],
+		exp.templateFiles["extras"],
+	)
+	if err != nil {
+		log.Errorf("Unable to create new html template: %v", err)
+	}
+	exp.templates = append(exp.templates, nodeTemplate)
+
 	statsTemplate, err := template.New("stats").Funcs(exp.templateHelpers).ParseFiles(
 		exp.templateFiles["stats"],
 		exp.templateFiles["extras"],
@@ -1499,6 +1570,14 @@ func (exp *explorerUI) addRoutes() {
 
 	exp.Mux.Route("/richlist", func(r chi.Router) {
 		r.Get("/", exp.richlist)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+	exp.Mux.Route("/nodes", func(r chi.Router) {
+		r.Get("/", exp.nodes)
+		r.Get("/ws", exp.rootWebsocket)
+	})
+	exp.Mux.Route("/nodesApi", func(r chi.Router) {
+		r.Get("/", exp.nodesApi)
 		r.Get("/ws", exp.rootWebsocket)
 	})
 

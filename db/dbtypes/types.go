@@ -178,6 +178,10 @@ type TopAddressRow struct {
 	StringVal  string
 	Belong     string
 }
+type NodeInfo struct {
+	Country string
+	Count   int
+}
 type ChartValue struct {
 	BalanceDist  []string  `json:"balance_dist"`
 	CountList    []int     `json:"count_list"`

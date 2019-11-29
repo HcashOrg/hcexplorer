@@ -239,7 +239,7 @@ func RetrieveAddressSpent(db *sql.DB, address string) (count, totalAmount int64,
 }
 
 func RetrieveAddressSpentUnspent(db *sql.DB, address string) (numSpent, numUnspent,
-totalSpent, totalUnspent int64, err error) {
+	totalSpent, totalUnspent int64, err error) {
 	dbtx, err := db.Begin()
 	if err != nil {
 		err = fmt.Errorf("unable to begin database transaction: %v", err)
@@ -429,6 +429,11 @@ func RetrieveDiffChartData(db *sql.DB) ([]*dbtypes.DiffData, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
 	return scanDiffChartQueryRows(rows)
 }
 
@@ -444,6 +449,29 @@ func RetrieveTop100Address(db *sql.DB, N, offset int64) ([]uint64, []*dbtypes.To
 	}()
 
 	return scanTopAddressQueryRows(rows)
+}
+func retrieveNodeInfo(db *sql.DB) (nodeinfos []*dbtypes.NodeInfo, errret error) {
+	rows, err := db.Query("select country,count (country) as nodecount from nodes group by country order by nodecount")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if e := rows.Close(); e != nil {
+			log.Errorf("Close of Query failed: %v", e)
+		}
+	}()
+	var nodeinfo *dbtypes.NodeInfo
+	for rows.Next() {
+		err := rows.Scan(nodeinfo.Country, nodeinfo.Count)
+		if err != nil {
+			log.Errorf("scan rows failed:%v", err)
+			errret = err
+			return
+		}
+		nodeinfos = append(nodeinfos, nodeinfo)
+	}
+	return
+
 }
 
 func scanDiffChartQueryRows(rows *sql.Rows) (addressRows []*dbtypes.DiffData, err error) {
@@ -573,8 +601,8 @@ func scanHashrateRows(rows *sql.Rows) (hashratejson *dbtypes.HashRateJson, err e
 		}
 		//bits := binary.BigEndian.Uint32(bitsbyte)
 		// diff to hashrate
-		hashrate_h_s := diff * (math.Pow(2, 32)) / 150 // h/s
-		hashrate_th_s := hashrate_h_s/math.Pow(10,12) // th/s
+		hashrate_h_s := diff * (math.Pow(2, 32)) / 150   // h/s
+		hashrate_th_s := hashrate_h_s / math.Pow(10, 12) // th/s
 		//hashrate := blockchain.CalcWork(bits).Int64()
 		//fmt.Println(hashrate)
 		fmt.Println(date)
@@ -1621,6 +1649,16 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 			log.Error(err)
 			return err
 		}
+	}
+	return nil
+}
+
+func addNode(db *sql.DB, ip string, country string) error {
+	log.Warnf("add node ip:%s,country:%s", ip, country)
+	insertStmt := fmt.Sprintf("insert into nodes(id,country)values(%s,%s) ON CONFLICT (hash) DO NOTHING", ip, country)
+	_, err := db.Exec(insertStmt)
+	if err != nil {
+		return err
 	}
 	return nil
 }

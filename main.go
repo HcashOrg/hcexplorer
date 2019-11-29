@@ -441,6 +441,8 @@ func mainCore() error {
 		go db.UpdateFeesStatAndMempoolHistory(hcdClient)
 		go db.SyncAddresses()
 		go db.UpdateScriptInfo()
+		go db.UpdateNodeInfo(hcdClient)
+
 	}
 
 	// Wait for notification handlers to quit
