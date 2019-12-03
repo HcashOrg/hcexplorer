@@ -451,7 +451,7 @@ func RetrieveTop100Address(db *sql.DB, N, offset int64) ([]uint64, []*dbtypes.To
 	return scanTopAddressQueryRows(rows)
 }
 func retrieveNodeInfo(db *sql.DB) (nodeinfos []*dbtypes.NodeInfo, errret error) {
-	rows, err := db.Query("select country,count (country) as nodecount from nodes group by country order by nodecount")
+	rows, err := db.Query("select country as name,count (country) as value from nodes group by country order by value")
 	if err != nil {
 		return nil, err
 	}
@@ -460,15 +460,21 @@ func retrieveNodeInfo(db *sql.DB) (nodeinfos []*dbtypes.NodeInfo, errret error) 
 			log.Errorf("Close of Query failed: %v", e)
 		}
 	}()
-	var nodeinfo *dbtypes.NodeInfo
+
 	for rows.Next() {
-		err := rows.Scan(nodeinfo.Country, nodeinfo.Count)
+		var country string
+		var count int
+		err := rows.Scan(&country, &count)
 		if err != nil {
 			log.Errorf("scan rows failed:%v", err)
 			errret = err
 			return
 		}
-		nodeinfos = append(nodeinfos, nodeinfo)
+		nodeinfo:=dbtypes.NodeInfo{
+			Country:country,
+			Count:count,
+		}
+		nodeinfos = append(nodeinfos, &nodeinfo)
 	}
 	return
 
@@ -1655,7 +1661,7 @@ func updateScriptInfo(db *sql.DB, first bool) error {
 
 func addNode(db *sql.DB, ip string, country string) error {
 	log.Warnf("add node ip:%s,country:%s", ip, country)
-	insertStmt := fmt.Sprintf("insert into nodes(id,country)values(%s,%s) ON CONFLICT (hash) DO NOTHING", ip, country)
+	insertStmt := fmt.Sprintf("insert into nodes(ip,country)values('%s','%s') ON CONFLICT (id) DO NOTHING", ip, country)
 	_, err := db.Exec(insertStmt)
 	if err != nil {
 		return err

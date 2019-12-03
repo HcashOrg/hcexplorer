@@ -1035,12 +1035,16 @@ func (pgb *ChainDB) UpdateNodeInfo(nodeClient *hcrpcclient.Client) error {
 			}
 			ip := net.ParseIP(split)
 
-			record, err := geodb.City(ip)
+			record, err := geodb.Country(ip)
 			if err != nil {
 				log.Errorf("get ip record info faile:%v", err)
 				continue
 			}
-			err = addNode(pgb.db, peer.Addr, record.Country.Names["en"])
+			countryName:=record.Country.Names["en"]
+			if countryName=="Hong Kong"||countryName=="Taiwan"||countryName=="Macao"{
+				countryName="China"
+			}
+			err = addNode(pgb.db, peer.Addr, countryName)
 			if err != nil {
 				log.Errorf("add node info failed:%v", err)
 				continue
@@ -1050,5 +1054,29 @@ func (pgb *ChainDB) UpdateNodeInfo(nodeClient *hcrpcclient.Client) error {
 		<-ticker.C
 	}
 
+	return nil
+}
+func (pgb *ChainDB) AddNode(Ip string) error {
+	geodb, err := geoip2.Open("./db/GeoLite2-City.mmdb")
+	if err != nil {
+		log.Errorf("geoip2.Open failed:%v", err)
+	}
+	defer geodb.Close()
+	ip := net.ParseIP(Ip)
+	record, err := geodb.Country(ip)
+	if err != nil {
+		log.Errorf("get ip record info faile:%v", err)
+		return err
+	}
+	countryName:=record.Country.Names["en"]
+	if countryName=="Hong Kong"||countryName=="Taiwan"||countryName=="Macao"{
+		countryName="China"
+	}
+
+	err = addNode(pgb.db, Ip, countryName)
+	if err != nil {
+		log.Errorf("add node info failed:%v", err)
+		return err
+	}
 	return nil
 }

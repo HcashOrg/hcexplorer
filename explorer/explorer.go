@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"io/ioutil"
 
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
@@ -106,6 +107,8 @@ type explorerDataSource interface {
 	GetOPReturnListData(N, offset int64) ([]*dbtypes.OPReturnListData, error)
 
 	GetMempoolHistory() ([]*dbtypes.MempoolHistory, []*dbtypes.MempoolHistory, error)
+
+	AddNode(ip string)error
 }
 
 type explorerUI struct {
@@ -286,6 +289,38 @@ func (exp *explorerUI) blocksizejson(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, blocksizeJson)
 }
+
+func (exp *explorerUI)getnodeinfo(w http.ResponseWriter, r *http.Request) {
+	nodeInfo, errN := exp.explorerSource.GetNodeInfo()
+	if errN != nil{
+		log.Errorf("Unable to get getnodeinfo")
+		http.Redirect(w, r, "/error/", http.StatusTemporaryRedirect)
+		return
+	}
+	writeJSON(w, nodeInfo)
+}
+
+func (exp *explorerUI)addnode(w http.ResponseWriter, r *http.Request) {
+	type req struct {
+		Ip string
+	}
+	result, err := ioutil.ReadAll(r.Body)
+	if err!=nil{
+		log.Errorf("Unable to read addnode post")
+		return
+	}
+    var node req
+    if err := json.Unmarshal(result, &node); err == nil {
+		log.Infof("add node ip:%s,country:%s", node.Ip)
+		errS:=exp.explorerSource.AddNode(node.Ip)
+		if errS!=nil{
+			log.Errorf("AddNode error:%v",errS)
+		}
+    } else {
+        log.Errorf("Unmarshal post.Body error:%v",err)
+    }
+}
+
 func (exp *explorerUI) blocksize(w http.ResponseWriter, r *http.Request) {
 
 	str, err := templateExecToString(exp.templates[blocksizeTemplateIndex], "blocksize", struct {
@@ -1601,6 +1636,10 @@ func (exp *explorerUI) addRoutes() {
 		r.Get("/", exp.blocksize)
 		r.Get("/ws", exp.rootWebsocket)
 	})
+
+
+	exp.Mux.Get("/getnodeinfo", exp.getnodeinfo)
+	exp.Mux.Post("/addnode", exp.addnode)
 
 	exp.Mux.Get("/hashratejson", exp.hashratejson)
 	exp.Mux.Route("/hashrate", func(r chi.Router) {
