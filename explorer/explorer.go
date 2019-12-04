@@ -302,20 +302,19 @@ func (exp *explorerUI)getnodeinfo(w http.ResponseWriter, r *http.Request) {
 
 func (exp *explorerUI)addnode(w http.ResponseWriter, r *http.Request) {
 	type req struct {
-		Ip string
+		IP string
 	}
 	result, err := ioutil.ReadAll(r.Body)
 	if err!=nil{
-		log.Errorf("Unable to read addnode post")
-		return
+		  log.Errorf("Unable to read addnode post")
+		  return
 	}
     var node req
     if err := json.Unmarshal(result, &node); err == nil {
-		log.Infof("add node ip:%s,country:%s", node.Ip)
-		errS:=exp.explorerSource.AddNode(node.Ip)
-		if errS!=nil{
-			log.Errorf("AddNode error:%v",errS)
-		}
+				errS:=exp.explorerSource.AddNode(node.IP)
+				if errS!=nil{
+					log.Errorf("AddNode error:%v",errS)
+				}
     } else {
         log.Errorf("Unmarshal post.Body error:%v",err)
     }

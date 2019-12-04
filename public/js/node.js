@@ -196,11 +196,13 @@
     //$("#nodesTb").html
     var nodesTbStr = "";
     var nodesArry=[]
-    var counts=0;
+    var maxNum=0;
     for (let i = 0;i<nodes.length;i++){
         let item = nodes[i]
-        nodesArry.push({name:item.Country,value:item.Count})
-        counts=counts+item.Count;
+        nodesArry.push({name:item.Country,value:item.Count});
+        if(item.Count>maxNum){
+        maxNum=item.Count;
+        }
         nodesTbStr = nodesTbStr + "<tr> <td> " + item.Country + " </td> <td> " + item.Count + "  </td> </tr>"
     }
     // $.each(nodes, function (index, item) {
@@ -250,7 +252,7 @@
             },
             visualMap: {
                 min: 0,
-                max: counts,
+                max: maxNum,
                 text: ['High', 'Low'],
                 realtime: true,
                 calculable: true,
